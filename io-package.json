@@ -71,8 +71,11 @@
         ]
     },
     "native": {
-        "option1": true,
-        "option2": "42"
+        "serialport": null,
+        "tcpserverip": "127.0.0.1",
+        "tcpserverport": 4001,
+        "pollintervall": 10,
+        "pauseintervall": 2
     },
     "objects": [],
     "instanceObjects": []
