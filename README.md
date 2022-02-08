@@ -1,6 +1,5 @@
 ![Logo](admin/idm-multitalent_002.png)
 # ioBroker.idm-multitalent_002
-
 [![NPM version](https://img.shields.io/npm/v/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 ![Number of Installations](https://iobroker.live/badges/idm-multitalent_002-installed.svg)
@@ -16,7 +15,7 @@
 Read and write values of a iDM heatpump with multitalent.002 control.
 
 ## Developer manual
-This section is intended for the developer. It can be deleted later
+Development just started, nothing working around so far.
 
 ### Getting started
 
