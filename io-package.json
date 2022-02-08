@@ -1,0 +1,79 @@
+{
+    "common": {
+        "name": "idm-multitalent_002",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "iDM multitalent.002",
+        "titleLang": {
+            "en": "iDM multitalent.002",
+            "de": "iDM multitalent.002",
+            "ru": "iDM multitalent.002",
+            "pt": "iDM multitalent.002",
+            "nl": "iDM multitalent.002",
+            "fr": "iDM multitalent.002",
+            "it": "iDM multitalent.002",
+            "es": "iDM multitalent.002",
+            "pl": "iDM multitalent.002",
+            "zh-cn": "iDM multitalent.002"
+        },
+        "desc": {
+            "en": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "de": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "ru": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "pt": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "nl": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "fr": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "it": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "es": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "pl": "Read and write values of a iDM heatpump with multitalent.002 control.",
+            "zh-cn": "Read and write values of a iDM heatpump with multitalent.002 control."
+        },
+        "authors": [
+            "zloe <klaus@zloebl.net>"
+        ],
+        "keywords": [
+            "iDM",
+            "heating",
+            "heatpump",
+            "multitalent"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "idm-multitalent_002.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/zloe/ioBroker.idm-multitalent_002/main/admin/idm-multitalent_002.png",
+        "readme": "https://github.com/zloe/ioBroker.idm-multitalent_002/blob/main/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "climate-control",
+        "compact": true,
+        "connectionType": "local",
+        "dataSource": "poll",
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=2.0.0"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": []
+}
