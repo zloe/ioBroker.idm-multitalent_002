@@ -105,7 +105,7 @@ For later updates, the above procedure is not necessary. Just do the following:
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.0.2 (2022-02-19)
 * (zloe) initial release
 
 ## License
