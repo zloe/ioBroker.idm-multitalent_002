@@ -21,6 +21,7 @@ class IdmMultitalent002 extends utils.Adapter {
             ...options,
             name: 'idm-multitalent_002',
         });
+        this.log.info('created');
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         // this.on('objectChange', this.onObjectChange.bind(this));
@@ -36,8 +37,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
         // The adapters config (in the instance object everything under the attribute "native") is accessible via
         // this.config:
-        this.log.info('config option1: ' + this.config.option1);
-        this.log.info('config option2: ' + this.config.option2);
+        this.log.info('config serialport: ' + this.config.serialport);
+        this.log.info('config tcpserverip: ' + this.config.tcpserverip);
+        this.log.info('config tcpserverport: ' + this.config.tcpserverport);
+        this.log.info('config pollinterval: ' + this.config.pollinterval);
+        
 
         /*
         For every state in the system there has to be also an object of type state
