@@ -161,11 +161,13 @@ class IdmMultitalent002 extends utils.Adapter {
 
 if (require.main !== module) {
     // Export the constructor in compact mode
+    log.info("using constructor with parameters");
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
     module.exports = (options) => new IdmMultitalent002(options);
 } else {
     // otherwise start the instance directly
+    log.info("using default constructor");
     new IdmMultitalent002();
 }
