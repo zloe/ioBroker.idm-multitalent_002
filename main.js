@@ -21,7 +21,7 @@ class IdmMultitalent002 extends utils.Adapter {
             ...options,
             name: 'idm-multitalent_002',
         });
-        this.log.info('created');
+        //this.log.info('created');
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         // this.on('objectChange', this.onObjectChange.bind(this));
@@ -37,10 +37,10 @@ class IdmMultitalent002 extends utils.Adapter {
 
         // The adapters config (in the instance object everything under the attribute "native") is accessible via
         // this.config:
-        this.log.info('config serialport: ' + this.config.serialport);
-        this.log.info('config tcpserverip: ' + this.config.tcpserverip);
-        this.log.info('config tcpserverport: ' + this.config.tcpserverport);
-        this.log.info('config pollinterval: ' + this.config.pollinterval);
+        //this.log.info('config serialport: ' + this.config.serialport);
+        //this.log.info('config tcpserverip: ' + this.config.tcpserverip);
+        //this.log.info('config tcpserverport: ' + this.config.tcpserverport);
+        //this.log.info('config pollinterval: ' + this.config.pollinterval);
         
 
         /*
@@ -83,10 +83,10 @@ class IdmMultitalent002 extends utils.Adapter {
 
         // examples for the checkPassword/checkGroup functions
         let result = await this.checkPasswordAsync('admin', 'iobroker');
-        this.log.info('check user admin pw iobroker: ' + result);
+        //this.log.info('check user admin pw iobroker: ' + result);
 
         result = await this.checkGroupAsync('admin', 'admin');
-        this.log.info('check group user admin group admin: ' + result);
+        //this.log.info('check group user admin group admin: ' + result);
     }
 
     /**
@@ -161,13 +161,13 @@ class IdmMultitalent002 extends utils.Adapter {
 
 if (require.main !== module) {
     // Export the constructor in compact mode
-    this.log.info("using constructor with parameters");
+    //this.log.info("using constructor with parameters");
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
     module.exports = (options) => new IdmMultitalent002(options);
 } else {
     // otherwise start the instance directly
-    this.log.info("using default constructor");
+    //this.log.info("using default constructor");
     new IdmMultitalent002();
 }
