@@ -48,12 +48,12 @@ class IdmMultitalent002 extends utils.Adapter {
         Here a simple template for a boolean variable named "config"
         Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
         */
-        await this.setObjectNotExistsAsync('config', {
-            type: 'state',
+        await this.setObjectNotExistsAsync('configuration_text', {
+            type: 'string',
             common: {
-                name: 'config',
+                name: 'configuration_text',
                 type: 'string',
-                role: 'indicator',
+                role: 'value',
                 read: true,
                 write: true,
             },
