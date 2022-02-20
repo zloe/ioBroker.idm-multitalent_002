@@ -49,7 +49,7 @@ class IdmMultitalent002 extends utils.Adapter {
         Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
         */
         await this.setObjectNotExistsAsync('configuration_text', {
-            type: 'string',
+            type: 'meta',
             common: {
                 name: 'configuration_text',
                 type: 'string',
