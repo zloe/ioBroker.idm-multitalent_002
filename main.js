@@ -61,7 +61,7 @@ class IdmMultitalent002 extends utils.Adapter {
         });
 
         // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-        this.subscribeStates('config');
+        this.subscribeStates('configuration_text');
         // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
         // this.subscribeStates('lights.*');
         // Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
@@ -72,7 +72,7 @@ class IdmMultitalent002 extends utils.Adapter {
             you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
         */
         // the variable config is set to true as command (ack=false)
-        await this.setStateAsync('config', config.tcpserverip);
+        await this.setStateAsync('configuration_text', this.config.tcpserverip);
 
         // same thing, but the value is flagged "ack"
         // ack should be always set to true if the value is received from or acknowledged from the target system
