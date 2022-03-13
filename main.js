@@ -181,13 +181,13 @@ class IdmMultitalent002 extends utils.Adapter {
 
         this.client = new net.Socket();
 
-        function write_init() {
-            client.write(create_message('0160'));
+        IdmMultitalent002.prototype.write_init = function write_init() {
+            this.client.write(create_message('0160'));
         }
 
-        function receive_hello(data) {
-            setStateAsync('received_message', data);
-            client.destroy();
+        IdmMultitalent002.prototype.receive_hello = function receive_hello(data) {
+            this.setStateAsync('received_message', data);
+            this.client.destroy();
         }
         
 
