@@ -180,16 +180,19 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.log.info('check group user admin group admin: ' + result);
 
         this.client = new net.Socket();
-        var that = this;
 
-        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, function() {
-            that.client.write(create_message('0160'));
-        });
-        this.client.on('data', function(this, data) {
-            that.setStateAsync('received_message', data);
-            that.client.destroy();
-        });
+        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, write_init);
+        this.client.on('data', receive_hello(data));
 
+        function write_init() {
+            this.client.write(create_message('0160'));
+        }
+
+        function receive_hello(data) {
+            this.setStateAsync('received_message', data);
+            this.destroy();
+        }
+        
     
     }
 
