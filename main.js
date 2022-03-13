@@ -120,7 +120,7 @@ class IdmMultitalent002 extends utils.Adapter {
     
 
     write_init() {
-        Uint8Array init_message = create_message('0160');
+        var init_message = create_message('0160');
         this.log.debug("init message: " + get_string(init_message));
         if(this.client) this.client.write(create_message('0160'));
     }
