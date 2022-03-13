@@ -181,9 +181,6 @@ class IdmMultitalent002 extends utils.Adapter {
 
         this.client = new net.Socket();
 
-        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, write_init);
-        this.client.on('data', receive_hello(data));
-
         function write_init() {
             this.client.write(create_message('0160'));
         }
@@ -192,6 +189,11 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setStateAsync('received_message', data);
             this.destroy();
         }
+        
+
+        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, write_init);
+        this.client.on('data', this.receive_hello(data));
+
         
     
     }
