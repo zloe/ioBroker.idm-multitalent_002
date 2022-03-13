@@ -14,6 +14,26 @@ function get_string(num) {
   return h.toString() + z.toString() + e.toString();
 }
 
+function get_string(data) {
+    var text = "";
+    for(var i = 0; i < data.byteLength; i++) {
+        switch(data[i]) {
+          case 1: 
+            text.concat("-START-");
+            break;
+          case 3:
+            text.concat("-CHKSUM-");
+            break;
+          case 4:
+            text.concat("-END-");
+            break;      
+          default:
+            text.concat(data[i].toString());
+        }
+    }
+    return text;
+}
+
 function calc_checksum(data) {
   var checksum;
   checksum = 0;
@@ -97,12 +117,16 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
+    
+
     write_init() {
+        Uint8Array init_message = create_message('0160');
+        this.log.debug("init message: " + get_string(init_message));
         if(this.client) this.client.write(create_message('0160'));
     }
 
     receive_hello(data) {
-        this.setStateAsync('received_message', data);
+        this.setStateAsync('received_message', get_string(data));
         if (this.client) this.client.destroy();
     }
 
