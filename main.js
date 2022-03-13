@@ -191,11 +191,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
         this.client = new net.Socket();
 
-        this.write_init_callback = this.write_init(this);
-        this.receive_hello_callback = this.receive_hello(this);
+        //this.write_init_callback = this.write_init(this);
+        //this.receive_hello_callback = this.receive_hello(this);
 
-        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.write_init_callback);
-        this.client.on('data', this.receive_hello_callback);
+        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.write_init.bind(this));
+        this.client.on('data', this.receive_hello.bind(this));
 
         
     
