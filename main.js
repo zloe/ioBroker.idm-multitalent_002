@@ -50,7 +50,7 @@ function read_val(length, data) {
 
 function create_message(data) {
   var checksum, checksumText, i, message;
-  message = new ArrayBuffer(data.length + 6);
+  message = new Uint8Array(data.length + 6);
   message[0] = 1;
   i = 1;
   checksum = 0;
@@ -64,9 +64,9 @@ function create_message(data) {
 
   message[i] = 3;
   checksumText = get_string(checksum);
-  message[i + 1] = checksumText[0];
-  message[i + 2] = checksumText[1];
-  message[i + 3] = checksumText[2];
+  message[i + 1] = ord(checksumText[0]);
+  message[i + 2] = ord(checksumText[1]);
+  message[i + 3] = ord(checksumText[2]);
   message[i + 4] = 4;
   return message;
 }
@@ -181,11 +181,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
         this.client = new net.Socket();
 
-        IdmMultitalent002.prototype.write_init = function write_init() {
+        write_init() {
             this.client.write(create_message('0160'));
         }
 
-        IdmMultitalent002.prototype.receive_hello = function receive_hello(data) {
+        receive_hello(data) {
             this.setStateAsync('received_message', data);
             this.client.destroy();
         }
