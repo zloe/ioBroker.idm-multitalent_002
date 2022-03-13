@@ -97,6 +97,16 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
+    write_init() {
+        if(this.client) this.client.write(create_message('0160'));
+    }
+
+    receive_hello(data) {
+        this.setStateAsync('received_message', data);
+        if (this.client) this.client.destroy();
+    }
+
+
     /**
      * Is called when databases are connected and adapter received configuration.
      */
@@ -188,15 +198,6 @@ class IdmMultitalent002 extends utils.Adapter {
 
         
     
-    }
-
-    write_init() {
-        if(this.client) this.client.write(create_message('0160'));
-    }
-
-    receive_hello(data) {
-        this.setStateAsync('received_message', data);
-        if (this.client) this.client.destroy();
     }
 
     /**
