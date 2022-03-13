@@ -17,6 +17,8 @@ function get_string(num) {
 function get_string_uint8array(data) {
     var text = "";
     for(var i = 0; i < data.byteLength; i++) {
+        text = text + data[i];
+        /*
         switch(data[i]) {
           case 1: 
             text.concat("-START-");
@@ -29,7 +31,7 @@ function get_string_uint8array(data) {
             break;      
           default:
             text.concat(data[i].toString());
-        }
+        }*/
     }
     return text;
 }
@@ -121,7 +123,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     write_init() {
         var init_message = create_message('0160');
-        this.log.debug("init message: " + get_string_uint8array(init_message));
+        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message));
         if(this.client) this.client.write(init_message);
     }
 
