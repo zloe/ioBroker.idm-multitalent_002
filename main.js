@@ -14,7 +14,7 @@ function get_string(num) {
   return h.toString() + z.toString() + e.toString();
 }
 
-function get_string(data) {
+function get_string_uint8array(data) {
     var text = "";
     for(var i = 0; i < data.byteLength; i++) {
         switch(data[i]) {
@@ -121,12 +121,12 @@ class IdmMultitalent002 extends utils.Adapter {
 
     write_init() {
         var init_message = create_message('0160');
-        this.log.debug("init message: " + get_string(init_message));
-        if(this.client) this.client.write(create_message('0160'));
+        this.log.debug("init message: " + get_string_uint8array(init_message));
+        if(this.client) this.client.write(init_message);
     }
 
     receive_hello(data) {
-        this.setStateAsync('received_message', get_string(data));
+        this.setStateAsync('received_message', get_string_uint8array(data));
         if (this.client) this.client.destroy();
     }
 
