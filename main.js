@@ -28,7 +28,7 @@ function get_string_uint8array(data) {
             text = text + '-END-';
             break;      
           default:
-            text = text + data[i];
+            text = text + String.fromCharCode(data[i]);
             break;
         }
     }
