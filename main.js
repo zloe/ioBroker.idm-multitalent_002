@@ -123,7 +123,7 @@ class IdmMultitalent002 extends utils.Adapter {
     write_init() {
         var init_message = create_message('0160');
         var chksum = calc_checksum('0160');
-        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message) + ' chksum:' + chksum);
+        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message) + ' chksum:' + chksum + ' chrsumstr:' + get_string(chksum));
         if(this.client) this.client.write(init_message);
     }
 
