@@ -17,21 +17,19 @@ function get_string(num) {
 function get_string_uint8array(data) {
     var text = "";
     for(var i = 0; i < data.byteLength; i++) {
-        text = text + data[i];
-        /*
         switch(data[i]) {
           case 1: 
-            text.concat("-START-");
+            text = text + '-START-';
             break;
           case 3:
-            text.concat("-CHKSUM-");
+            text.concat('-CHKSUM-');
             break;
           case 4:
-            text.concat("-END-");
+            text.concat('-END-');
             break;      
           default:
-            text.concat(data[i].toString());
-        }*/
+            text = text.concat(data[i]);
+        }
     }
     return text;
 }
@@ -119,7 +117,8 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
-    
+    buffer = "";
+
 
     write_init() {
         var init_message = create_message('0160');
@@ -128,7 +127,9 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     receive_hello(data) {
-        this.setStateAsync('received_message', get_string_uint8array(data));
+        this.buffer.concat(get_string_uint8array(data));
+        this.log.debug('received data: ' + this.buffer);
+        this.setStateAsync('received_message', this.buffer);
         if (this.client) this.client.destroy();
     }
 
