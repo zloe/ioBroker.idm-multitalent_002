@@ -22,13 +22,14 @@ function get_string_uint8array(data) {
             text = text + '-START-';
             break;
           case 3:
-            text.concat('-CHKSUM-');
+            text = text + '-CHKSUM-';
             break;
           case 4:
-            text.concat('-END-');
+            text = text + '-END-';
             break;      
           default:
-            text = text.concat(data[i]);
+            text = text + data[i];
+            break;
         }
     }
     return text;
