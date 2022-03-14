@@ -131,7 +131,6 @@ class IdmMultitalent002 extends utils.Adapter {
         this.buffer = this.buffer + get_string_uint8array(data);
         this.log.debug('received data: ' + data.byteLength + ' - ' + this.buffer);
         this.setStateAsync('received_message', this.buffer);
-        if (this.client) this.client.destroy();
     }
 
 
