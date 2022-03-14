@@ -8,8 +8,8 @@ function ord(chr) { return chr.charCodeAt(0);}
 
 function get_string(num) {
   var e, h, z;
-  h = Math.round(num / 100);
-  z = Math.round((num - h * 100) / 10);
+  h = Math.floor(num / 100);
+  z = Math.floor((num - h * 100) / 10);
   e = num % 10;
   return h.toString() + z.toString() + e.toString();
 }
