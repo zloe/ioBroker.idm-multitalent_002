@@ -36,12 +36,11 @@ function get_string_uint8array(data) {
 }
 
 function calc_checksum(data) {
-  var checksum;
-  checksum = 0;
+  var checksum = 0;
 
-  for (var ch, idx = 0, len = data.length; idx < len; idx += 1) {
-    ch = data[idx];
-    checksum = checksum ^ ord(ch);
+
+  for (var idx = 0; idx < data.length; idx += 1) {
+    checksum = checksum ^ ord(data[idx]);
   }
 
   return checksum;
@@ -123,7 +122,8 @@ class IdmMultitalent002 extends utils.Adapter {
 
     write_init() {
         var init_message = create_message('0160');
-        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message));
+        var chksum = calc_checksum('0160');
+        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message) + ' chksum:' + chksum);
         if(this.client) this.client.write(init_message);
     }
 
