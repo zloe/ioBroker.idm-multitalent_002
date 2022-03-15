@@ -58,7 +58,7 @@ class IdmMultitalent002 extends utils.Adapter {
         var text = idm.interpret_data(received_data);
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
-          this.setStateAsync('idm_control_version', text.slice(9));
+          this.setStateAsync('idm_control_version', text.slice(9), true);
           this.setConnected(true);
         } else {
           this.setStateAsync('received_message', text);
@@ -75,6 +75,7 @@ class IdmMultitalent002 extends utils.Adapter {
     setConnected(isConnected) {
       if (this.connected !== isConnected) {
           this.connected = isConnected;
+          this.log.debug('setting connected state to: ' + this.connected);
           this.setState('info.connection', this.connected, true, (err) => {
               // analyse if the state could be set (because of permissions)
               if (err && this.log) this.log.error('Can not update connected state: ' + err);
