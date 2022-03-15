@@ -73,7 +73,7 @@ class IdmMultitalent002 extends utils.Adapter {
     connected = false;
 
     setConnected(isConnected) {
-      if (this.connected !== isConnected) {
+     // if (this.connected !== isConnected) {
           this.connected = isConnected;
           this.log.debug('setting connected state to: ' + this.connected);
           this.setState('info.connection', this.connected, true, (err) => {
@@ -81,7 +81,7 @@ class IdmMultitalent002 extends utils.Adapter {
               if (err && this.log) this.log.error('Can not update connected state: ' + err);
               else if (this.log) this.log.debug('connected set to ' + this.connected);
           });
-      }
+     // }
   }
     /**
      * Is called when databases are connected and adapter received configuration.
