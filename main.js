@@ -58,8 +58,8 @@ class IdmMultitalent002 extends utils.Adapter {
         var text = idm.interpret_data(received_data);
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
-          this.setStateAsync('idm_control_version', text.slice(9), true);
           this.setConnected(true);
+          this.setStateAsync('idm_control_version', text.slice(9), true);
         } else {
           this.setStateAsync('received_message', text);
         }
