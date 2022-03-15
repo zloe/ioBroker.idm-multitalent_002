@@ -34,7 +34,15 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
   
+    request_block(block) {
+      var message = idm.create_message('0160');
+      if (this.client) {
+        this.client.write(message);
+        message = idm.create_message('0171' + block + '00');
 
+        message = idm.create_message('0172');
+      }
+    }
 
     write_init() {
         var init_message = idm.create_message('0160');
@@ -49,7 +57,11 @@ class IdmMultitalent002 extends utils.Adapter {
         var received_data = idm.get_data_packet();
         var text = idm.interpret_data(received_data);
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
-        this.setStateAsync('received_message', text);
+        if (text.slice(0,1) ==="V") {
+          this.setStateAsync('idm_control_version', text.slice(9));
+        } else {
+          this.setStateAsync('received_message', text);
+        }
         idm.reset();
       } else if (state > 3) {
         idm.reset();
@@ -95,11 +107,32 @@ class IdmMultitalent002 extends utils.Adapter {
         });
 
         // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-        this.subscribeStates('received_message');
+        this.subscribeStates('idm_control_version');
         // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
         // this.subscribeStates('lights.*');
         // Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
         // this.subscribeStates('*');
+
+        /*
+        For every state in the system there has to be also an object of type state
+        Here a simple template for a boolean variable named "config"
+        Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
+        */
+        await this.setObjectNotExistsAsync('idm_control_version', {
+          type: 'state',
+          common: {
+              name: 'idm_control_version',
+              type: 'string',
+              role: 'value',
+              read: true,
+              write: false,
+          },
+          native: {},
+      });
+
+      // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
+      this.subscribeStates('received_message');
+
 
         /*
         For every state in the system there has to be also an object of type state
