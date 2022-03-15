@@ -208,7 +208,7 @@ class IdmMultitalent002 extends utils.Adapter {
             // clearTimeout(timeout2);
             // ...
             // clearInterval(interval1);
-            this.client.destroy();
+            this.client && this.client.destroy();
             callback();
         } catch (e) {
             callback();
