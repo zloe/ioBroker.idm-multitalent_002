@@ -59,6 +59,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
           this.setStateAsync('idm_control_version', text.slice(9));
+          this.setConnected(true);
         } else {
           this.setStateAsync('received_message', text);
         }
@@ -68,14 +69,19 @@ class IdmMultitalent002 extends utils.Adapter {
       }
 
     }
-/*
-    receive_hello(data) {
-        this.buffer = this.receive_buffer + idm.get_string_uint8array(data);
-        this.log.debug('received data: ' + data.byteLength + ' - ' + this.receive_buffer);
-        this.setStateAsync('received_message', this.receive_buffer);
-    }
-*/
 
+    connected = false;
+
+    setConnected(isConnected) {
+      if (this.connected !== isConnected) {
+          this.connected = isConnected;
+          this.setState('info.connection', this.connected, true, (err) => {
+              // analyse if the state could be set (because of permissions)
+              if (err && this.log) this.log.error('Can not update connected state: ' + err);
+              else if (this.log) this.log.debug('connected set to ' + this.connected);
+          });
+      }
+  }
     /**
      * Is called when databases are connected and adapter received configuration.
      */
@@ -202,7 +208,7 @@ class IdmMultitalent002 extends utils.Adapter {
             // clearTimeout(timeout2);
             // ...
             // clearInterval(interval1);
-
+            this.client.destroy();
             callback();
         } catch (e) {
             callback();
