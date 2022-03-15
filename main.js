@@ -46,9 +46,12 @@ class IdmMultitalent002 extends utils.Adapter {
     receive_data(data) {
       var state = idm.add_to_packet(data);
       if (state == 3) {
-        var received_data = get_data_packet();
+        var received_data = idm.get_data_packet();
         this.log.debug('received data: ' + data.byteLength + ' - ' + received_data);
         this.setStateAsync('received_message', received_data);
+        idm.reset();
+      } else if (state > 3) {
+        idm.reset();
       }
 
     }
