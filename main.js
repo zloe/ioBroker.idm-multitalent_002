@@ -4,97 +4,13 @@
  * Created with @iobroker/create-adapter v2.0.2
  */
 
-function ord(chr) { return chr.charCodeAt(0);}
 
-function get_string(num) {
-  var e, h, z;
-  h = Math.floor(num / 100);
-  z = Math.floor((num - h * 100) / 10);
-  e = num % 10;
-  return h.toString() + z.toString() + e.toString();
-}
-
-function get_string_uint8array(data) {
-    var text = "";
-    for(var i = 0; i < data.byteLength; i++) {
-        switch(data[i]) {
-          case 1: 
-            text = text + '-START-';
-            break;
-          case 3:
-            text = text + '-CHKSUM-';
-            break;
-          case 4:
-            text = text + '-END-';
-            break;      
-          default:
-            text = text + String.fromCharCode(data[i]);
-            break;
-        }
-    }
-    return text;
-}
-
-function calc_checksum(data) {
-  var checksum = 0;
-
-
-  for (var idx = 0; idx < data.length; idx += 1) {
-    checksum = checksum ^ ord(data[idx]);
-  }
-
-  return checksum;
-}
-
-function read_val(length, data) {
-  var factor, value;
-
-  if (length === 0) {
-    return 0;
-  }
-
-  if (data.length < length) {
-    return 0;
-  }
-
-  factor = Math.pow(10, length - 1);
-  value = 0;
-
-  for (var i = 0; i < length; i += 1) {
-    value = value + factor * Number.parseInt(data[i]);
-    factor = factor / 10;
-  }
-
-  return value;
-}
-
-function create_message(data) {
-  var checksum, checksumText, i, message;
-  message = new Uint8Array(data.length + 6);
-  message[0] = 1;
-  i = 1;
-  checksum = 0;
-
-  for (var ch, idx = 0, data, len = data.length; idx < len; idx += 1) {
-    ch = data[idx];
-    message[i] = ord(ch);
-    i = i + 1;
-    checksum = checksum ^ ord(ch);
-  }
-
-  message[i] = 3;
-  checksumText = get_string(checksum);
-  message[i + 1] = ord(checksumText[0]);
-  message[i + 2] = ord(checksumText[1]);
-  message[i + 3] = ord(checksumText[2]);
-  message[i + 4] = 4;
-  return message;
-}
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const net = require('net');
+const idm = require('./lib/idm-protocol');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -117,22 +33,32 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
-    buffer = "";
+  
 
 
     write_init() {
-        var init_message = create_message('0160');
-        var chksum = calc_checksum('0160');
-        this.log.debug('init message: ' + init_message.byteLength + ' - ' + get_string_uint8array(init_message) + ' chksum:' + chksum + ' chrsumstr:' + get_string(chksum));
+        var init_message = idm.create_message('0160');
+        var chksum = idm.calc_checksum('0160');
+        this.log.debug('init message: ' + init_message.byteLength + ' - ' + idm.get_string_uint8array(init_message) + ' chksum:' + chksum + ' chrsumstr:' + idm.get_string(chksum));
         if(this.client) this.client.write(init_message);
     }
 
-    receive_hello(data) {
-        this.buffer = this.buffer + get_string_uint8array(data);
-        this.log.debug('received data: ' + data.byteLength + ' - ' + this.buffer);
-        this.setStateAsync('received_message', this.buffer);
-    }
+    receive_data(data) {
+      var state = idm.add_to_packet(data);
+      if (state == 3) {
+        var received_data = get_data_packet();
+        this.log.debug('received data: ' + data.byteLength + ' - ' + received_data);
+        this.setStateAsync('received_message', received_data);
+      }
 
+    }
+/*
+    receive_hello(data) {
+        this.buffer = this.receive_buffer + idm.get_string_uint8array(data);
+        this.log.debug('received data: ' + data.byteLength + ' - ' + this.receive_buffer);
+        this.setStateAsync('received_message', this.receive_buffer);
+    }
+*/
 
     /**
      * Is called when databases are connected and adapter received configuration.
@@ -222,7 +148,7 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.receive_hello_callback = this.receive_hello(this);
 
         this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.write_init.bind(this));
-        this.client.on('data', this.receive_hello.bind(this));
+        this.client.on('data', this.receive_data.bind(this));
 
         
     
