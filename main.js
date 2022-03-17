@@ -64,7 +64,7 @@ class IdmMultitalent002 extends utils.Adapter {
         await this.sleep(1000);
         if (this.client) this.client.write(init_message);
         await this.sleep(1000);
-        var requestMessage = idm.create_message(dataBlocks[i]);
+        var requestMessage = idm.create_message('0171' + dataBlocks[i] + '00');
         if(this.client) this.client.write(requestMessage);
         await this.sleep(1200);
       }
@@ -87,7 +87,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (protocolState === "R1") {// successful data request, we can request the real data now
           idm.reset();  
           await this.sleep(1000);
-          var message = idm.create_message("0172");
+          var message = idm.create_message('0172');
           if (this.client) this.client.write(message);
           return;
         }
