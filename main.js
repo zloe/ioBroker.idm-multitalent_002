@@ -227,6 +227,108 @@ class IdmMultitalent002 extends utils.Adapter {
         //result = await this.checkGroupAsync('admin', 'admin');
         //this.log.info('check group user admin group admin: ' + result);
 
+        await this.setObjectNotExistsAsync('Data_block_3', {
+            type: 'state',
+            common: {
+                name: 'Data_block_3',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_4', {
+            type: 'state',
+            common: {
+                name: 'Data_block_4',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_5', {
+            type: 'state',
+            common: {
+                name: 'Data_block_5',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_6', {
+            type: 'state',
+            common: {
+                name: 'Data_block_6',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_7', {
+            type: 'state',
+            common: {
+                name: 'Data_block_7',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_8', {
+            type: 'state',
+            common: {
+                name: 'Data_block_8',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_9', {
+            type: 'state',
+            common: {
+                name: 'Data_block_9',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_10', {
+            type: 'state',
+            common: {
+                name: 'Data_block_10',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync('Data_block_11', {
+            type: 'state',
+            common: {
+                name: 'Data_block_11',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+
+
+
         this.client = new net.Socket();
 
         //this.write_init_callback = this.write_init(this);
