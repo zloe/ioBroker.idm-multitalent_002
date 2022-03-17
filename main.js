@@ -88,7 +88,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
         var text = idm.interpret_data(received_data);
         if (protocolState.slice(0,4) == 'Data') {
-            this.setStateAsync(protocolState, text(slice(10)), true);
+            this.setStateAsync(protocolState, text, true);
         }
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
