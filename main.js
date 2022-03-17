@@ -51,6 +51,10 @@ class IdmMultitalent002 extends utils.Adapter {
         if(this.client) this.client.write(init_message);
     }
 
+    request_data() {
+        
+    }
+
     receive_data(data) {
       var state = idm.add_to_packet(data);
       if (state == 3) {
