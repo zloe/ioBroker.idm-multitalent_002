@@ -56,9 +56,11 @@ class IdmMultitalent002 extends utils.Adapter {
       this.log.debug('requesting data for ' + version);
       this.haveData = true;
       var dataBlocks = idm.getDataBlocks(version);
+      
       if (!dataBlocks) return;
       var init_message = idm.create_message('0160');
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
+        this.log.debug('requesting data block ' + dataBlocks[i]);
         await this.sleep(1000);
         if (this.client) this.client.write(init_message);
         await this.sleep(1000);
@@ -91,6 +93,8 @@ class IdmMultitalent002 extends utils.Adapter {
         var text = idm.interpret_data(received_data);
         if (protocolState.slice(0,4) == 'Data') {
             this.setStateAsync(protocolState, text, true);
+            idm.reset();
+            return;
         }
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
