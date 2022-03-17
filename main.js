@@ -10,10 +10,11 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const net = require('net');
-const idm = require('./lib/idm-protocol');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
+const idm = require('./lib/idm-protocol');
+idm.initialize();
 
 class IdmMultitalent002 extends utils.Adapter {
 
@@ -51,15 +52,44 @@ class IdmMultitalent002 extends utils.Adapter {
         if(this.client) this.client.write(init_message);
     }
 
-    request_data() {
-        
+    async request_data(version) {
+      var dataBlocks = idm.getDataBlocks(version);
+      if (!dataBlocks) return;
+      var init_message = idm.create_message('0160');
+      for (var i = 0; i < dataBlocks.length; i +=1 ) {
+        await this.sleep(1000);
+        if (this.client) this.client.write(init_message);
+        await this.sleep(1000);
+        var requestMessage = idm.create_message(dataBlocks[i]);
+        if(this.client) this.client.write(requestMessage);
+        await this.sleep(1200);
+      }
     }
 
-    receive_data(data) {
+
+
+    sleep(ms) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, ms);
+        });
+      }
+
+    async receive_data(data) {
       var state = idm.add_to_packet(data);
       if (state == 3) {
         var received_data = idm.get_data_packet();
+        var protocolState = idm.protocol_state(received_data);
+        if (protocolState === "R1") {// successful data request, we can request the real data now
+          idm.reset();  
+          await this.sleep(1000);
+          var message = idm.create_message("0172");
+          if (this.client) this.client.write(message);
+          return;
+        }
         var text = idm.interpret_data(received_data);
+        if (protocolState.slice(0,4) == 'Data') {
+            this.setStateAsync(protocolState, text(slice(10)), true);
+        }
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
           this.setConnected(true);
@@ -75,6 +105,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     connected = false;
+    haveData = false;
 
     setConnected(isConnected) {
      // if (this.connected !== isConnected) {
