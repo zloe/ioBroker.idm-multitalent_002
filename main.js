@@ -62,8 +62,10 @@ class IdmMultitalent002 extends utils.Adapter {
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
         this.log.debug('requesting data block ' + dataBlocks[i]);
         await this.sleep(1000);
+        this.log.debug('sending init')
         if (this.client) this.client.write(init_message);
         await this.sleep(1000);
+        this.log.debug('sending request')
         var requestMessage = idm.create_message('0171' + dataBlocks[i] + '00');
         if(this.client) this.client.write(requestMessage);
         await this.sleep(1200);
