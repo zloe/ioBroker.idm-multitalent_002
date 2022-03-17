@@ -83,6 +83,7 @@ class IdmMultitalent002 extends utils.Adapter {
       if (state == 3) {
         var received_data = idm.get_data_packet();
         var protocolState = idm.protocol_state(received_data);
+        this.log.debug('protocol state ' + protocolState);
         if (protocolState === "R1") {// successful data request, we can request the real data now
           idm.reset();  
           await this.sleep(1000);
