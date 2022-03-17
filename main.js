@@ -96,7 +96,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (text.slice(0,1) ==="V") {
           this.setConnected(true);
           this.setStateAsync('idm_control_version', text.slice(9), true);
-          if (!haveData) {
+          if (!this.haveData) {
               idm.reset();
               this.request_data(text.slice(9));
           }
