@@ -54,6 +54,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     async request_data(version) {
       this.log.debug('requesting data for ' + version);
+      this.haveData = true;
       var dataBlocks = idm.getDataBlocks(version);
       if (!dataBlocks) return;
       var init_message = idm.create_message('0160');
