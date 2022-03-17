@@ -53,6 +53,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     async request_data(version) {
+      this.log.debug('requesting data for ' + version);
       var dataBlocks = idm.getDataBlocks(version);
       if (!dataBlocks) return;
       var init_message = idm.create_message('0160');
@@ -94,6 +95,10 @@ class IdmMultitalent002 extends utils.Adapter {
         if (text.slice(0,1) ==="V") {
           this.setConnected(true);
           this.setStateAsync('idm_control_version', text.slice(9), true);
+          if (!haveData) {
+              idm.reset();
+              this.request_data(text.slice(9));
+          }
         } else {
           this.setStateAsync('received_message', text);
         }
