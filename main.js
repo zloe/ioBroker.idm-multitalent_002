@@ -90,8 +90,8 @@ class IdmMultitalent002 extends utils.Adapter {
       var state = idm.add_to_packet(data);
       this.log.debug('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
       if (state == 3) {
-        idm.reset();
         var received_data = idm.get_data_packet();
+        idm.reset();
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
         if (protocolState === "R1") {// successful data request, we can request the real data now  
@@ -99,7 +99,7 @@ class IdmMultitalent002 extends utils.Adapter {
           return;
         }
         var text = idm.interpret_data(received_data);
-        this.log.debug('received data: ' + data.byteLength + ' - ' + text);
+        this.log.debug('received data: ' + received_data.length + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') {
             this.setStateAsync(protocolState, text, true);
             return;
