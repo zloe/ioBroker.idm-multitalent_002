@@ -356,6 +356,7 @@ class IdmMultitalent002 extends utils.Adapter {
      */
     onUnload(callback) {
         try {
+            this.setConnected(false);
             // Here you must clear all timeouts or intervals that may still be active
             // clearTimeout(timeout1);
             // clearTimeout(timeout2);
