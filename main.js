@@ -90,16 +90,17 @@ class IdmMultitalent002 extends utils.Adapter {
           idm.reset();  
           await this.sleep(1000);
           var message = idm.create_message('0172');
+          this.log.debug('requesting data (0172)');
           if (this.client) this.client.write(message);
           return;
         }
         var text = idm.interpret_data(received_data);
+        this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') {
             this.setStateAsync(protocolState, text, true);
             idm.reset();
             return;
         }
-        this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (text.slice(0,1) ==="V") {
           this.setConnected(true);
           this.setStateAsync('idm_control_version', text.slice(9), true);
