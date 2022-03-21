@@ -73,9 +73,8 @@ class IdmMultitalent002 extends utils.Adapter {
       var dataBlocks = idm.getDataBlocks(version);
       
       if (!dataBlocks) return;
-      var init_message = idm.create_message('0160');
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3200);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 5000);
       }
 
     }
@@ -89,6 +88,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     receive_data(data) {
       var state = idm.add_to_packet(data);
+      this.log.debug('************* receiving **************** state ' + state);
       if (state == 3) {
         var received_data = idm.get_data_packet();
         var protocolState = idm.protocol_state(received_data);
