@@ -88,13 +88,13 @@ class IdmMultitalent002 extends utils.Adapter {
 
     receive_data(data) {
       var state = idm.add_to_packet(data);
-      this.log.debug('************* receiving **************** state ' + state);
+      this.log.debug('************* receiving **************** state ' + state + ' data=' + data.toString());
       if (state == 3) {
+        idm.reset();
         var received_data = idm.get_data_packet();
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
-        if (protocolState === "R1") {// successful data request, we can request the real data now
-          idm.reset();  
+        if (protocolState === "R1") {// successful data request, we can request the real data now  
           setTimeout(this.request_data_content.bind(this), 1000);
           return;
         }
@@ -102,20 +102,17 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('received data: ' + data.byteLength + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') {
             this.setStateAsync(protocolState, text, true);
-            idm.reset();
             return;
         }
         if (text.slice(0,1) ==="V") {
           this.setConnected(true);
           this.setStateAsync('idm_control_version', text.slice(9), true);
           if (!this.haveData) {
-              idm.reset();
               this.request_data(text.slice(9));
           }
         } else {
           this.setStateAsync('received_message', text);
         }
-        idm.reset();
       } else if (state > 3) {
         idm.reset();
       }
