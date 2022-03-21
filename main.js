@@ -75,7 +75,7 @@ class IdmMultitalent002 extends utils.Adapter {
       if (!dataBlocks) return;
       var init_message = idm.create_message('0160');
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * 3200);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3200);
       }
 
     }
