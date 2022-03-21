@@ -52,7 +52,22 @@ class IdmMultitalent002 extends utils.Adapter {
         if(this.client) this.client.write(init_message);
     }
 
-    async request_data(version) {
+
+    request_data_block(dataBlock) {
+        this.log.debug('requesting data block ' + dataBlock);
+        setTimeout(this.write_init.bind(this), 1000);
+        setTimeout(this.write_data_block_request.bind(this, dataBlock), 2000);
+        
+    }
+
+    write_data_block_request(dataBlock) {
+        this.log.debug('sending request');
+        var requestMessage = idm.create_message('0171' + dataBlock + '00');
+        if (this.client)
+            this.client.write(requestMessage);
+    }
+
+    request_data(version) {
       this.log.debug('requesting data for ' + version);
       this.haveData = true;
       var dataBlocks = idm.getDataBlocks(version);
@@ -60,27 +75,19 @@ class IdmMultitalent002 extends utils.Adapter {
       if (!dataBlocks) return;
       var init_message = idm.create_message('0160');
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-        this.log.debug('requesting data block ' + dataBlocks[i]);
-        await this.sleep(1000);
-        this.log.debug('sending init')
-        if (this.client) this.client.write(init_message);
-        await this.sleep(1000);
-        this.log.debug('sending request')
-        var requestMessage = idm.create_message('0171' + dataBlocks[i] + '00');
-        if(this.client) this.client.write(requestMessage);
-        await this.sleep(1200);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * 3200);
       }
+
     }
 
 
+    request_data_content() {
+        var message = idm.create_message('0172');
+        this.log.debug('requesting data (0172)');
+        if (this.client) this.client.write(message);
+    }
 
-    sleep(ms) {
-        return new Promise((resolve) => {
-          setTimeout(resolve, ms);
-        });
-      }
-
-    async receive_data(data) {
+    receive_data(data) {
       var state = idm.add_to_packet(data);
       if (state == 3) {
         var received_data = idm.get_data_packet();
@@ -88,10 +95,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('protocol state ' + protocolState);
         if (protocolState === "R1") {// successful data request, we can request the real data now
           idm.reset();  
-          await this.sleep(1000);
-          var message = idm.create_message('0172');
-          this.log.debug('requesting data (0172)');
-          if (this.client) this.client.write(message);
+          setTimeout(this.request_data_content.bind(this), 1000);
           return;
         }
         var text = idm.interpret_data(received_data);
