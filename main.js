@@ -76,7 +76,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     request_data_block(dataBlock) {
         this.log.debug('requesting data block ' + dataBlock);
-        this.send_init.bind(this); // directly send, no delay needed
+        this.send_init(); // directly send, no delay needed
         setTimeout(this.send_data_block_request.bind(this, dataBlock), 1250);
         
     }
