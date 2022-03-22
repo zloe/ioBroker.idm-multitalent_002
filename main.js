@@ -27,6 +27,7 @@ class IdmMultitalent002 extends utils.Adapter {
         });
         //this.log.info('created');
         idm.initialize();
+        this.connectedToIDM = false;
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         // this.on('objectChange', this.onObjectChange.bind(this));
@@ -123,9 +124,11 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
         if (text.slice(0,1) ==="V") {
-          this.version = text.slice(9);
-          this.setStateAsync('idm_control_version', this.version, true);
-          this.setConnected(true);
+            if (!this.connectedToIDM) {
+                this.version = text.slice(9);
+                this.setStateAsync('idm_control_version', this.version, true);
+                this.setConnected(true);
+            }
         } else {
           this.log.debug('not sure what to do');
         }
@@ -135,30 +138,30 @@ class IdmMultitalent002 extends utils.Adapter {
 
     }
 
-    connected = false;
+    connectedToIDM;
 
     setConnected(isConnected) {
-          this.log.info('setConnected, current state ' + this.connected + '  new state ' + isConnected);
-     // if (this.connected !== isConnected) {
-          this.connected = isConnected;
-          this.log.debug('setting connected state to: ' + this.connected);
-          this.setState('info.connection', this.connected, true, (err) => {
+      this.log.info('setConnected, current state ' + this.connectedToIDM + '  new state ' + isConnected);
+      if (this.connectedToIDM !== isConnected) {
+          this.connectedToIDM = isConnected;
+          this.log.debug('setting connected state to: ' + this.connectedToIDM);
+          this.setState('info.connection', this.connectedToIDM, true, (err) => {
               // analyse if the state could be set (because of permissions)
               if (err && this.log) this.log.error('Can not update connected state: ' + err);
-              else if (this.log) this.log.debug('connected set to ' + this.connected);
+              else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
           });
-          if(this.connected && this.version && !this.cyclicReader) {
+          if(this.connectedToIDM && this.version && !this.cyclicReader) {
               this.log.debug('creating cyclic timer to request data every ' + this.config.pollinterval + ' seconds');
               this.cyclicReader = setInterval(this.request_data.bind(this), this.config.pollinterval * 1000, this.version);
               this.log.debug('timer id ' + this.cyclicReader);
           }
-          if(!this.connected && this.cyclicReader) {
+          if(!this.connectedToIDM && this.cyclicReader) {
               this.log.debug('clear cyclic timer');
               clearInterval(this.cyclicReader);
               this.cyclicReader = undefined;
           }
-     // }
-  }
+      }
+    }
     /**
      * Is called when databases are connected and adapter received configuration.
      */
