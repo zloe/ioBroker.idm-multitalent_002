@@ -45,7 +45,7 @@ class IdmMultitalent002 extends utils.Adapter {
     async CreateStates(states) {
         this.log.debug('creating states');
         await states.forEach(async element => {
-            var stateName = 'Data_block_' + Number.parseInt(element);
+            var stateName = 'Data_block_' + idm.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
                 type: 'state',
                 common: {
