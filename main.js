@@ -76,8 +76,8 @@ class IdmMultitalent002 extends utils.Adapter {
 
     request_data_block(dataBlock) {
         this.log.debug('requesting data block ' + dataBlock);
-        setTimeout(this.send_init.bind(this), 900);
-        setTimeout(this.send_data_block_request.bind(this, dataBlock), 1800);
+        this.send_init.bind(this);
+        setTimeout(this.send_data_block_request.bind(this, dataBlock), 1250);
         
     }
 
@@ -94,7 +94,7 @@ class IdmMultitalent002 extends utils.Adapter {
           return;
       }
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3110);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3750);
       }
 
     }
@@ -114,7 +114,7 @@ class IdmMultitalent002 extends utils.Adapter {
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
         if (protocolState === "R1") {// successful data request, we can request the real data now  
-          setTimeout(this.request_data_content.bind(this), 900);
+          setTimeout(this.request_data_content.bind(this), 1250);
           return;
         }
         var text = idm.interpret_data(received_data);
