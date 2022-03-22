@@ -34,7 +34,10 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
-  
+    cyclicReader;
+    statesCreated = false;
+    version;
+
     request_block(block) {
       var message = idm.create_message('0160');
       if (this.client) {
@@ -48,15 +51,15 @@ class IdmMultitalent002 extends utils.Adapter {
     write_init() {
         var init_message = idm.create_message('0160');
         var chksum = idm.calc_checksum('0160');
-        this.log.debug('init message: ' + init_message.byteLength + ' - ' + idm.get_string_uint8array(init_message) + ' chksum:' + chksum + ' chrsumstr:' + idm.get_string(chksum));
+        this.log.silly('init message: ' + init_message.byteLength + ' - ' + idm.get_string_uint8array(init_message) + ' chksum:' + chksum + ' chrsumstr:' + idm.get_string(chksum));
         if(this.client) this.client.write(init_message);
     }
 
 
     request_data_block(dataBlock) {
         this.log.debug('requesting data block ' + dataBlock);
-        setTimeout(this.write_init.bind(this), 1000);
-        setTimeout(this.write_data_block_request.bind(this, dataBlock), 2000);
+        setTimeout(this.write_init.bind(this), 900);
+        setTimeout(this.write_data_block_request.bind(this, dataBlock), 1800);
         
     }
 
@@ -71,10 +74,13 @@ class IdmMultitalent002 extends utils.Adapter {
       this.log.debug('requesting data for ' + version);
       this.haveData = true;
       var dataBlocks = idm.getDataBlocks(version);
-      
+      if (!this.statesCreated) {
+          this.CreateStates(dataBlocks);
+      }
+
       if (!dataBlocks) return;
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 5000);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3110);
       }
 
     }
@@ -105,11 +111,9 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
         if (text.slice(0,1) ==="V") {
+          this.version = text.slice(9);
+          this.setStateAsync('idm_control_version', this.version, true);
           this.setConnected(true);
-          this.setStateAsync('idm_control_version', text.slice(9), true);
-          if (!this.haveData) {
-              this.request_data(text.slice(9));
-          }
         } else {
           this.setStateAsync('received_message', text);
         }
@@ -120,7 +124,6 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     connected = false;
-    haveData = false;
 
     setConnected(isConnected) {
      // if (this.connected !== isConnected) {
@@ -131,6 +134,15 @@ class IdmMultitalent002 extends utils.Adapter {
               if (err && this.log) this.log.error('Can not update connected state: ' + err);
               else if (this.log) this.log.debug('connected set to ' + this.connected);
           });
+          if(this.connected && this.version && !this.cyclicReader) {
+              this.log.debug('creating cyclic timer to request data every ' + this.config.pollinterval + ' seconds');
+              this.cyclicReader = setInterval(this.request_data.bind(this), this.config.pollinterval * 1000, this.version);
+          }
+          if(!this.connected && this.cyclicReader) {
+              this.log.debug('clear cyclic timer');
+              clearInterval(this.cyclicReader);
+              this.cyclicReader = undefined;
+          }
      // }
   }
     /**
@@ -236,118 +248,37 @@ class IdmMultitalent002 extends utils.Adapter {
         //result = await this.checkGroupAsync('admin', 'admin');
         //this.log.info('check group user admin group admin: ' + result);
 
-        await this.setObjectNotExistsAsync('Data_block_3', {
-            type: 'state',
-            common: {
-                name: 'Data_block_3',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_4', {
-            type: 'state',
-            common: {
-                name: 'Data_block_4',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_5', {
-            type: 'state',
-            common: {
-                name: 'Data_block_5',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_6', {
-            type: 'state',
-            common: {
-                name: 'Data_block_6',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_7', {
-            type: 'state',
-            common: {
-                name: 'Data_block_7',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_8', {
-            type: 'state',
-            common: {
-                name: 'Data_block_8',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_9', {
-            type: 'state',
-            common: {
-                name: 'Data_block_9',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_10', {
-            type: 'state',
-            common: {
-                name: 'Data_block_10',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync('Data_block_11', {
-            type: 'state',
-            common: {
-                name: 'Data_block_11',
-                type: 'string',
-                role: 'value',
-                read: true,
-                write: false,
-            },
-            native: {},
-        });
+      
+        this.connectAndRead();
+       
+    
+    }
 
+    async CreateStates(states) {
+        this.log.debug('creating states');
+        await states.forEach(async element => {
+            var stateName = 'Data_block_' + Number.parseInt(element);
+            await this.setObjectNotExistsAsync(stateName, {
+                type: 'state',
+                common: {
+                    name: stateName,
+                    type: 'string',
+                    role: 'value',
+                    read: true,
+                    write: false,
+                },
+                native: {},
+            });            
+        });
+        this.statesCreated = true;
+        this.log.debug('states created');
+    }
 
-
+    connectAndRead() {
         this.client = new net.Socket();
-
-        //this.write_init_callback = this.write_init(this);
-        //this.receive_hello_callback = this.receive_hello(this);
 
         this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.write_init.bind(this));
         this.client.on('data', this.receive_data.bind(this));
-
-        
-    
     }
 
     /**
@@ -357,6 +288,10 @@ class IdmMultitalent002 extends utils.Adapter {
     onUnload(callback) {
         try {
             this.setConnected(false);
+            if (this.cyclicReader) {
+                clearInterval(this.cyclicReader);
+                this.cyclicReader = undefined;
+            }
             // Here you must clear all timeouts or intervals that may still be active
             // clearTimeout(timeout1);
             // clearTimeout(timeout2);
