@@ -83,7 +83,6 @@
         ]
     },
     "native": {
-        "serialport": null,
         "tcpserverip": "192.168.2.42",
         "tcpserverport": 4001,
         "pollinterval": 60,
