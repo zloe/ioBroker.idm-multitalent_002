@@ -76,7 +76,7 @@ class IdmMultitalent002 extends utils.Adapter {
         const day = dateNow.getDate();
         const month = dateNow.getMonth() + 1;
         const year = dateNow.getFullYear();
-        this.sendQueue.enqueue(idm.create_set_value_message(102,second, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
         this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
         this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
         this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
@@ -90,7 +90,7 @@ class IdmMultitalent002 extends utils.Adapter {
         let count = 0;
         while(count++ < 10 && this.sendQueue.length > 0) {
             let item = this.sendQueue.dequeue();
-            this.log.info('setting values: ' + idm.get_protocol_string(item.toString()));
+            this.log.info('setting values: ' + idm.get_protocol_string(item));
         }
 
         // now request the data
