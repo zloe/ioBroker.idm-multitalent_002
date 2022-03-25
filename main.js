@@ -8,11 +8,14 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
+const { time } = require('console');
 const net = require('net');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
 const idm = require('./lib/idm-protocol');
+const Queue = require('./lib/queue');
+const queue = require('./lib/queue');
 
 
 class IdmMultitalent002 extends utils.Adapter {
@@ -36,12 +39,15 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
 
-
-    cyclicReader;
     statesCreated = false;
+    cyclicDataHandler;
+    timeUpdater;
     version;
+    connectedToIDM;
+    sendQueue = new Queue();
 
 
+    // create the states
     async CreateStates(states) {
         this.log.debug('creating states');
         await states.forEach(async element => {
@@ -62,58 +68,97 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('states created');
     }
 
+    updateTime() {
+        const dateNow = new Date();
+        const second = dateNow.getSeconds();
+        const minute = dateNow.getMinutes();
+        const hour = dateNow.getHours();
+        const day = dateNow.getDate();
+        const month = dateNow.getMonth() + 1;
+        const year = dateNow.getFullYear();
+        this.sendQueue.enqueue(idm.create_set_value_message(102,second, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
+        this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));
+    }
+
+
+    handle_communication() {
+        // first send from the sendQueue, but not more than 10 items at once
+        let count = 0;
+        while(count++ < 10 && this.sendQueue.length > 0) {
+            let item = this.sendQueue.dequeue();
+            this.log.info('setting values: ' + idm.get_protocol_string(item.toString()));
+        }
+
+        // now request the data
+        this.request_data();
+    }
+
+    // send the init message to the control
     send_init() {
         var init_message = idm.create_init_message();
         this.log.silly('init message: ' + idm.get_protocol_string(init_message));
         if(this.client) this.client.write(init_message);
     }
 
+    // send a data block request to the control
     send_data_block_request(dataBlock) {
         this.log.debug('sending request');
         var requestMessage = idm.create_request_data_block_message(dataBlock);
         if (this.client) this.client.write(requestMessage);
     }
 
+    // request a particular data block
     request_data_block(dataBlock) {
         this.log.debug('requesting data block ' + dataBlock);
-        this.send_init(); // directly send, no delay needed
+        this.send_init(); // directly send init, no delay needed
+        // assume that the answer is sent within one second
         setTimeout(this.send_data_block_request.bind(this, dataBlock), 1250);
         
     }
 
-    request_data(version) {
-      this.log.debug('requesting data for ' + version);
+    // request all data blocks for a particular version in a loop, ... with a pause inbetween 
+    request_data() {
+      this.log.debug('requesting data for ' + this.version);
       this.haveData = true;
-      var dataBlocks = idm.getDataBlocks(version);
-      if (!this.statesCreated) {
-          this.CreateStates(dataBlocks);
-      }
+      var dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
 
       if (!dataBlocks) {
-          this.log.debug('no data blocks defined, no data will be requested'); 
-          return;
+        this.log.debug('no data blocks defined, no data will be requested'); 
+        return;
+    }
+
+      if (!this.statesCreated) {
+          this.CreateStates(dataBlocks); // create the states according to the connected version
       }
+
+      // request loop for all known data blocks
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
           setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3750);
       }
 
     }
 
+    // send a data content request to the control
     request_data_content() {
         var message = idm.create_request_data_content_message();
         this.log.debug('requesting data content');
         if (this.client) this.client.write(message);
     }
 
+    // callback for data received from control
     receive_data(data) {
       var state = idm.add_to_packet(data);
-      this.log.debug('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
-      if (state == 3) {
+      this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
+      if (state == 3) { // data packed received completely, let's check what we've got
         var received_data = idm.get_data_packet();
-        idm.reset();
+        idm.reset();   // reset the packet reader to be ready for the next packet
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
-        if (protocolState === "R1") {// successful data request, we can request the real data now  
+        if (protocolState === "R1") {// successful data request, we can request the real data now, after a short pause ofc.  
           setTimeout(this.request_data_content.bind(this), 1250);
           return;
         }
@@ -123,7 +168,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setStateAsync(protocolState, text, true);
             return;
         }
-        if (text.slice(0,1) ==="V") {
+        if (text.slice(0,1) ==="V") { // received answer to init message, if the first one after connection set the state
             if (!this.connectedToIDM) {
                 this.version = text.slice(9);
                 this.setStateAsync('idm_control_version', this.version, true);
@@ -138,8 +183,6 @@ class IdmMultitalent002 extends utils.Adapter {
 
     }
 
-    connectedToIDM;
-
     setConnected(isConnected) {
       this.log.info('setConnected, current state ' + this.connectedToIDM + '  new state ' + isConnected);
       if (this.connectedToIDM !== isConnected) {
@@ -150,15 +193,20 @@ class IdmMultitalent002 extends utils.Adapter {
               if (err && this.log) this.log.error('Can not update connected state: ' + err);
               else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
           });
-          if(this.connectedToIDM && this.version && !this.cyclicReader) {
+          if(this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
               this.log.debug('creating cyclic timer to request data every ' + this.config.pollinterval + ' seconds');
-              this.cyclicReader = setInterval(this.request_data.bind(this), this.config.pollinterval * 1000, this.version);
-              this.log.debug('timer id ' + this.cyclicReader);
+              this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), this.config.pollinterval * 1000);
+              if (this.config.autoupdatetime) {
+                  this.timeUpdater = setInterval(this.updateTime.bind(this), 47000);
+              }
+              this.log.debug('timer id ' + this.cyclicDataHandler);
           }
-          if(!this.connectedToIDM && this.cyclicReader) {
+          if(!this.connectedToIDM && this.cyclicDataHandler) { // disconnectd, clear interval
               this.log.debug('clear cyclic timer');
-              clearInterval(this.cyclicReader);
-              this.cyclicReader = undefined;
+              clearInterval(this.cyclicDataHandler);
+              this.cyclicDataHandler = undefined;
+              clearInterval(this.timeUpdater);
+              this.timeUpdater = undefined;
           }
       }
     }
@@ -220,6 +268,7 @@ class IdmMultitalent002 extends utils.Adapter {
     
     }
 
+    // at start connect and send the init message to get the version number of the Multitalent control
     connectAndRead() {
         this.client = new net.Socket();
 
@@ -234,9 +283,13 @@ class IdmMultitalent002 extends utils.Adapter {
     onUnload(callback) {
         try {
             this.setConnected(false);
-            if (this.cyclicReader) {
-                clearInterval(this.cyclicReader);
-                this.cyclicReader = undefined;
+            if (this.cyclicDataHandler) {
+                clearInterval(this.cyclicDataHandler);
+                this.cyclicDataHandler = undefined;
+            }
+            if (this.timeUpdater) {
+                clearInterval(this.timeUpdater);
+                this.timeUpdater = undefined;
             }
             // Here you must clear all timeouts or intervals that may still be active
             // clearTimeout(timeout1);
@@ -260,12 +313,12 @@ class IdmMultitalent002 extends utils.Adapter {
     //  */
     // onObjectChange(id, obj) {
     //     if (obj) {
-    //         // The object was changed
+            // The object was changed
     //         this.log.info(`object ${id} changed: ${JSON.stringify(obj)}`);
     //     } else {
-    //         // The object was deleted
+            // The object was deleted
     //         this.log.info(`object ${id} deleted`);
-    //     }
+    //    }
     // }
 
     /**
