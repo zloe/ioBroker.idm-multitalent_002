@@ -10,6 +10,7 @@
 const utils = require('@iobroker/adapter-core');
 const { time } = require('console');
 const net = require('net');
+const { isFunction } = require('util');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -69,6 +70,10 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     updateTime() {
+        this.sendQueue.enqueue(this.create_update_time_messages.bind(this));
+    }
+
+    create_update_time_messages() {
         const dateNow = new Date();
         const second = dateNow.getSeconds();
         const minute = dateNow.getMinutes();
@@ -81,15 +86,18 @@ class IdmMultitalent002 extends utils.Adapter {
         this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
         this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
         this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));
+        this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
     }
-
 
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
         let count = 0;
         while(count++ < 10 && this.sendQueue.length > 0) {
             let item = this.sendQueue.dequeue();
+            if (isFunction(item)) {
+                item();
+                continue;
+            }
             this.log.info('setting values: ' + idm.get_protocol_string(item));
         }
 
