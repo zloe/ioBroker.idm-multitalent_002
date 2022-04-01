@@ -42,10 +42,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
     statesCreated = false;
     cyclicDataHandler;
-    timeUpdater;
+    timeUpdater; // interval for updating the time on the iDM heatpump
     version;
     connectedToIDM;
     sendQueue = new Queue();
+    maxWrites = 10;  // max values to be set in one "loop"
 
 
     // create the states
@@ -73,33 +74,45 @@ class IdmMultitalent002 extends utils.Adapter {
         this.sendQueue.enqueue(this.create_update_time_messages.bind(this));
     }
 
-    create_update_time_messages() {
-        const dateNow = new Date();
-        const second = dateNow.getSeconds();
-        const minute = dateNow.getMinutes();
-        const hour = dateNow.getHours();
-        const day = dateNow.getDate();
-        const month = dateNow.getMonth() + 1;
-        const year = dateNow.getFullYear();
-        this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
-        this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
+    create_update_time_messages(action) {
+        if (action) {
+            const dateNow = new Date();
+            const second = dateNow.getSeconds();
+            const minute = dateNow.getMinutes();
+            const hour = dateNow.getHours();
+            const day = dateNow.getDate();
+            const month = dateNow.getMonth() + 1;
+            const year = dateNow.getFullYear();
+            this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
+            this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
+            this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
+            this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
+            this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
+            this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
+        }
+        else return 6;
     }
+
 
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
         let count = 0;
-        while(count++ < 10 && this.sendQueue.length > 0) {
-            let item = this.sendQueue.dequeue();
+        while(count++ < this.maxWrites && this.sendQueue.hasItems) {
+            let item = this.sendQueue.peek(); 
             if (isFunction(item)) {
-                item();
-                continue;
+                const numItems = item(false); // get the number of items to be generated 
+                if (count + numItems <= this.maxWrites) {
+                    count --;
+                    item = this.sendQueue.dequeue();
+                    item(true); // call the function that creates the messages to be sent
+                    continue;
+                } else {
+                    break; // not enough slots free to be sent at once, so skip it this time
+                }
             }
             this.log.info('setting values: ' + idm.get_protocol_string(item));
         }
+
 
         // now request the data
         this.request_data();
