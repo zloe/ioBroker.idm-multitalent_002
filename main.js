@@ -96,6 +96,9 @@ class IdmMultitalent002 extends utils.Adapter {
         else return 6;
     }
 
+    write(message) {
+        if (this.client) this.client.write(message);
+    }
 
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
@@ -119,7 +122,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 message[i] = item[i];
             }
             this.log.info('setting values: ' + idm.get_protocol_string(message));
-            if (this.client) setTimeout(this.client.write.bind(message), count * 1200);
+            if (this.client) setTimeout(this.write.bind(this, message), count * 1200);
         }
 
 
