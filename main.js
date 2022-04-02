@@ -27,9 +27,10 @@ class IdmMultitalent002 extends utils.Adapter {
     constructor(options) {
         super({
             ...options,
-            name: 'idm-multitalent_002',
+            name: 'idm-multitalent_002'
         });
         //this.log.info('created');
+        this.statesCreated = false;
         idm.initialize();
         this.connectedToIDM = false;
         this.on('ready', this.onReady.bind(this));
@@ -40,7 +41,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
 
-    statesCreated = false;
+    statesCreated;
     cyclicDataHandler;
     timeUpdater; // interval for updating the time on the iDM heatpump
     version;
@@ -96,7 +97,11 @@ class IdmMultitalent002 extends utils.Adapter {
         else return 6;
     }
 
-    write(message) {
+    write(item) {
+        var message = new Uint8Array(item.length);
+        for(let i = 0; i < item.length; i++) {
+            message[i] = item[i];
+        }
         if (this.client) this.client.write(message);
     }
 
@@ -117,12 +122,8 @@ class IdmMultitalent002 extends utils.Adapter {
                 }
             }
             item = this.sendQueue.dequeue();
-            let message = new Uint8Array(item.length);
-            for(let i = 0; i < item.length; i++) {
-                message[i] = item[i];
-            }
-            this.log.info('setting values: ' + idm.get_protocol_string(message));
-            if (this.client) setTimeout(this.write.bind(this, message), count * 1200);
+            this.log.info('setting values: ' + idm.get_protocol_string(item));
+            if (this.client) setTimeout(this.write.bind(this, item), count * 1200);
         }
 
 
