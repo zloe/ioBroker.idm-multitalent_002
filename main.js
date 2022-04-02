@@ -102,7 +102,10 @@ class IdmMultitalent002 extends utils.Adapter {
         for(let i = 0; i < item.length; i++) {
             message[i] = item[i];
         }
-        if (this.client) this.client.write(message);
+        if (this.client) {
+           // this.client.write(message);
+           this.log.info('would send: ' + idm.get_protocol_string(message));
+        }
     }
 
     handle_communication() {
