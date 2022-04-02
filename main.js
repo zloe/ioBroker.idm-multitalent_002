@@ -183,7 +183,7 @@ class IdmMultitalent002 extends utils.Adapter {
           setTimeout(this.request_data_content.bind(this), 1250);
           return;
         }
-        var text = idm.interpret_data(received_data);
+        var text = idm.interpret_data(this.version, received_data);
         this.log.debug('received data: ' + received_data.length + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') { // received a data block, setting the according state
             this.setStateAsync(protocolState, text, true);
