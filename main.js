@@ -114,8 +114,12 @@ class IdmMultitalent002 extends utils.Adapter {
                 }
             }
             item = this.sendQueue.dequeue();
-            this.log.info('setting values: ' + idm.get_protocol_string(item));
-            if (this.client) setTimeout(this.client.write.bind(item), count * 1200);
+            let message = new Uint8Array(item.length);
+            for(let i = 0; i < item.length; i++) {
+                message[i] = item[i];
+            }
+            this.log.info('setting values: ' + idm.get_protocol_string(message));
+            if (this.client) setTimeout(this.client.write.bind(message), count * 1200);
         }
 
 
