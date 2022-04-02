@@ -110,6 +110,7 @@ class IdmMultitalent002 extends utils.Adapter {
                     break; // not enough slots free to be sent at once, so skip it this time
                 }
             }
+            item = this.sendQueue.dequeue();
             this.log.info('setting values: ' + idm.get_protocol_string(item));
         }
 
