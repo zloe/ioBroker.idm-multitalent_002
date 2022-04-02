@@ -131,7 +131,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
 
         // now request the data
-        this.request_data();
+        setTimeout(this.request_data.bind(this), count * 1200);
     }
 
     // send the init message to the control
