@@ -76,8 +76,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
     create_update_time_messages(action) {
         if (action) {
-            const dateNow = new Date();
-            const second = dateNow.getSeconds();
+            let dateNow = new Date();
+            let waitTime = 0;
+            dateNow.setTime(dateNow.getTime() + 1000); // add 1 second as it takes some time to transmit the change
+            let second = dateNow.getSeconds();
+            if (second > 40) second = 40;
             const minute = dateNow.getMinutes();
             const hour = dateNow.getHours();
             const day = dateNow.getDate();
@@ -112,6 +115,7 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             item = this.sendQueue.dequeue();
             this.log.info('setting values: ' + idm.get_protocol_string(item));
+            if (this.client) setTimeout(this.client.write.bind(item), count * 1200);
         }
 
 
