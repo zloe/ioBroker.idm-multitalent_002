@@ -213,6 +213,8 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         } else {
           this.log.debug('not sure what to do');
+          this.log.info('unknown protocol state ' + protocolState + ' data=' + idm.get_protocol_string(data));
+
         }
       } else if (state > 3) {
         idm.reset();
