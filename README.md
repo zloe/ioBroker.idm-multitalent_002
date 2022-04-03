@@ -15,7 +15,11 @@
 Read and write values of a iDM heatpump with multitalent.002 control.
 
 ## Developer manual
-Development just started, nothing working around so far.
+Development just started, most features missing.
+Basic readout of values is working.
+Missing documentation about the data structures/blocks.
+
+Attention, still experimental, ... the adapter sets values of the heatpump, so do not install unless you know what you are doing and contacted the author! 
 
 ### Getting started
 
