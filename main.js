@@ -198,9 +198,12 @@ class IdmMultitalent002 extends utils.Adapter {
         idm.reset();   // reset the packet reader to be ready for the next packet
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
-        if (protocolState === "R1") {// successful data request, we can request the real data now, after a short pause ofc.  
+        if (protocolState === 'R1') {// successful data request, we can request the real data now, after a short pause ofc.  
           setTimeout(this.request_data_content.bind(this), 1250);
           return;
+        }
+        if (protocolState === 'S1') {
+            return;
         }
         var text = idm.interpret_data(this.version, received_data);
         this.log.debug('received data: ' + received_data.length + ' - ' + text);
@@ -216,7 +219,7 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         } else {
           this.log.debug('not sure what to do');
-          this.log.info('unknown protocol state ' + protocolState + ' data=' + idm.get_protocol_string(data));
+          this.log.info('unknown protocol state ' + protocolState + ' data=' + idm.get_protocol_string(received_data));
 
         }
       } else if (state > 3) {
