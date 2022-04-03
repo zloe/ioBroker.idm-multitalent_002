@@ -87,6 +87,7 @@ class IdmMultitalent002 extends utils.Adapter {
             const day = dateNow.getDate();
             const month = dateNow.getMonth() + 1;
             const year = dateNow.getFullYear();
+            this.sendQueue.enqueue(idm.create_set_value_message(17,second/2,2));
             this.sendQueue.enqueue(idm.create_set_value_message(102, second, 2));
             this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 2));
             this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 2));
