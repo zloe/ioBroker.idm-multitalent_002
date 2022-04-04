@@ -70,10 +70,17 @@ class IdmMultitalent002 extends utils.Adapter {
 
 
     // create the states
-    async CreateStates(states) {
+    async CreateStates() {
         this.log.debug('creating states');
+        var dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+
+        if (!dataBlocks) {
+          this.log.debug('no data blocks defined, no states will be created'); 
+          return;
+        }
+  
         idm.mapStatenames(this.version, this.createIDMState.bind(this));
-        await states.forEach(async element => {
+        await dataBlocks.forEach(async element => {
             var stateName = 'Data_block_' + idm.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
                 type: 'state',
@@ -189,10 +196,10 @@ class IdmMultitalent002 extends utils.Adapter {
       if (!dataBlocks) {
         this.log.debug('no data blocks defined, no data will be requested'); 
         return;
-    }
+      }
 
       if (!this.statesCreated) {
-          this.CreateStates(dataBlocks); // create the states according to the connected version
+          this.CreateStates(); // create the states according to the connected version
       }
 
       // request loop for all known data blocks
@@ -236,6 +243,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.version = text.slice(9);
                 this.setStateAsync('idm_control_version', this.version, true);
                 this.setConnected(true);
+                this.CreateStates();
             }
         } else {
           this.log.debug('not sure what to do');
