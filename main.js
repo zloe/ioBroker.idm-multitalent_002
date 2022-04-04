@@ -49,10 +49,30 @@ class IdmMultitalent002 extends utils.Adapter {
     sendQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
 
+    setIDMState(stateName, value) {
+        this.setStateAsync(stateName, value, true);
+    }
+
+    async createIDMState(stateName, writeable = false) {
+        await this.setObjectNotExistsAsync(stateName, {
+            type: 'state',
+            common: {
+                name: stateName,
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: writeable,
+            },
+            native: {},
+        });            
+    }
+
+
 
     // create the states
     async CreateStates(states) {
         this.log.debug('creating states');
+        idm.mapStatenames(this.version, this.createIDMState.bind(this));
         await states.forEach(async element => {
             var stateName = 'Data_block_' + idm.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
@@ -82,20 +102,20 @@ class IdmMultitalent002 extends utils.Adapter {
             dateNow.setTime(dateNow.getTime() + 1000); // add 1 second as it takes some time to transmit the change
             let second = dateNow.getSeconds();
             if (second > 40) second = 40;
-            const minute = dateNow.getMinutes();
-            const hour = dateNow.getHours();
-            const day = dateNow.getDate();
-            const month = dateNow.getMonth() + 1;
-            const year = dateNow.getFullYear();
+            //const minute = dateNow.getMinutes();
+            //const hour = dateNow.getHours();
+            //const day = dateNow.getDate();
+            //const month = dateNow.getMonth() + 1;
+            //const year = dateNow.getFullYear();
             this.sendQueue.enqueue(idm.create_set_value_message(17,second/2,2));
-            this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
-            this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
-            this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
-            this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
-            this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
-            this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
+            //this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
+            //this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
+            //this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
+            //this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
+            //this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
+            //this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
         }
-        else return 6;
+        else return 1;
     }
 
     write(item) {
@@ -205,7 +225,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (protocolState === 'S1') {
             return;
         }
-        var text = idm.interpret_data(this.version, received_data);
+        var text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
         this.log.debug('received data: ' + received_data.length + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') { // received a data block, setting the according state
             this.setStateAsync(protocolState, text, true);
