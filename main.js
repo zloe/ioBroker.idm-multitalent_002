@@ -58,7 +58,7 @@ class IdmMultitalent002 extends utils.Adapter {
             type: 'state',
             common: {
                 name: stateName,
-                type: 'string',
+                type: 'number',
                 role: 'value',
                 read: true,
                 write: writeable,
