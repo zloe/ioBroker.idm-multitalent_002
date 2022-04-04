@@ -49,7 +49,8 @@ class IdmMultitalent002 extends utils.Adapter {
     sendQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
     requestInterval = 3200;
-    requestDataBlockDelay = 900;
+    requestInitDelay = 600;
+    requestDataBlockDelay = 600;
     requestDataContentDelay = 1500;
 
     setIDMState(stateName, value) {
@@ -202,7 +203,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
       // request loop for all known data blocks
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * this.requestInterval);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * this.requestInterval + this.requestInitDelay);
       }
 
     }
