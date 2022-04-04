@@ -48,6 +48,9 @@ class IdmMultitalent002 extends utils.Adapter {
     connectedToIDM;
     sendQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
+    requestInterval = 3200;
+    requestDataBlockDelay = 900;
+    requestDataContentDelay = 1500;
 
     setIDMState(stateName, value) {
         this.setStateAsync(stateName, value, true);
@@ -107,20 +110,11 @@ class IdmMultitalent002 extends utils.Adapter {
             let dateNow = new Date();
             let waitTime = 0;
             dateNow.setTime(dateNow.getTime() + 1000); // add 1 second as it takes some time to transmit the change
-            let second = dateNow.getSeconds();
+            let second = (dateNow.getMilliseconds()/10) % 20;
             if (second > 40) second = 40;
-            //const minute = dateNow.getMinutes();
-            //const hour = dateNow.getHours();
-            //const day = dateNow.getDate();
-            //const month = dateNow.getMonth() + 1;
-            //const year = dateNow.getFullYear();
-            this.sendQueue.enqueue(idm.create_set_value_message(17,second/2,2));
-            //this.sendQueue.enqueue(idm.create_set_value_message(102, second, 1));
-            //this.sendQueue.enqueue(idm.create_set_value_message(103, minute, 1));
-            //this.sendQueue.enqueue(idm.create_set_value_message(104, hour, 1));
-            //this.sendQueue.enqueue(idm.create_set_value_message(105, day, 1));
-            //this.sendQueue.enqueue(idm.create_set_value_message(106, month, 1));
-            //this.sendQueue.enqueue(idm.create_set_value_message(136, year, 2));    
+
+            this.sendQueue.enqueue(idm.create_set_value_message(17,second,2));
+
         }
         else return 1;
     }
@@ -135,6 +129,9 @@ class IdmMultitalent002 extends utils.Adapter {
            this.log.info('would send: ' + idm.get_protocol_string(message));
         }
     }
+    
+    setValueDelay = 1100;
+    secondSetValueOffset = 600;
 
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
@@ -154,14 +151,15 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             item = this.sendQueue.dequeue();
             this.log.info('setting values: ' + idm.get_protocol_string(item));
-            if (this.client) setTimeout(this.send_init.bind(this), 2*count * 1100)
-            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * 1100);
-            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * 1100 + 600);
+
+            if (this.client) setTimeout(this.send_init.bind(this), 2*count * this.setValueDelay)
+            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay);
+            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay + this.secondSetValueOffset);
         }
 
 
         // now request the data
-        setTimeout(this.request_data.bind(this), 2*count * 1100 + 600);
+        setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + this.secondSetValueOffset);
     }
 
     // send the init message to the control
@@ -183,7 +181,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('requesting data block ' + dataBlock);
         this.send_init(); // directly send init, no delay needed
         // assume that the answer is sent within one second
-        setTimeout(this.send_data_block_request.bind(this, dataBlock), 1250);
+        setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
         
     }
 
@@ -204,7 +202,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
       // request loop for all known data blocks
       for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * 3750);
+          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), (i+1) * this.requestInterval);
       }
 
     }
@@ -226,7 +224,7 @@ class IdmMultitalent002 extends utils.Adapter {
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
         if (protocolState === 'R1') {// successful data request, we can request the real data now, after a short pause ofc.  
-          setTimeout(this.request_data_content.bind(this), 1250);
+          setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay);
           return;
         }
         if (protocolState === 'S1') {
