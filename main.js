@@ -177,11 +177,11 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             item = this.sendQueue.dequeue();
             this.log.info('setting values: ' + idm.get_protocol_string(item));
-/*
+
             if (this.client) setTimeout(this.send_init.bind(this), 2*count * this.setValueDelay)
             if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay);
             if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay + this.secondSetValueOffset);
-        */
+ 
            }
 
 
