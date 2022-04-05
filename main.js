@@ -140,7 +140,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
         if (this.client) {
          this.client.write(message);
-           this.log.info('would send: ' + idm_u.get_protocol_string(message));
+           this.log.info('would send: ' + idm.get_protocol_string(message));
         }
     }
     
@@ -164,7 +164,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 }
             }
             item = this.sendQueue.dequeue();
-            this.log.info('setting values: ' + idm_u.get_protocol_string(item));
+            this.log.info('setting values: ' + idm.get_protocol_string(item));
 
             if (this.client) setTimeout(this.send_init.bind(this), 2*count * this.setValueDelay)
             if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay);
@@ -179,7 +179,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // send the init message to the control
     send_init() {
         var init_message = idm.create_init_message();
-        this.log.silly('init message: ' + idm_u.get_protocol_string(init_message));
+        this.log.silly('init message: ' + idm.get_protocol_string(init_message));
         if(this.client) this.client.write(init_message);
     }
 
@@ -231,7 +231,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // callback for data received from control
     receive_data(data) {
       var state = idm.add_to_packet(data);
-      this.log.silly('************* receiving **************** state ' + state + ' data=' + idm_u.get_protocol_string(data));
+      this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
       if (state == 3) { // data packed received completely, let's check what we've got
         var received_data = idm.get_data_packet();
         idm.reset();   // reset the packet reader to be ready for the next packet
