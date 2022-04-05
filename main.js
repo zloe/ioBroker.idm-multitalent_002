@@ -16,7 +16,7 @@ const { isFunction } = require('util');
 // const fs = require("fs");
 const idm = require('./lib/idm-protocol');
 const Queue = require('./lib/queue');
-const queue = require('./lib/queue');
+
 
 
 class IdmMultitalent002 extends utils.Adapter {
@@ -103,7 +103,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     updateTime() {
-        this.sendQueue.enqueue(this.create_update_time_messages.bind(this));
+        //this.sendQueue.enqueue(this.create_update_time_messages.bind(this));
     }
 
     create_update_time_messages(action) {
