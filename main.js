@@ -87,8 +87,8 @@ class IdmMultitalent002 extends utils.Adapter {
             },
             native: {},
         });  
-        if (writable && !this.statesSubscribed) {
-            this.log.debug('subscribing to state ' + stateName);
+        if (writable && (this.statesSubscribed === false)) {
+            this.log.debug('subscribing to state ' + stateName + ' ***************');
             this.subscribeStates(stateName);
         }  else {
             this.log.debug('not subscribing to state ' + stateName + (writable ? ' but was writable' : ''));        
@@ -108,7 +108,6 @@ class IdmMultitalent002 extends utils.Adapter {
         }
   
         idm.mapStatenames(this.version, this.createIDMState.bind(this));
-        this.statesSubscribed = true;
         await dataBlocks.forEach(async element => {
             var stateName = 'Data_block_' + idm_u.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
@@ -123,6 +122,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 native: {},
             });            
         });
+        this.statesSubscribed = true;
         this.statesCreated = true;
         this.log.debug('states created');
     }
