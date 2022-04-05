@@ -60,7 +60,16 @@ class IdmMultitalent002 extends utils.Adapter {
         this.setStateAsync(stateName, value, true);
     }
 
-    async createIDMState(stateName, writable = false, description, functionNr, unitOfMeasure, minVal, maxVal) {
+    /**
+     * @param {string} stateName
+     * @param {any} description
+     * @param {any} functionNr
+     * @param {any} length
+     * @param {any} unitOfMeasure
+     * @param {any} minVal
+     * @param {any} maxVal
+     */
+    async createIDMState(stateName, writable = false, description, functionNr, length, unitOfMeasure, minVal, maxVal) {
         await this.setObjectNotExistsAsync(stateName, {
             type: 'state',
             common: {
@@ -69,7 +78,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 role: 'value',
                 read: true,
                 write: writable,
-                custom: {function: functionNr},
+                custom: {function: functionNr, length: length},
                 min: minVal,
                 max: maxVal,
                 unit: unitOfMeasure,
@@ -165,11 +174,12 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             item = this.sendQueue.dequeue();
             this.log.info('setting values: ' + idm.get_protocol_string(item));
-
+/*
             if (this.client) setTimeout(this.send_init.bind(this), 2*count * this.setValueDelay)
             if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay);
             if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay + this.secondSetValueOffset);
-        }
+        */
+           }
 
 
         // now request the data
@@ -405,8 +415,11 @@ class IdmMultitalent002 extends utils.Adapter {
     //         this.log.info(`object ${id} deleted`);
     //    }
     // }
-    sendValue(statename, value) {
-
+    sendValue(stateObject, value) {
+        if (stateObject.custom.function) {
+            this.sendQueue.enqueue(idm.create_set_value_message(stateObject.custom.function,value,stateObject.custom.length));
+        }
+        
     }
 
     /**
@@ -417,7 +430,11 @@ class IdmMultitalent002 extends utils.Adapter {
     onStateChange(id, state) {
         if (state) {
             // The state was changed
-            this.sendValue(id, state.val);
+            this.getObject(id, (err, obj) => {
+                if (!err && obj) this.sendValue(obj, state.val);
+            });
+            
+            if(state) this.sendValue(id, state.val, );
             this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
         } else {
             // The state was deleted
