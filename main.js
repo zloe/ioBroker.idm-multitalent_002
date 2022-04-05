@@ -87,7 +87,7 @@ class IdmMultitalent002 extends utils.Adapter {
             },
             native: {},
         });  
-        if (writable && (this.statesSubscribed === false)) {
+        if (writable) {
             this.log.debug('subscribing to state ' + stateName + ' ***************');
             this.subscribeStates(stateName);
         }  else {
