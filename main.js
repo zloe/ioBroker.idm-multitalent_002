@@ -434,7 +434,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (state) {
             // The state was changed
             this.getObject(id, (err, obj) => {
-                if (!err && obj && obj.common.custom) this.sendValue(obj.common, state.val);
+                if (!err && obj && obj.common.custom && (state.ack===false)) this.sendValue(obj.common, state.val);
             });
             
             if(state) this.sendValue(id, state.val, );
