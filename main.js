@@ -416,7 +416,7 @@ class IdmMultitalent002 extends utils.Adapter {
     //    }
     // }
     sendValue(stateObject, value) {
-        if (stateObject.custom.function) {
+        if (stateObject.custom && stateObject.custom.function) {
             this.sendQueue.enqueue(idm.create_set_value_message(stateObject.custom.function,value,stateObject.custom.length));
         }
         
@@ -431,7 +431,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (state) {
             // The state was changed
             this.getObject(id, (err, obj) => {
-                if (!err && obj) this.sendValue(obj, state.val);
+                if (!err && obj && obj.common.custom) this.sendValue(obj.common, state.val);
             });
             
             if(state) this.sendValue(id, state.val, );
