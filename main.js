@@ -31,6 +31,7 @@ class IdmMultitalent002 extends utils.Adapter {
         });
         //this.log.info('created');
         this.statesCreated = false;
+        this.statesSubscribed = false;
         idm.initialize();
         this.connectedToIDM = false;
         this.on('ready', this.onReady.bind(this));
@@ -42,6 +43,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
 
     statesCreated;
+    statesSubscribed;
     cyclicDataHandler;
     timeUpdater; // interval for updating the time on the iDM heatpump
     version;
@@ -57,7 +59,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.setStateAsync(stateName, value, true);
     }
 
-    async createIDMState(stateName, writeable = false) {
+    async createIDMState(stateName, writable = false, description, functionNr, unitOfMeasure, minVal, maxVal) {
         await this.setObjectNotExistsAsync(stateName, {
             type: 'state',
             common: {
@@ -65,10 +67,19 @@ class IdmMultitalent002 extends utils.Adapter {
                 type: 'number',
                 role: 'value',
                 read: true,
-                write: writeable,
+                write: writable,
+                custom: {function: functionNr},
+                min: minVal,
+                max: maxVal,
+                unit: unitOfMeasure,
+                desc: description,
+
             },
             native: {},
-        });            
+        });  
+        if (writable && !this.statesSubscribed) {
+            this.subscribeStates(stateName);
+        }          
     }
 
 
@@ -84,6 +95,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
   
         idm.mapStatenames(this.version, this.createIDMState.bind(this));
+        this.statesSubscribed = true;
         await dataBlocks.forEach(async element => {
             var stateName = 'Data_block_' + idm.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
@@ -392,6 +404,9 @@ class IdmMultitalent002 extends utils.Adapter {
     //         this.log.info(`object ${id} deleted`);
     //    }
     // }
+    sendValue(statename, value) {
+
+    }
 
     /**
      * Is called if a subscribed state changes
@@ -401,6 +416,7 @@ class IdmMultitalent002 extends utils.Adapter {
     onStateChange(id, state) {
         if (state) {
             // The state was changed
+            this.sendValue(id, state.val);
             this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
         } else {
             // The state was deleted
