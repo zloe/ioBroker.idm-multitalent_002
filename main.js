@@ -419,7 +419,7 @@ class IdmMultitalent002 extends utils.Adapter {
     //    }
     // }
     sendValue(stateObject, value) {
-        if (stateObject.custom && stateObject.custom.function) {
+        if (stateObject.custom && stateObject.custom.function) { // check the necessary custom parameters
             this.sendQueue.enqueue(idm.create_set_value_message(stateObject.custom.function,value,stateObject.custom.length));
         }
         
@@ -433,6 +433,7 @@ class IdmMultitalent002 extends utils.Adapter {
     onStateChange(id, state) {
         if (state) {
             // The state was changed
+            // if the state is still not acknowledged and the state has the custom parameters set then we enqueue the change 
             this.getObject(id, (err, obj) => {
                 if (!err && obj && obj.common.custom && (state.ack===false)) this.sendValue(obj.common, state.val);
             });

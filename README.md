@@ -13,6 +13,11 @@
 ## idm-multitalent_002 adapter for ioBroker
 
 Read and write values of a iDM heatpump with multitalent.002 control.
+You need a Ethernet to RS422 converter to connect to the multitalent control.
+Note that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
+The values are read once a minute. As the control is quite picky on the timing this is the fastest sugested polling time.
+The changed values are also transferred once a minute (exactly before the values are read) to the control.
+
 
 ## Developer manual
 Development just started, most features missing.
