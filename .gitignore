@@ -9,7 +9,9 @@ nbproject
 
 # npm package files
 iobroker.*.tgz
-
+nm.tar
+pack.sh
+test.sh
 Thumbs.db
 
 # i18n intermediate files
