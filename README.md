@@ -112,7 +112,6 @@ For later updates, the above procedure is not necessary. Just do the following:
 ## Changelog
 
 ### **WORK IN PROGRESS**
-### 0.1.0 (2022-04-10)
 * (zloe) first running version, still missing proper error handling
 ### 0.0.2 (2022-02-19)
 * (zloe) initial release
