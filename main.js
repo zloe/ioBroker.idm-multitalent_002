@@ -162,7 +162,10 @@ class IdmMultitalent002 extends utils.Adapter {
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
         let count = 0;
+        this.log.debug('********* check if data has to be sent');
+
         while(count++ < this.maxWrites && this.sendQueue.hasItems) {
+            this.log.debug('********* found data to be sent');
             let item = this.sendQueue.peek(); 
             if (isFunction(item)) {
                 const numItems = item(false); // get the number of items to be generated 
@@ -419,7 +422,9 @@ class IdmMultitalent002 extends utils.Adapter {
     //    }
     // }
     sendValue(stateObject, value) {
+        this.log.debug('********* checking if enqueuing data to be sent');
         if (stateObject.custom && stateObject.custom.function) { // check the necessary custom parameters
+            this.log.debug('********* all prerequisites met, enqueuing data to be sent');
             this.sendQueue.enqueue(idm.create_set_value_message(stateObject.custom.function,value,stateObject.custom.length));
         }
         
