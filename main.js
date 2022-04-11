@@ -435,7 +435,11 @@ class IdmMultitalent002 extends utils.Adapter {
             // The state was changed
             // if the state is still not acknowledged and the state has the custom parameters set then we enqueue the change 
             this.getObject(id, (err, obj) => {
-                if (err || !obj || !obj.common.custom) this.log.debug('change of state ' + id + ' not sent to heatpump!');
+                if (err || !obj || !obj.common.custom) {
+                    this.log.debug('change of state ' + id + ' not sent to heatpump!');
+                } else {
+                    if (state.ack) this.log.debug('state ' + id + ' already acknowledged, will not be sent!');
+                }
                 if (!err && obj && obj.common.custom && (state.ack===false)) this.sendValue(obj.common, state.val);
             });
             
