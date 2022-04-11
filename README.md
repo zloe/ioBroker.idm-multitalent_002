@@ -110,6 +110,12 @@ For later updates, the above procedure is not necessary. Just do the following:
 1. Execute `iobroker upload idm-multitalent_002` on the ioBroker host
 
 ## Changelog
+
+### **WORK_IN_PROGRESS**
+
+* (zloe) request static data at a different (less frequent) interval or when changes are sent to the control
+* (zloe) improve error handling
+* (zloe) do not use custom state parameters as they are overwritten in some circumstances (i do not yet understand how to do this properly)
 ### 0.1.0 (2022-04-10)
 * (zloe) first running version, still missing proper error handling
 

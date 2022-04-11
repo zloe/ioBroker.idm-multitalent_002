@@ -50,11 +50,13 @@ class IdmMultitalent002 extends utils.Adapter {
     version;
     connectedToIDM;
     sendQueue = new Queue();
+    readQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
     requestInterval = 3200;
     requestInitDelay = 600;
     requestDataBlockDelay = 600;
     requestDataContentDelay = 1500;
+    stateNameMap = new Map();
 
     setIDMState(stateName, value) {
         this.setStateAsync(stateName, value, true);
@@ -68,8 +70,9 @@ class IdmMultitalent002 extends utils.Adapter {
      * @param {any} unitOfMeasure
      * @param {any} minVal
      * @param {any} maxVal
+     * @param {any} block
      */
-    async createIDMState(stateName, writable = false, description, functionNr, length, unitOfMeasure, minVal, maxVal) {
+    async createIDMState(stateName, writable = false, description, functionNr, length, unitOfMeasure, minVal, maxVal, block) {
         await this.setObjectNotExistsAsync(stateName, {
             type: 'state',
             common: {
@@ -87,6 +90,9 @@ class IdmMultitalent002 extends utils.Adapter {
             },
             native: {},
         });  
+
+        this.stateNameMap.set(stateName, { function: functionNr, writable: writable, length: length, unit: unitOfMeasure, min: minVal, max: maxVal, block: block});
+
         if (writable) {
             this.log.debug('subscribing to state ' + stateName + ' ***************');
             this.subscribeStates(stateName);
@@ -215,25 +221,40 @@ class IdmMultitalent002 extends utils.Adapter {
         
     }
 
+    lastConfigRead = 0;
     // request all data blocks for a particular version in a loop, ... with a pause inbetween 
     request_data() {
-      this.log.debug('requesting data for ' + this.version);
-      this.haveData = true;
-      var dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
-
-      if (!dataBlocks) {
-        this.log.debug('no data blocks defined, no data will be requested'); 
+        this.log.debug('requesting data for ' + this.version);
+        this.haveData = true;
+        var dataBlocks;
+        const readConfig = (this.lastConfigRead <= 0);
+        if (readConfig) {
+            this.lastConfigRead = this.config.pollintervalstatic;
+            dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+            this.readQueue = new Queue();  // remove items from readQueue as we anyhow read all values
+        } else {
+            dataBlocks = idm.getSensorDataBlocks(this.version); // get the sensor data blocks
+        }
+        this.lastConfigRead -= this.config.pollinterval;
+        if (!dataBlocks) {
+            this.log.debug('no data blocks defined, no data will be requested'); 
         return;
-      }
+        }
 
-      if (!this.statesCreated) {
-          this.CreateStates(); // create the states according to the connected version
-      }
+        if (!this.statesCreated) {
+            this.CreateStates(); // create the states according to the connected version
+        }
 
-      // request loop for all known data blocks
-      for (var i = 0; i < dataBlocks.length; i +=1 ) {
-          setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * this.requestInterval + this.requestInitDelay);
-      }
+        // request loop for all known data blocks
+        let i;
+        for (i = 0; i < dataBlocks.length; i +=1 ) {
+            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * this.requestInterval + this.requestInitDelay);
+        }
+        // request all config data blocks that have changes recorded
+        while (this.readQueue.hasItems) {
+            setTimeout(this.request_data_block.bind(this, this.readQueue.dequeue()), (i++) * this.requestInterval + this.requestInitDelay);
+
+        }
 
     }
 
@@ -421,13 +442,15 @@ class IdmMultitalent002 extends utils.Adapter {
     //         this.log.info(`object ${id} deleted`);
     //    }
     // }
-    sendValue(stateObject, value) {
-        this.log.debug('********* checking if enqueuing data to be sent');
-        if (stateObject.custom && stateObject.custom.function) { // check the necessary custom parameters
-            this.log.debug('********* all prerequisites met, enqueuing data to be sent');
-            this.sendQueue.enqueue(idm.create_set_value_message(stateObject.custom.function,value,stateObject.custom.length));
+    /**
+     * @param {{ function: any; length: any; writable: any}} definition
+     * @param {string | number | boolean | null} value
+     */
+    sendValue(definition, value) {
+        if (definition.writable) {
+        this.log.debug('********* all prerequisites met, enqueuing data to be sent');
+        this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length));
         }
-        
     }
 
     /**
@@ -438,18 +461,14 @@ class IdmMultitalent002 extends utils.Adapter {
     onStateChange(id, state) {
         if (state) {
             // The state was changed
-            // if the state is still not acknowledged and the state has the custom parameters set then we enqueue the change 
-            this.getObject(id, (err, obj) => {
-                if (err || !obj || !obj.common.custom) {
-                    this.log.debug('change of state ' + id + ' not sent to heatpump!');
-                } else {
-                    if (state.ack) this.log.debug('state ' + id + ' already acknowledged, will not be sent!');
+            // if the state is still not acknowledged and the state is one of interrest then we enqueue the change 
+            if ((state.ack === false) &&this.stateNameMap.has(id)) {
+                const definition = this.stateNameMap[id];
+                if (definition.writable ) {
+                    this.sendValue(definition, state.val);
+                    this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 }
-                if (!err && obj && obj.common.custom && (state.ack===false)) this.sendValue(obj.common, state.val);
-            });
-            
-            if(state) this.sendValue(id, state.val, );
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+            }
         } else {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
