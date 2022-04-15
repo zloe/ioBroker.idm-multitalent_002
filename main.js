@@ -90,7 +90,7 @@ class IdmMultitalent002 extends utils.Adapter {
         });  
 
         this.stateNameMap.set(stateName, { function: functionNr, writable: writable, length: length, unit: unitOfMeasure, min: minVal, max: maxVal, block: block});
-        this.log.debug('added to stateNameMap: ' + this.stateNameMap.get(stateName));
+        this.log.debug('added to stateNameMap: ' + JSON.stringify(this.stateNameMap.get(stateName)));
         if (writable) {
             this.log.debug('subscribing to state ' + stateName + ' ***************');
             this.subscribeStates(stateName);
