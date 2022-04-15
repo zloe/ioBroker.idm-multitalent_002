@@ -463,10 +463,11 @@ class IdmMultitalent002 extends utils.Adapter {
         if (state) {
             // The state was changed
             // if the state is still not acknowledged and the state is one of interrest then we enqueue the change 
-            this.log.debug('checking for state "' + id + '" in stateMap, ...' + (this.stateNameMap.has(id)?' found' : 'not found'));
+            const stateName = id.slice(this.namespace.length + 1);
+            this.log.debug('checking for state "' + stateName + '" in stateMap, ...' + (this.stateNameMap.has(stateName)?' found' : 'not found'));
 
-            if ((state.ack === false) && this.stateNameMap.has(id)) {
-                const definition = this.stateNameMap.get(id);
+            if ((state.ack === false) && this.stateNameMap.has(stateName)) {
+                const definition = this.stateNameMap.get(stateName);
                 if (definition.writable ) {
                     this.sendValue(definition, state.val);
                     this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), will be sent`);
