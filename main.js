@@ -166,7 +166,10 @@ class IdmMultitalent002 extends utils.Adapter {
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
         let count = 0;
-        this.log.debug('********* check if data has to be sent');
+        this.maxWrites = this.config.pollinterval - (this.requestInterval * 6 + this.secondSetValueOffset)/1000;
+        this.maxWrites = Math.floor(this.maxWrites / 2 / this.setValueDelay);  
+
+        this.log.debug('********* check if data has to be sent, max sent at once: ' + this.maxWrites);
 
         while(count++ < this.maxWrites && this.sendQueue.hasItems) {
             this.log.debug('********* found data to be sent');
@@ -317,8 +320,8 @@ class IdmMultitalent002 extends utils.Adapter {
               else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
           });
           if(this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
-              this.log.debug('creating cyclic timer to request data every ' + this.config.pollinterval + ' seconds');
-              this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), this.config.pollinterval * 1000);
+              this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
+              this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7);
               this.log.debug('timer id ' + this.cyclicDataHandler);
           }
           if(!this.connectedToIDM && this.cyclicDataHandler) { // disconnectd, clear interval

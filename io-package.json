@@ -88,8 +88,7 @@
     "native": {
         "tcpserverip": "192.168.2.42",
         "tcpserverport": 4001,
-        "pollinterval": 60,
-        "pollintervalstatic": 600
+        "pollinterval": 30
     },
     "objects": [],
     "instanceObjects": [
