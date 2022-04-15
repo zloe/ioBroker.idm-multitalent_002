@@ -1,8 +1,9 @@
 ![Logo](admin/idm-multitalent_002.png)
 
 ## Attention!
-This is an unofficial adapter, no warranty or guarantees!
-You might loose warranty from the manufacturer!
+This is an open source adapter from an individual that is not related to the manufacturer, no warranty or guarantees!
+
+### You might loose warranty from the manufacturer!
 # ioBroker.idm-multitalent_002
 [![NPM version](https://img.shields.io/npm/v/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
