@@ -97,6 +97,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }  else {
             this.log.debug('not subscribing to state ' + stateName + (writable ? ' but was writable' : ''));        
         }
+        this.log.debug('added to stateNameMap: ' + this.stateNameMap[stateName]);
     }
 
 
@@ -463,13 +464,14 @@ class IdmMultitalent002 extends utils.Adapter {
         if (state) {
             // The state was changed
             // if the state is still not acknowledged and the state is one of interrest then we enqueue the change 
-            if ((state.ack === false) &&this.stateNameMap.has(id)) {
+            if ((state.ack === false) && this.stateNameMap.has(id)) {
                 const definition = this.stateNameMap[id];
                 if (definition.writable ) {
                     this.sendValue(definition, state.val);
-                    this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+                    this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), will be sent`);
                 }
             }
+            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
         } else {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
