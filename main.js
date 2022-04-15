@@ -90,7 +90,7 @@ class IdmMultitalent002 extends utils.Adapter {
         });  
 
         this.stateNameMap.set(stateName, { function: functionNr, writable: writable, length: length, unit: unitOfMeasure, min: minVal, max: maxVal, block: block});
-        this.log.debug('added to stateNameMap: ' + this.namespace + '.' + stateName + ' === ' + JSON.stringify(this.stateNameMap.get(stateName)));
+        //this.log.debug('added to stateNameMap: ' + this.namespace + '.' + stateName + ' === ' + JSON.stringify(this.stateNameMap.get(stateName)));
         if (writable) {
             this.log.debug('subscribing to state ' + stateName + ' ***************');
             this.subscribeStates(stateName);
@@ -155,8 +155,8 @@ class IdmMultitalent002 extends utils.Adapter {
             message[i] = item[i];
         }
         if (this.client) {
-         this.client.write(message);
-           this.log.info('would send: ' + idm.get_protocol_string(message));
+           this.client.write(message);
+           this.log.info('sent: ' + idm.get_protocol_string(message));
         }
     }
     
@@ -463,14 +463,16 @@ class IdmMultitalent002 extends utils.Adapter {
         if (state) {
             // The state was changed
             // if the state is still not acknowledged and the state is one of interrest then we enqueue the change 
-            const stateName = id.slice(this.namespace.length + 1);
-            this.log.debug('checking for state "' + stateName + '" in stateMap, ...' + (this.stateNameMap.has(stateName)?' found' : 'not found'));
+            if (state.ack === false) {
+                const stateName = id.slice(this.namespace.length + 1);
+                this.log.debug('checking for state "' + stateName + '" in stateMap, ...' + (this.stateNameMap.has(stateName)?' found' : 'not found'));
 
-            if ((state.ack === false) && this.stateNameMap.has(stateName)) {
-                const definition = this.stateNameMap.get(stateName);
-                if (definition.writable ) {
-                    this.sendValue(definition, state.val);
-                    this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), will be sent`);
+                if (this.stateNameMap.has(stateName)) {
+                    const definition = this.stateNameMap.get(stateName);
+                    if (definition.writable ) {
+                        this.sendValue(definition, state.val);
+                        this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), will be sent`);
+                    }
                 }
             }
             this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
