@@ -50,7 +50,6 @@ class IdmMultitalent002 extends utils.Adapter {
     version;
     connectedToIDM;
     sendQueue = new Queue();
-    readQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
     requestInterval = 3200;
     requestInitDelay = 600;
@@ -81,7 +80,6 @@ class IdmMultitalent002 extends utils.Adapter {
                 role: 'value',
                 read: true,
                 write: writable,
-                custom: {function: functionNr, length: length},
                 min: minVal,
                 max: maxVal,
                 unit: unitOfMeasure,
@@ -163,7 +161,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
     
     setValueDelay = 1100;
-    secondSetValueOffset = 600;
+    secondSetValueOffset = 600; // after which delay a value is set the second time (seems to be required in most cases)
 
     handle_communication() {
         // first send from the sendQueue, but not more than 10 items at once
@@ -221,40 +219,43 @@ class IdmMultitalent002 extends utils.Adapter {
         
     }
 
-    lastConfigRead = 0;
-    // request all data blocks for a particular version in a loop, ... with a pause inbetween 
+    lastSettingsIndex = 0;
+    
+    // request all sensor data blocks for a particular version and one set of settings data blocks in a loop, ... with a pause inbetween 
     request_data() {
         this.log.debug('requesting data for ' + this.version);
         this.haveData = true;
-        var dataBlocks;
-        const readConfig = (this.lastConfigRead <= 0);
-        if (readConfig) {
-            this.lastConfigRead = this.config.pollintervalstatic;
-            dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
-            this.readQueue = new Queue();  // remove items from readQueue as we anyhow read all values
-        } else {
-            dataBlocks = idm.getSensorDataBlocks(this.version); // get the sensor data blocks
-        }
-        this.lastConfigRead -= this.config.pollinterval;
+        var dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
         if (!dataBlocks) {
-            this.log.debug('no data blocks defined, no data will be requested'); 
-        return;
+            this.log.debug('no sensor data blocks defined, no data will be requested'); 
+            return;
         }
 
         if (!this.statesCreated) {
             this.CreateStates(); // create the states according to the connected version
         }
 
-        // request loop for all known data blocks
-        let i;
-        for (i = 0; i < dataBlocks.length; i +=1 ) {
-            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), i * this.requestInterval + this.requestInitDelay);
+        // request loop for all known sensor data blocks
+        let i, delayMultiplier = 0;
+        for (i = 0; i < dataBlocks.length; i++, delayMultiplier++ ) {
+            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), delayMultiplier * this.requestInterval + this.requestInitDelay);
         }
-        // request all config data blocks that have changes recorded
-        while (this.readQueue.hasItems) {
-            setTimeout(this.request_data_block.bind(this, this.readQueue.dequeue()), (i++) * this.requestInterval + this.requestInitDelay);
 
+        // request the next settings datablock
+        var dataBlocksArray = idm.getSettingsDataBlocks(this.version);
+        if (!dataBlocksArray) {
+            this.log.debug('no settings data blocks defined, no settings data will be requested'); 
+            return;
         }
+        this.lastSettingsIndex %= dataBlocksArray.length;
+        dataBlocks = dataBlocksArray[this.lastSettingsIndex++];
+        if (!dataBlocks) {
+            this.log.debug('no sensor data blocks defined, no data will be requested'); 
+            return;
+        }
+        for (i = 0; i < dataBlocks.length; i++, delayMultiplier++ ) {
+            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), delayMultiplier * this.requestInterval + this.requestInitDelay);
+        }        
 
     }
 
