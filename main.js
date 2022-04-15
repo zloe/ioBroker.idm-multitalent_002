@@ -321,7 +321,7 @@ class IdmMultitalent002 extends utils.Adapter {
           });
           if(this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
               this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
-              this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7);
+              this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
               this.log.debug('timer id ' + this.cyclicDataHandler);
           }
           if(!this.connectedToIDM && this.cyclicDataHandler) { // disconnectd, clear interval
