@@ -1,4 +1,8 @@
 ![Logo](admin/idm-multitalent_002.png)
+
+## Attention!
+This is an unofficial adapter, no warranty or guarantees!
+You might loose warranty from the manufacturer!
 # ioBroker.idm-multitalent_002
 [![NPM version](https://img.shields.io/npm/v/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
@@ -11,7 +15,7 @@
 **Tests:** ![Test and Release](https://github.com/zloe/ioBroker.idm-multitalent_002/workflows/Test%20and%20Release/badge.svg)
 
 ## idm-multitalent_002 adapter for ioBroker
-
+Attention
 Read and write values of a iDM heatpump with multitalent.002 control.
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 Note that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
