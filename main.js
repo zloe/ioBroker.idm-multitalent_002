@@ -167,7 +167,7 @@ class IdmMultitalent002 extends utils.Adapter {
         // first send from the sendQueue, but not more than 10 items at once
         let count = 0;
         this.maxWrites = this.config.pollinterval - (this.requestInterval * 6 + this.secondSetValueOffset)/1000;
-        this.maxWrites = Math.floor(this.maxWrites / 2 / this.setValueDelay);  
+        this.maxWrites = Math.floor(this.maxWrites / (2 * this.setValueDelay / 1000 ));  
 
         this.log.debug('********* check if data has to be sent, max sent at once: ' + this.maxWrites);
 
