@@ -225,7 +225,7 @@ class IdmMultitalent002 extends utils.Adapter {
     request_data() {
         this.log.debug('requesting data for ' + this.version);
         this.haveData = true;
-        var dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+        var dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
         if (!dataBlocks) {
             this.log.debug('no sensor data blocks defined, no data will be requested'); 
             return;
