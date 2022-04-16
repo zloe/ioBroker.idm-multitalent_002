@@ -46,15 +46,15 @@
         },
         "desc": {
             "en": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "de": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "ru": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "pt": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "nl": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "fr": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "it": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "es": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "pl": "Read and write values of a iDM heatpump with multitalent.002 control.",
-            "zh-cn": "Read and write values of a iDM heatpump with multitalent.002 control."
+            "de": "Lesen und schreiben Sie Werte einer iDM Wärmepumpe mit multitalent.002 Steuerung.",
+            "ru": "Чтение и запись значений теплового насоса iDM с управлением multitalent.002.",
+            "pt": "Ler e gravar valores de uma bomba de calor iDM com controle multitalent.002.",
+            "nl": "Lees en schrijf waarden van een iDM warmtepomp met multitalent.002 besturing.",
+            "fr": "Lecture et écriture des valeurs d'une pompe à chaleur iDM avec commande multitalent.002.",
+            "it": "Leggi e scrivi valori di una pompa di calore iDM con controllo multitalent.002.",
+            "es": "Leer y escribir valores de una bomba de calor iDM con control multitalent.002.",
+            "pl": "Odczyt i zapis wartości pompy ciepła iDM ze sterowaniem multitalent.002.",
+            "zh-cn": "读取和写入具有 multitalent.002 控制的 iDM 热泵的值。"
         },
         "authors": [
             "zloe <klaus@zloebl.net>"
