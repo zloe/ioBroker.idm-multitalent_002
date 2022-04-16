@@ -34,13 +34,14 @@ Example installation:
 ![system overview](idm%20RS422%20Anschluss.drawio.png)
 
 Settings of the serial adapter:
+```
  Baud Rate(bps) 19200
  Parity         Even
  Data Bit       8
  Stop Bit       1
  Flow Control   None
  UART FIFO      Disable
-
+```
 ## Changelog
 
 ### **WORK_IN_PROGRESS**
