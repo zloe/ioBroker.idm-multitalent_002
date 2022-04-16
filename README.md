@@ -19,7 +19,7 @@ This is an open source adapter from an individual that is not related to the man
 Read and write values of a iDM heatpump with multitalent.002 control.
 
 Currently following versions are supported:
-* TERRA050701  - idm701 ... mostly supported, protocol information missing, one experimently installation, running since March 2022
+* TERRA050701  - idm701 ... mostly supported, protocol information missing, one experimently installation, running since April 6th, 2022
 * TERRA061001  - idm712 ... supported, one experimental installation
 * EVR-II071102 - idm750 ... experimentally supported, protocol information available, but no installation 
 
