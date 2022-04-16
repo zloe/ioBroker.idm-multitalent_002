@@ -527,7 +527,7 @@ class IdmMultitalent002 extends utils.Adapter {
      */
     sendValue(definition, value) {
         if (definition.writable) {
-        this.log.debug('********* all prerequisites met, enqueuing data to be sent');
+        //this.log.debug('********* all prerequisites met, enqueuing data to be sent');
         this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length));
         }
     }
@@ -543,7 +543,7 @@ class IdmMultitalent002 extends utils.Adapter {
             // if the state is still not acknowledged and the state is one of interrest then we enqueue the change 
             if (state.ack === false) {
                 const stateName = id.slice(this.namespace.length + 1);
-                this.log.debug('checking for state "' + stateName + '" in stateMap, ...' + (this.stateNameMap.has(stateName)?' found' : 'not found'));
+                //this.log.debug('checking for state "' + stateName + '" in stateMap, ...' + (this.stateNameMap.has(stateName)?' found' : 'not found'));
 
                 if (this.stateNameMap.has(stateName)) {
                     const definition = this.stateNameMap.get(stateName);
@@ -553,7 +553,7 @@ class IdmMultitalent002 extends utils.Adapter {
                     }
                 }
             }
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+            //this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
         } else {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
