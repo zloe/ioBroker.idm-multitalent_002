@@ -30,7 +30,16 @@ The changed values are also transferred once all 30 seconds (exactly before the 
 During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again.
 
 Example installation:
+
 ![system overview](idm%20RS422%20Anschluss.drawio.png)
+
+Settings of the serial adapter:
+ Baud Rate(bps) 19200
+ Parity         Even
+ Data Bit       8
+ Stop Bit       1
+ Flow Control   None
+ UART FIFO      Disable
 
 ## Changelog
 
