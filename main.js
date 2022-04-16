@@ -57,6 +57,29 @@ class IdmMultitalent002 extends utils.Adapter {
     requestDataContentDelay = 1500;
     stateNameMap = new Map();
 
+    idmProtocolState = -1; 
+    // -1 for not connected
+    // 0 for idle, or data received, or data set value ack received
+    // 1 for init sent waiting for answer
+    // 2 for init answer received
+    // 3 for data requested, waiting for ack
+    // 4 for data request ack received
+    // 5 for data content request sent, waiting for data 
+    // 6 for data set value sent, waiting of ack
+
+    idmProtocolStateToText() {
+        switch(this.idmProtocolState) {
+            case -1: return 'not connected';
+            case 0: return 'idle';
+            case 1: return 'init sent waiting for answer';
+            case 2: return 'init answer received';
+            case 3: return 'data requested, waiting for ack';
+            case 4: return 'data request ack received';
+            case 5: return 'data content request sent, waiting for data';
+            case 6: return 'data set value sent, waiting of ack';
+        }
+    }
+
     setIDMState(stateName, value) {
         this.setStateAsync(stateName, value, true);
     }
@@ -131,10 +154,6 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('states created');
     }
 
-    updateTime() {
-        //this.sendQueue.enqueue(this.create_update_time_messages.bind(this));
-    }
-
     create_update_time_messages(action) {
         if (action) {
             let dateNow = new Date();
@@ -149,14 +168,19 @@ class IdmMultitalent002 extends utils.Adapter {
         else return 1;
     }
 
-    write(item) {
+    sendSetValueMessage(item) {
+        if (this.idmProtocolState !== 2 && this.idmProtocolState !== 0) {
+            this.log.debug('wrong state, should be in 2 but we are in ' + this.idmProtocolState);
+        }
         var message = new Uint8Array(item.length);
         for(let i = 0; i < item.length; i++) {
             message[i] = item[i];
         }
+
         if (this.client) {
            this.client.write(message);
            this.log.info('sent: ' + idm.get_protocol_string(message));
+           this.idmProtocolState = 6;
         }
     }
     
@@ -189,8 +213,8 @@ class IdmMultitalent002 extends utils.Adapter {
             this.log.info('setting values: ' + idm.get_protocol_string(item));
 
             if (this.client) setTimeout(this.send_init.bind(this), 2*count * this.setValueDelay)
-            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay);
-            if (this.client) setTimeout(this.write.bind(this, item), (2*count+1) * this.setValueDelay + this.secondSetValueOffset);
+            if (this.client) setTimeout(this.sendSetValueMessage.bind(this, item), (2*count+1) * this.setValueDelay);
+            if (this.client) setTimeout(this.sendSetValueMessage.bind(this, item), (2*count+1) * this.setValueDelay + this.secondSetValueOffset);
  
            }
 
@@ -201,16 +225,28 @@ class IdmMultitalent002 extends utils.Adapter {
 
     // send the init message to the control
     send_init() {
+        if (this.idmProtocolState > 0) {
+            this.log.debug('wrong state, should be in -1 or 0 but we are in ' + this.idmProtocolState);
+        }
         var init_message = idm.create_init_message();
         this.log.silly('init message: ' + idm.get_protocol_string(init_message));
-        if(this.client) this.client.write(init_message);
+        if(this.client) {
+            this.client.write(init_message);
+            this.idmProtocolState = 1;
+        }
     }
 
     // send a data block request to the control
     send_data_block_request(dataBlock) {
+        if (this.idmProtocolState !== 2) {
+            this.log.debug('wrong state, should be in 2 but we are in ' + this.idmProtocolState);
+        }
         this.log.debug('sending request');
         var requestMessage = idm.create_request_data_block_message(dataBlock);
-        if (this.client) this.client.write(requestMessage);
+        if (this.client) {
+            this.client.write(requestMessage);
+            this.idmProtocolState = 3;
+        }
     }
 
     // request a particular data block
@@ -264,9 +300,15 @@ class IdmMultitalent002 extends utils.Adapter {
 
     // send a data content request to the control
     request_data_content() {
+        if (this.idmProtocolState !== 4) {
+            this.log.debug('wrong state, should be in 4 but we are in ' + this.idmProtocolState);
+        }
         var message = idm.create_request_data_content_message();
         this.log.debug('requesting data content');
-        if (this.client) this.client.write(message);
+        if (this.client) {
+            this.client.write(message);
+            this.idmProtocolState = 5;
+        }
     }
 
     // callback for data received from control
@@ -279,19 +321,34 @@ class IdmMultitalent002 extends utils.Adapter {
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
         if (protocolState === 'R1') {// successful data request, we can request the real data now, after a short pause ofc.  
-          setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay);
-          return;
+            if (this.idmProtocolState !== 3) {
+                this.log.debug('wrong state, should be in 3 but we are in ' + this.idmProtocolState);
+            }
+            setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay);
+            return;
         }
         if (protocolState === 'S1') {
+            if (this.idmProtocolState !== 6) {
+                this.log.debug('wrong state, should be in 6 but we are in ' + this.idmProtocolState);
+            }
+            this.idmProtocolState = 0;
             return;
         }
         var text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
         this.log.debug('received data: ' + received_data.length + ' - ' + text);
         if (protocolState.slice(0,4) == 'Data') { // received a data block, setting the according state
+            if (this.idmProtocolState !== 5) {
+                this.log.debug('wrong state, shold be in 5 but we are in ' + this.idmProtocolState);
+            }
+            this.idmProtocolState = 0; 
             this.setStateAsync(protocolState, text, true);
             return;
         }
         if (text.slice(0,1) ==="V") { // received answer to init message, if the first one after connection set the state
+            if (this.idmProtocolState !== 1) {
+                this.log.debug('wrong state, should be in 0 but we are in ' + this.idmProtocolState);
+            }
+            this.idmProtocolState = 2;
             if (!this.connectedToIDM) {
                 this.version = text.slice(9);
                 this.setStateAsync('idm_control_version', this.version, true);
@@ -299,7 +356,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.CreateStates();
             }
         } else {
-          this.log.debug('not sure what to do');
+          this.log.debug('not sure what to do, idm-protocol-state' + this.idmProtocolStateToText());
           this.log.info('unknown protocol state ' + protocolState + ' data=' + text);
 
         }
