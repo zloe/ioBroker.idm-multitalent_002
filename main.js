@@ -181,6 +181,7 @@ class IdmMultitalent002 extends utils.Adapter {
            this.client.write(message);
            this.log.info('sent: ' + idm.get_protocol_string(message));
            this.idmProtocolState = 6;
+           this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
         }
     }
     
@@ -233,6 +234,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if(this.client) {
             this.client.write(init_message);
             this.idmProtocolState = 1;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
         }
     }
 
@@ -246,6 +248,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (this.client) {
             this.client.write(requestMessage);
             this.idmProtocolState = 3;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
         }
     }
 
@@ -308,6 +311,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (this.client) {
             this.client.write(message);
             this.idmProtocolState = 5;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
         }
     }
 
@@ -320,10 +324,13 @@ class IdmMultitalent002 extends utils.Adapter {
         idm.reset();   // reset the packet reader to be ready for the next packet
         var protocolState = idm.protocol_state(received_data);
         this.log.debug('protocol state ' + protocolState);
+        this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
         if (protocolState === 'R1') {// successful data request, we can request the real data now, after a short pause ofc.  
             if (this.idmProtocolState !== 3) {
                 this.log.debug('wrong state, should be in 3 but we are in ' + this.idmProtocolState);
             }
+            this.idmProtocolState = 4;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
             setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay);
             return;
         }
@@ -332,6 +339,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.log.debug('wrong state, should be in 6 but we are in ' + this.idmProtocolState);
             }
             this.idmProtocolState = 0;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
             return;
         }
         var text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
@@ -341,14 +349,16 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.log.debug('wrong state, shold be in 5 but we are in ' + this.idmProtocolState);
             }
             this.idmProtocolState = 0; 
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
             this.setStateAsync(protocolState, text, true);
             return;
         }
         if (text.slice(0,1) ==="V") { // received answer to init message, if the first one after connection set the state
             if (this.idmProtocolState !== 1) {
-                this.log.debug('wrong state, should be in 0 but we are in ' + this.idmProtocolState);
+                this.log.debug('wrong state, should be in 1 but we are in ' + this.idmProtocolState);
             }
             this.idmProtocolState = 2;
+            this.setStateAsync('idm_protocol_state', this.idmProtocolState, true);
             if (!this.connectedToIDM) {
                 this.version = text.slice(9);
                 this.setStateAsync('idm_control_version', this.version, true);
@@ -419,7 +429,18 @@ class IdmMultitalent002 extends utils.Adapter {
           native: {},
         });
 
-
+        await this.setObjectNotExistsAsync('idm_protocol_state', {
+            type: 'state',
+            common: {
+                name: 'idm_protocol_state',
+                type: 'string',
+                role: 'value',
+                read: true,
+                write: false,
+            },
+            native: {},
+          });
+  
 
        /*
             setState examples
