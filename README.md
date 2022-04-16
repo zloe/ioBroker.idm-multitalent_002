@@ -24,17 +24,15 @@ Currently following versions are supported:
 * EVR-II071102 - idm750 ... experimentally supported, protocol information available, but no installation 
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
-Note that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
+**Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
 The values are read all 30 seconds. As the control is quite picky on the timing this is the fastest suggested polling time.
 The changed values are also transferred once all 30 seconds (exactly before the values are read) to the control.
 
-During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently NOT ensured by the adapter. So you manually need to stop it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again.
+During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again.
 
 Example installation:
 ![system overview](idm%20RS422%20Anschluss.drawio.png)
 ## Developer manual
-Development just started, most features missing.
-Basic readout of values is working.
 Missing documentation about the data structures/blocks.
 
 Attention, still experimental, ... the adapter sets values of the heatpump, so do not install, unless you know what you are doing and contacted the author! 
@@ -124,12 +122,11 @@ For later updates, the above procedure is not necessary. Just do the following:
 ## Changelog
 
 ### **WORK_IN_PROGRESS**
-
-* (zloe) request static data at a different (less frequent) interval or when changes are sent to the control
 * (zloe) improve error handling
-* (zloe) do not use custom state parameters as they are overwritten in some circumstances (i do not yet understand how to do this properly)
 ### 0.1.0 (2022-04-10)
+* (zloe) request static data at a different (less frequent) interval or when changes are sent to the control
 * (zloe) first running version, still missing proper error handling
+* (zloe) do not use custom state parameters as they are overwritten in some circumstances (i do not yet understand how to do this properly)
 
 ### 0.0.2 (2022-02-19)
 * (zloe) initial release
