@@ -1,6 +1,7 @@
 ![Logo](admin/idm-multitalent_002.png)
 
  **Attention!** This is an open source adapter from an individual that is not related to the manufacturer, no warranty or guarantees! 
+ 
  Still the manufacturer agreed to the publishing of this work.
 
 ***You might loose warranty from the manufacturer!***
