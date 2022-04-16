@@ -1,9 +1,8 @@
 ![Logo](admin/idm-multitalent_002.png)
 
-## Attention!
-This is an open source adapter from an individual that is not related to the manufacturer, no warranty or guarantees!
+ **Attention!** This is an open source adapter from an individual that is not related to the manufacturer, no warranty or guarantees!
 
-### You might loose warranty from the manufacturer!
+***You might loose warranty from the manufacturer!***
 # ioBroker.idm-multitalent_002
 [![NPM version](https://img.shields.io/npm/v/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
@@ -16,7 +15,7 @@ This is an open source adapter from an individual that is not related to the man
 **Tests:** ![Test and Release](https://github.com/zloe/ioBroker.idm-multitalent_002/workflows/Test%20and%20Release/badge.svg)
 
 ## idm-multitalent_002 adapter for ioBroker
-Read and write values of a iDM heatpump with multitalent.002 control.
+Read sensor data and read and write settings of a iDM heatpump with multitalent.002 control.
 
 Currently following versions are supported:
 * TERRA050701  - idm701 ... mostly supported, protocol information missing, one experimently installation, running since April 6th, 2022
