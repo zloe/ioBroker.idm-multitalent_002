@@ -433,7 +433,7 @@ class IdmMultitalent002 extends utils.Adapter {
             type: 'state',
             common: {
                 name: 'idm_protocol_state',
-                type: 'string',
+                type: 'number',
                 role: 'value',
                 read: true,
                 write: false,
