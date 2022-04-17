@@ -246,7 +246,7 @@ class IdmMultitalent002 extends utils.Adapter {
     send_data_block_request(dataBlock) {
         if (this.idmProtocolState !== 2) {
             this.log.info('wrong state, should be in 2 but we are in ' + this.idmProtocolState + ' resetting connection');
-            this.setConnected(false);
+            this.setConnected(false, true);
             return;
         }
         this.log.debug('sending request');
