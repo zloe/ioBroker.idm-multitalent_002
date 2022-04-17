@@ -46,7 +46,7 @@ Settings of the serial adapter:
 ```
 ## Changelog
 
-### **WORK_IN_PROGRESS**
+### **WORK IN PROGRESS**
 
 ### 0.1.1 (2022-04-17)
 * (zloe) improved error and reconnect handling
