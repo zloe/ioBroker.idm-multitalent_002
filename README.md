@@ -47,7 +47,9 @@ Settings of the serial adapter:
 ## Changelog
 
 ### **WORK_IN_PROGRESS**
-* (zloe) improve error handling
+
+### 0.1.1 (2022-04-17)
+* (zloe) improved error and reconnect handling
 ### 0.1.0 (2022-04-10)
 * (zloe) request static data at a different (less frequent) interval or when changes are sent to the control
 * (zloe) first running version, still missing proper error handling
