@@ -496,9 +496,11 @@ class IdmMultitalent002 extends utils.Adapter {
 
     socketConnectHandler() {
         this.log.debug('connection established');
-        this.client?.on('data', this.receive_data.bind(this));
-        this.client?.on('close', this.socketCloseHandler.bind(this));
-        this.client?.on('disconnect', this.socketDisconnectHanlder.bind(this));
+        if (this.client) {
+            this.client.on('data', this.receive_data.bind(this));
+            this.client.on('close', this.socketCloseHandler.bind(this));
+            this.client.on('disconnect', this.socketDisconnectHanlder.bind(this));
+        }
         // now all is prepared we can start "talking" to our heatpump
         this.send_init();
     }
