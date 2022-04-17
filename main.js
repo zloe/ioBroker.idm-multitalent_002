@@ -410,6 +410,10 @@ class IdmMultitalent002 extends utils.Adapter {
           this.idmProtocolState = -1;
           if (reconnect) {
             this.log.info('reconnection requested');
+            if (this.resendInterval) {
+                clearInterval(this.resendInterval);
+                this.resendInterval = undefined;
+            }
             if(!this.reconnectTimer) {
                 this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
                 this.log.debug('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
@@ -425,9 +429,9 @@ class IdmMultitalent002 extends utils.Adapter {
           this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
           this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
           this.log.debug('timer id ' + this.cyclicDataHandler);
-          if(this.resendTimer) {
-              clearTimeout(this.resendTimer);
-              this.resendTimer = undefined;
+          if(this.resendInterval) {
+              clearInterval(this.resendInterval);
+              this.resendInterval = undefined;
           }
           if (this.reconnectTimer) {
             this.log.debug('clearing reconnect timeout as we are connected');
@@ -440,6 +444,16 @@ class IdmMultitalent002 extends utils.Adapter {
           clearInterval(this.cyclicDataHandler);
           this.cyclicDataHandler = undefined;
         }
+      } else {
+          if (isConnected === false && this.resendInterval) {
+              this.log.debug('waiting for answer from heatpump, got disconnected from TCP to SERIAL adapter, stopping resend and try to reconnect');
+              clearInterval(this.resendInterval);
+              this.resendInterval = undefined;
+              if(!this.reconnectTimer) {
+                this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+                this.log.debug('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
+            }
+          }
       }
 
     }
@@ -504,7 +518,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     reconnectTimer; // timer for tcp connection retries
-    resendTimer;    // time for missing answers from heatpump
+    resendInterval;    // time for missing answers from heatpump
 
     socketRecycleTime = 2000;
     // at start connect and send the init message to get the version number of the Multitalent control
@@ -535,7 +549,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.reconnectTimer = undefined;
         }
     // now all is prepared we can start "talking" to our heatpump
-        this.resendTimer = setTimeout(this.resend_init.bind(this), this.config.reconnectinterval * 1000);
+        this.resendInterval = setInterval(this.resend_init.bind(this), this.config.reconnectinterval * 1000);
         this.send_init();
     }
 
@@ -570,9 +584,9 @@ class IdmMultitalent002 extends utils.Adapter {
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = undefined;
             }
-            if (this.resendTimer) {
-                this.clearTimeout(this.resendTimer);
-                this.resendTimer = undefined;
+            if (this.resendInterval) {
+                clearInterval(this.resendInterval);
+                this.resendInterval = undefined;
             }
 
             // Here you must clear all timeouts or intervals that may still be active
