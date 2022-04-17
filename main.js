@@ -225,7 +225,7 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
 
-    resend_init() {
+    send_first_init() {
         this.idmProtocolState = -1;
         this.send_init();
     }
@@ -446,6 +446,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
       } else {
           if (isConnected === false && this.resendInterval) {
+              this.idmProtocolState = -1;
               this.log.debug('waiting for answer from heatpump, got disconnected from TCP to SERIAL adapter, stopping resend and try to reconnect');
               clearInterval(this.resendInterval);
               this.resendInterval = undefined;
@@ -549,8 +550,8 @@ class IdmMultitalent002 extends utils.Adapter {
             this.reconnectTimer = undefined;
         }
     // now all is prepared we can start "talking" to our heatpump
-        this.resendInterval = setInterval(this.resend_init.bind(this), this.config.reconnectinterval * 1000);
-        this.send_init();
+        this.resendInterval = setInterval(this.send_first_init.bind(this), this.config.reconnectinterval * 1000);
+        this.send_first_init();
     }
 
     socketDisconnectHandler() {
