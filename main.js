@@ -224,8 +224,16 @@ class IdmMultitalent002 extends utils.Adapter {
         setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + this.secondSetValueOffset);
     }
 
+
+    resend_init() {
+        this.idmProtocolState = -1;
+        this.send_init();
+    }
     // send the init message to the control
     send_init() {
+        if (this.connectedToIDM === false) {
+            this.log.info('sending initial init message to heatpump');
+        }
         if (this.idmProtocolState > 0) {
             this.log.info('wrong state, should be in -1 or 0 but we are in ' + this.idmProtocolState + ' resetting connection');
             this.setConnected(false, true);
@@ -498,12 +506,16 @@ class IdmMultitalent002 extends utils.Adapter {
     reconnectTimer; // timer for tcp connection retries
     resendTimer;    // time for missing answers from heatpump
 
+    socketRecycleTime = 2000;
     // at start connect and send the init message to get the version number of the Multitalent control
     connectAndRead() {
         this.log.debug('trying to connect to ' + this.config.tcpserverip + ':' + this.config.tcpserverport);
         this.client = new net.Socket();
+        setTimeout(this.startConnection.bind(this),this.socketRecycleTime);
+    }
 
-        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
+    startConnection() {
+        if (this.client) this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
 
         // create an timeout if connection does not get established after specified timeout
         this.reconnectTimer = setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
@@ -517,7 +529,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.client.on('disconnect', this.socketDisconnectHanlder.bind(this));
         }
         // now all is prepared we can start "talking" to our heatpump
-        this.resendTimer = setTimeout(this.send_init.bind(this), this.config.reconnectinterval * 1000);
+        this.resendTimer = setTimeout(this.resend_init.bind(this), this.config.reconnectinterval * 1000);
         this.send_init();
     }
 
