@@ -417,6 +417,10 @@ class IdmMultitalent002 extends utils.Adapter {
           this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
           this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
           this.log.debug('timer id ' + this.cyclicDataHandler);
+          if(this.resendTimer) {
+              clearTimeout(this.resendTimer);
+              this.resendTimer = undefined;
+          }
           if (this.reconnectTimer) {
             this.log.debug('clearing reconnect timeout as we are connected');
             clearTimeout(this.reconnectTimer);
@@ -491,7 +495,8 @@ class IdmMultitalent002 extends utils.Adapter {
     
     }
 
-    reconnectTimer;
+    reconnectTimer; // timer for tcp connection retries
+    resendTimer;    // time for missing answers from heatpump
 
     // at start connect and send the init message to get the version number of the Multitalent control
     connectAndRead() {
@@ -501,7 +506,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
 
         // create an timeout if connection does not get established after specified timeout
-        if(!this.reconnectTimer) this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+        this.reconnectTimer = setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
     }
 
     socketConnectHandler() {
@@ -512,6 +517,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.client.on('disconnect', this.socketDisconnectHanlder.bind(this));
         }
         // now all is prepared we can start "talking" to our heatpump
+        this.resendTimer = setTimeout(this.send_init.bind(this), this.config.reconnectinterval * 1000);
         this.send_init();
     }
 
@@ -537,12 +543,15 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setConnected(false);
             if (this.cyclicDataHandler) {
                 clearInterval(this.cyclicDataHandler);
-                this.cyclicDataHandler = undefined;
-                
+                this.cyclicDataHandler = undefined;               
             }
             if (this.reconnectTimer) {
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = undefined;
+            }
+            if (this.resendTimer) {
+                this.clearTimeout(this.resendTimer);
+                this.resendTimer = undefined;
             }
 
             // Here you must clear all timeouts or intervals that may still be active
