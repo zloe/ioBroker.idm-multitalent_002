@@ -486,6 +486,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     // at start connect and send the init message to get the version number of the Multitalent control
     connectAndRead() {
+        this.log.debug('trying to connect to ' + this.config.tcpserverip + ':' + this.config.tcpserverport);
         this.client = new net.Socket();
 
         this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
