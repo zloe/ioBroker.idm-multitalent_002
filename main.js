@@ -376,6 +376,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.setStateAsync('idm_control_version', this.version, true);
                 this.setConnected(true);
                 this.CreateStates();
+                this.idmProtocolState = 0; // this is the first contact to get the verison, we are back to idle
             }
         } else {
           this.log.info('not sure what to do, idm-protocol-state' + this.idmProtocolStateToText());
