@@ -476,7 +476,10 @@ class IdmMultitalent002 extends utils.Adapter {
         //result = await this.checkGroupAsync('admin', 'admin');
         //this.log.info('check group user admin group admin: ' + result);
 
-      
+        // limit the poll and restart frequencies to acceptable values
+        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval*7/1000); // 
+        this.config.reconnectinterval = Math.max(this.config.reconnectinterval, this.config.pollinterval * 2);
+
         this.connectAndRead();
        
     
