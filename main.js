@@ -526,14 +526,20 @@ class IdmMultitalent002 extends utils.Adapter {
         if (this.client) {
             this.client.on('data', this.receive_data.bind(this));
             this.client.on('close', this.socketCloseHandler.bind(this));
-            this.client.on('disconnect', this.socketDisconnectHanlder.bind(this));
+            this.client.on('disconnect', this.socketDisconnectHandler.bind(this));
+            this.client.on('error', this.socketErrorHandler.bind(this));
         }
-        // now all is prepared we can start "talking" to our heatpump
+        if (this.reconnectTimer) {
+            this.log.debug('clearing reconnect timer as we are connected');
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = undefined;
+        }
+    // now all is prepared we can start "talking" to our heatpump
         this.resendTimer = setTimeout(this.resend_init.bind(this), this.config.reconnectinterval * 1000);
         this.send_init();
     }
 
-    socketDisconnectHanlder() {
+    socketDisconnectHandler() {
         this.client = null;
         this.log.info('disconnected from LAN to SERIAL adapter');
         this.setConnected(false, true);
@@ -545,6 +551,9 @@ class IdmMultitalent002 extends utils.Adapter {
         this.setConnected(false, true);
     }
 
+    socketErrorHandler() {
+        this.idmProtocolState = -1;
+    }
 
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
