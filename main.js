@@ -488,13 +488,19 @@ class IdmMultitalent002 extends utils.Adapter {
     connectAndRead() {
         this.client = new net.Socket();
 
-        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.send_init.bind(this));
-        this.client.on('data', this.receive_data.bind(this));
-        this.client.on('close', this.socketCloseHandler.bind(this));
-        this.client.on('disconnect', this.socketDisconnectHanlder.bind(this));
+        this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
 
         // create an timeout if connection does not get established after specified timeout
         if(!this.reconnectTimer) this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+    }
+
+    socketConnectHandler() {
+        this.log.debug('connection established');
+        this.client?.on('data', this.receive_data.bind(this));
+        this.client?.on('close', this.socketCloseHandler.bind(this));
+        this.client?.on('disconnect', this.socketDisconnectHanlder.bind(this));
+        // now all is prepared we can start "talking" to our heatpump
+        this.send_init();
     }
 
     socketDisconnectHanlder() {
