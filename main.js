@@ -401,7 +401,11 @@ class IdmMultitalent002 extends utils.Adapter {
           this.client = null;
           this.idmProtocolState = -1;
           if (reconnect) {
-            if(!this.reconnectTimer) this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+            this.log.info('reconnection requested');
+            if(!this.reconnectTimer) {
+                this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+                this.log.debug('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
+            }
           }
         }
         this.setState('info.connection', this.connectedToIDM, true, (err) => {
@@ -414,6 +418,7 @@ class IdmMultitalent002 extends utils.Adapter {
           this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
           this.log.debug('timer id ' + this.cyclicDataHandler);
           if (this.reconnectTimer) {
+            this.log.debug('clearing reconnect timeout as we are connected');
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = undefined;
           }
