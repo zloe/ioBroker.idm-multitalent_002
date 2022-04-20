@@ -45,6 +45,9 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
+
+### **WORK IN PROGRESS**
+* (zloe) fixed bug with signed values
 ### 0.1.2 (2022-04-17)
 * (zloe) refactoring
 
