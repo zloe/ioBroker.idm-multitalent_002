@@ -45,7 +45,7 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
-### ** WORK IN PROGRESS **
+### **WORK IN PROGRESS**
 * (zloe) added experimental support for version EVR752101
 * (zloe) fixed bug with signed values
 
