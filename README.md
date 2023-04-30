@@ -45,9 +45,9 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.2.1 (2023-04-30)
 * (zloe) fixed padding in datablock 7 for version IDM712100
+
 ### 0.2.0 (2023-04-30)
 * (zloe) added experimental support for version EVR752101
 * (zloe) fixed bug with signed values
