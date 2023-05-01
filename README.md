@@ -73,7 +73,7 @@ Settings of the serial adapter:
 ## License
 MIT License
 
-Copyright (c) 2022 zloe <klaus@zloebl.net>
+Copyright (c) 2023 zloe <klaus@zloebl.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
