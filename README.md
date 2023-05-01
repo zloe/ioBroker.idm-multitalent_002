@@ -47,6 +47,7 @@ Settings of the serial adapter:
 ```
 ## Changelog
 ### **WORK IN PROGRESS**
+* (zloe) fixed an issue writing values introduced with 0.2.0
 * (zloe) updating dependencies
 * (zloe) further fixing for version EVR752101
 ### 0.2.1 (2023-04-30)
