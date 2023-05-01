@@ -20,16 +20,17 @@
 Read sensor data and read and write settings of a iDM heatpump with multitalent.002 control.
 
 Currently following versions are supported:
-* TERRA050701  - idm701 (idm701100)... mostly supported, protocol information missing, one experimently installation, running since April 6th, 2022
+* TERRA050701  - idm701 (idm701100)... mostly supported, protocol information missing, one installation, running since April 6th, 2022
 * TERRA061001  - idm712 (idm712100)... supported, one experimental installation
 * EVR-II071102 - idm750 (idm750100)... experimentally supported, protocol information available, but no installation 
+* EVR-II100201 - evr752 (evr752101)... support in development currently, stay tuned
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
 The values are read all 30 seconds. As the control is quite picky on the timing this is the fastest suggested polling time.
 The changed values are also transferred once all 30 seconds (exactly before the values are read) to the control.
 
-During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again.
+During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
 
 Example installation:
 
@@ -91,6 +92,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Installation
+As the adapter is not (yet) listed in the official ioBroker repository you have to download the tgz file from here (github or npmjs).
+1. Upload the file to your ioBroker host
+1. Install it locally (The paths are different on Windows):
+    ```bash
+    cd /opt/iobroker
+    npm i /path/to/tarball.tgz
+    ```
 
 ## Developer manual
 Missing documentation about the data structures/blocks.
