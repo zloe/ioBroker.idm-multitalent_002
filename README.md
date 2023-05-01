@@ -188,3 +188,5 @@ In order to install the adapter locally without publishing, the following steps 
 For later updates, the above procedure is not necessary. Just do the following:
 1. Overwrite the changed files in the adapter directory (`/opt/iobroker/node_modules/iobroker.idm-multitalent_002`)
 1. Execute `iobroker upload idm-multitalent_002` on the ioBroker host
+
+Copyright (c) 2023 zloe <klaus@zloebl.net>
