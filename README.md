@@ -47,7 +47,7 @@ Settings of the serial adapter:
 ```
 ## Changelog
 ### **WORK IN PROGRESS**
-* (zloe) further fixing for version EVR752101
+* (zloe) further fixing for version EVR752101, datablock definition fixes
 
 ### 0.2.3 (2023-05-03)
 * (zloe) further fixing for version EVR752101
