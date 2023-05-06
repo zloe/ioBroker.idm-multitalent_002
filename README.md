@@ -48,6 +48,7 @@ Settings of the serial adapter:
 ## Changelog
 ### **WORK IN PROGRESS**
 * (zloe) allowing more values to be written
+* (zloe) more unit tests
 ### 0.2.5 (2023-05-05)
 * (zloe) further fixing for version EVR752101, datablock definition fixes
 
