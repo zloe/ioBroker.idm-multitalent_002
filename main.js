@@ -221,7 +221,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
 
         // now request the data
-        setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + this.secondSetValueOffset);
+        setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + 2 * this.secondSetValueOffset);
     }
 
 
@@ -229,6 +229,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.idmProtocolState = -1;
         this.send_init();
     }
+
     // send the init message to the control
     send_init() {
         if (this.connectedToIDM === false) {
@@ -239,12 +240,15 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setConnected(false, true);
             return;
         }
+
         var init_message = idm.create_init_message();
         this.log.silly('init message: ' + idm.get_protocol_string(init_message));
         if(this.client) {
             this.client.write(init_message);
             this.idmProtocolState = 1;
         }
+
+        
     }
 
     // send a data block request to the control
@@ -426,8 +430,8 @@ class IdmMultitalent002 extends utils.Adapter {
           else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
         });
         if(this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
-          this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
-          this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
+          this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*8/1000) + ' seconds');
+          this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*8));
           this.log.debug('timer id ' + this.cyclicDataHandler);
           if(this.resendInterval) {
               clearInterval(this.resendInterval);
@@ -458,6 +462,8 @@ class IdmMultitalent002 extends utils.Adapter {
       }
 
     }
+
+    initialConnectionDelay = 2000;
     /**
      * Is called when databases are connected and adapter received configuration.
      */
@@ -510,10 +516,10 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.log.info('check group user admin group admin: ' + result);
 
         // limit the poll and restart frequencies to acceptable values
-        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval*7/1000); // 
+        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval * 8/1000); // 
         this.config.reconnectinterval = Math.max(this.config.reconnectinterval, this.config.pollinterval * 2);
 
-        this.connectAndRead();
+        setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
        
     
     }
@@ -521,7 +527,7 @@ class IdmMultitalent002 extends utils.Adapter {
     reconnectTimer; // timer for tcp connection retries
     resendInterval;    // time for missing answers from heatpump
 
-    socketRecycleTime = 2000;
+    socketRecycleTime = 5000;
     // at start connect and send the init message to get the version number of the Multitalent control
     connectAndRead() {
         this.log.debug('trying to connect to ' + this.config.tcpserverip + ':' + this.config.tcpserverport);

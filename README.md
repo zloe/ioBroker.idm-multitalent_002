@@ -10,8 +10,6 @@
 [![Downloads](https://img.shields.io/npm/dm/iobroker.idm-multitalent_002.svg)](https://www.npmjs.com/package/iobroker.idm-multitalent_002)
 ![Number of Installations](https://iobroker.live/badges/idm-multitalent_002-installed.svg)
 ![Current version in stable repository](https://iobroker.live/badges/idm-multitalent_002-stable.svg)
-<!--[![Dependency Status](https://img.shields.io/david/zloe/iobroker.idm-multitalent_002.svg)](https://david-dm.org/zloe/iobroker.idm-multitalent_002)
--->
 [![NPM](https://nodei.co/npm/iobroker.idm-multitalent_002.png?downloads=true)](https://nodei.co/npm/iobroker.idm-multitalent_002/)
 
 **Tests:** ![Test and Release](https://github.com/zloe/ioBroker.idm-multitalent_002/workflows/Test%20and%20Release/badge.svg)
@@ -49,7 +47,7 @@ Settings of the serial adapter:
 ### **WORK IN PROGRESS**
 * (zloe) ongoing work on EVR752101
 * (zloe) updated dependencies, dropped support for nodejs 14
-
+* (zloe) adjusted timing to hopefully prevent estart loops in some situations
 ### 0.2.6 (2023-05-06)
 * (zloe) allowing more values to be written
 * (zloe) more unit tests
