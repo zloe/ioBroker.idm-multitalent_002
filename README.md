@@ -27,6 +27,7 @@ You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
 The values are read all 30 seconds. As the control is quite picky on the timing this is the fastest suggested polling time.
 The changed values are also transferred once all 30 seconds (exactly before the values are read) to the control.
+Note that settings of the heatpump are only read all ~5-6 cycles, so when setting values the acknowledgment might take up to 3 minutes.
 
 During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
 
