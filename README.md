@@ -45,6 +45,9 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
+
+### **WORK IN PROGRESS**
+* (zloe) fixing reconnect timing to avoid pending requests overlapping with reconnection messages
 ### 0.2.7 (2023-06-08)
 * (zloe) ongoing work on EVR752101
 * (zloe) updated dependencies, dropped support for nodejs 14
