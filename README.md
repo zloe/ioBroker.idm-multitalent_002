@@ -44,7 +44,7 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
-### 0.2.7 (2023-06-08)
+### **WORK IN PROGRESS**
 * (zloe) ongoing work on EVR752101
 * (zloe) updated dependencies, dropped support for nodejs 14
 * (zloe) adjusted timing to hopefully prevent estart loops in some situations
