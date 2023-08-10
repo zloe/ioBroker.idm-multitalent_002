@@ -52,7 +52,7 @@ class IdmMultitalent002 extends utils.Adapter {
     maxWrites = 10;  // max values to be set in one "loop"
     requestInterval = 3200;
     requestInitDelay = 600;
-    requestDataBlockDelay = 600;
+    requestDataBlockDelay = 900;
     requestDataContentDelay = 1500;
     stateNameMap = new Map();
 
@@ -196,7 +196,8 @@ class IdmMultitalent002 extends utils.Adapter {
 
         this.log.debug('********* check if data has to be sent, max sent at once: ' + this.maxWrites);
 
-        while(count++ < this.maxWrites && this.sendQueue.hasItems) {
+        while(count < this.maxWrites && this.sendQueue.hasItems) {
+            count++;
             this.log.debug('********* found data to be sent');
             let item = this.sendQueue.peek(); 
             if (isFunction(item)) {
@@ -221,7 +222,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
 
         // now request the data
-        setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + 2 * this.secondSetValueOffset);
+        setTimeout(this.request_data.bind(this), 2*count * this.setValueDelay + (count > 0 ? 2 * this.secondSetValueOffset : 0) );
     }
 
 

@@ -45,6 +45,9 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) fixed timing
+* (zloe) updated dependencies
 ### 0.2.8 (2023-06-08)
 * (zloe) fixing reconnect timing to avoid pending requests overlapping with reconnection messages
 
