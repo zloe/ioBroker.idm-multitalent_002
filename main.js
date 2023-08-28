@@ -50,9 +50,9 @@ class IdmMultitalent002 extends utils.Adapter {
     connectedToIDM;
     sendQueue = new Queue();
     maxWrites = 10;  // max values to be set in one "loop"
-    requestInterval = 3200;
+    requestInterval = 14500;
     requestInitDelay = 600;
-    requestDataBlockDelay = 900;
+    requestDataBlockDelay = 4500;
     requestDataContentDelay = 1500;
     stateNameMap = new Map();
 
@@ -435,8 +435,8 @@ class IdmMultitalent002 extends utils.Adapter {
           else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
         });
         if (this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
-          this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*8/1000) + ' seconds');
-          this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*8));
+          this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*7/1000) + ' seconds');
+          this.cyclicDataHandler = setInterval(this.handle_communication.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*7));
           this.log.debug('timer id ' + this.cyclicDataHandler);
           if(this.resendInterval) {
               clearInterval(this.resendInterval);
@@ -521,7 +521,7 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.log.info('check group user admin group admin: ' + result);
 
         // limit the poll and restart frequencies to acceptable values
-        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval * 8/1000); // 
+        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval * 7/1000); // 
         this.config.reconnectinterval = Math.max(this.config.reconnectinterval, this.config.pollinterval * 3);
 
         setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
