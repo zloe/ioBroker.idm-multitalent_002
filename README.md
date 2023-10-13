@@ -48,7 +48,7 @@ Settings of the serial adapter:
 ### **WORK IN PROGRESS**
 * (zloe) fixed timing
 * (zloe) updated dependencies
-* (zloe) last version with static timing, timing very relaxed
+* (zloe) last version with static timing, timing very relaxed to ensure working
 ### 0.2.8 (2023-06-08)
 * (zloe) fixing reconnect timing to avoid pending requests overlapping with reconnection messages
 
