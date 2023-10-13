@@ -45,10 +45,11 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.2.9 (2023-10-13)
 * (zloe) fixed timing
 * (zloe) updated dependencies
 * (zloe) last version with static timing, timing very relaxed to ensure working
+
 ### 0.2.8 (2023-06-08)
 * (zloe) fixing reconnect timing to avoid pending requests overlapping with reconnection messages
 
