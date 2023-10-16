@@ -45,7 +45,7 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 ## Changelog
-### 0.2.9 (2023-10-13)
+### **WORK IN PROGRESS**
 * (zloe) fixed timing
 * (zloe) updated dependencies
 * (zloe) last version with static timing, timing very relaxed to ensure working
