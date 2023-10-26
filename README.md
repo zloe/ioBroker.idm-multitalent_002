@@ -26,9 +26,9 @@ Currently following versions are supported (if your version is not listed but yo
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
-The values are read all 30 seconds. As the control is quite picky on the timing this is the fastest suggested polling time.
-The changed values are also transferred once all 30 seconds (exactly before the values are read) to the control.
-Note that settings of the heatpump are only read all ~5-6 cycles, so when setting values the acknowledgment might take up to 3 minutes.
+There are sensor values and settings values. During a cycle all sensor values and one part of the settings values are read. So the sensor values are read more frequently than the settings values. 
+The changed values are transferred immediately.
+Note that settings of the heatpump are only read all ~5-6 cycles, so when setting values the acknowledgment might take some time.
 
 During bootup of the control (e.g. after a power loss) no values should be polled from the control. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
 
@@ -45,10 +45,6 @@ Settings of the serial adapter:
  Flow Control   None
  UART FIFO      Disable
 ```
-## Note on the current implementation: 
-The protocol is implemented in a static way. Meaning that in a fixed timing messages are sent to the control. It is assumed that the control reacted in time and sent the requested data. If the control needs longer to react, then the adapter gets confused and disconnects. 
-Currently the timing is so relaxed (loooooong waiting times) that this almost never happens.
-This is the reason fo a major rework currently. The new design simply folow the timing of the control and only requests new data when the previous request was answered. You might think, ... well that's the way it should have been from the beginning, ... and, ... you are right. Still it was my very first attempt in programming JS or TS, so please forgive my naive first approach and wait for the new version.
 
 ## Changelog
 ### **WORK IN PROGRESS**
