@@ -49,10 +49,10 @@ class IdmMultitalent002 extends utils.Adapter {
     connectedToIDM;
     sendQueue = new Queue();
     maxWrites = 5;  // max values to be set in one "loop"
-    requestInterval = 18500;
-    requestInitDelay = 600;
-    requestDataBlockDelay = 600;
-    requestDataContentDelay = 600;
+    requestInitDelay = 700;
+    requestDataBlockDelay = 700;
+    requestDataContentDelay = 1500;
+    maxRequestDataContentDelay = 5000;
     stateNameMap = new Map();
 
     idmProtocolState = -1; 
@@ -170,10 +170,11 @@ class IdmMultitalent002 extends utils.Adapter {
         }
     }
     
-    setValueDelay = 1100;
-    secondSetValueOffset = 600; // after which delay a value is set the second time (seems to be required in most cases)
+    setValueDelay = 1000;
+    secondSetValueOffset = 1000; // after which delay a value is set the second time (seems to be required in most cases)
     send_count = 0;
     send_state = 0;
+    itemToBeSent;
     // returns true if something was written (init or set value message)
     // returns false if nothing has been written
     write_data_to_heatpump(first_call) {
@@ -184,18 +185,18 @@ class IdmMultitalent002 extends utils.Adapter {
             this.send_count = 0;
             this.send_state = 0;
         }
-        if (this.send_count < this.maxWrites && this.sendQueue.hasItems) {
-            this.log.debug('********* found data to be sent');
-            let item = this.sendQueue.dequeue();
-            this.log.info('setting values: ' + idm.get_protocol_string(item));
+        if ((this.send_count < this.maxWrites && this.sendQueue.hasItems) || this.send_state > 0) {
+            this.log.debug('********* found data to be sent, state: ' + this.send_state);
             if (this.send_state === 0) {
+                this.itemToBeSent = this.sendQueue.dequeue();
+                this.log.info('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
                 if (this.client) setTimeout(this.send_init.bind(this), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 1) {
-                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, item), this.setValueDelay);
+                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 2) {
-                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, item), this.secondSetValueOffset);
+                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
                 this.send_state=0;
                 this.send_count++;
             }
@@ -409,8 +410,16 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.request_data();                
             }
         } else {
-          this.log.info('not sure what to do, idm-protocol-state ' + this.idmProtocolStateToText());
-          this.log.info('unknown protocol state ' + protocolState + ' data=' + text);
+            if (text.slice(0,2) ==="E1" || text.slice(0,2) === 'E2') {
+                this.log.info('data content request error, trying to increase wait time. Now: ' + this.requestDataContentDelay + 
+                                ', Max: ' + this.maxRequestDataContentDelay + ', New: ' + this.requestDataBlockDelay + 100);
+                this.requestDataBlockDelay = Math.max(this.requestDataBlockDelay + 100, this.maxRequestDataContentDelay);
+                this.idmProtocolState = 0;
+                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                return;
+            }
+            this.log.info('not sure what to do, idm-protocol-state ' + this.idmProtocolStateToText());
+            this.log.info('unknown protocol state ' + protocolState + ' data=' + text);
         }
       } else if (state > 3) {
         idm.reset();
@@ -529,9 +538,7 @@ class IdmMultitalent002 extends utils.Adapter {
         //result = await this.checkGroupAsync('admin', 'admin');
         //this.log.info('check group user admin group admin: ' + result);
 
-        // limit the poll and restart frequencies to acceptable values
-        this.config.pollinterval = Math.max(this.config.pollinterval, this.requestInterval * 8/1000); // 
-        this.config.reconnectinterval = Math.max(this.config.reconnectinterval, this.config.pollinterval * 3);
+        // limit restart frequencies to acceptable values 
 
         setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
        
