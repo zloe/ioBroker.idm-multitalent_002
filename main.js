@@ -366,7 +366,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             }
             this.idmProtocolState = 4;
-            setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay);
+            setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay); // request the data content
             return;
         }
         if (protocolState === 'S1') { // have to be in idmProtocolState 6
