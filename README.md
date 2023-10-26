@@ -51,6 +51,9 @@ Currently the timing is so relaxed (loooooong waiting times) that this almost ne
 This is the reason fo a major rework currently. The new design simply folow the timing of the control and only requests new data when the previous request was answered. You might think, ... well that's the way it should have been from the beginning, ... and, ... you are right. Still it was my very first attempt in programming JS or TS, so please forgive my naive first approach and wait for the new version.
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) major rework, go for a dynamic approach
+
 ### 0.2.10 (2023-10-16)
 * (zloe) fixed timing
 * (zloe) updated dependencies
