@@ -207,11 +207,6 @@ class IdmMultitalent002 extends utils.Adapter {
            else {
             return false;
            }
-
-
-        // now request the data
-        // TODO: remove this, this needs to be handled in receive_data
-        setTimeout(this.request_data.bind(this), 2*this.send_count * this.setValueDelay + (this.send_count > 0 ? 2 * this.secondSetValueOffset : 0) );
     }
 
     // first contact, ... set the correct state and go 
@@ -274,42 +269,46 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     lastSettingsIndex = 0; // used to iterate settings data blocks
-    
+    requestingSensorData = true;
+    lastSensorIndex = 0;
     // request all sensor data blocks for a particular version and one set of settings data blocks in a loop, ... with a pause inbetween 
     request_data() {
         this.log.debug('requesting data for ' + this.version);
         this.haveData = true;
-        var dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
-        if (!dataBlocks) {
-            this.log.debug('no sensor data blocks defined, no data will be requested'); 
-            return;
-        }
-
-        if (!this.statesCreated) {
-            this.CreateStates(); // create the states according to the connected version
-        }
-
+        let datablockToRequest = "";
         // request loop for all known sensor data blocks
-        let i, delayMultiplier = 0;
-        for (i = 0; i < dataBlocks.length; i++, delayMultiplier++ ) {
-            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), delayMultiplier * this.requestInterval + this.requestInitDelay);
+        if (this.requestingSensorData) {
+            var dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
+            if (!dataBlocks) {
+                this.log.debug('no sensor data blocks defined, no data will be requested'); 
+                this.requestingSensorData = false;
+                return;
+            }
+
+            if (!this.statesCreated) {
+                this.CreateStates(); // create the states according to the connected version
+            }
+            datablockToRequest = dataBlocks[this.lastSensorIndex++];
+            if (this.lastSensorIndex >= dataBlocks.length) {
+                this.lastSensorIndex = 0;
+                this.requestingSensorData = false;
+            }
+
+        } else {
+
+            // request the next settings datablock
+            var dataBlocks = idm.getSettingsDataBlocks(this.version);
+            if (!dataBlocks) {
+                this.log.debug('no settings data blocks defined, no settings data will be requested'); 
+                this.requestingSensorData = true;
+                return;
+            }
+            this.lastSettingsIndex %= dataBlocks.length;
+            datablockToRequest = dataBlocks[this.lastSettingsIndex++];
+            this.requestingSensorData = true;
         }
 
-        // request the next settings datablock
-        var dataBlocksArray = idm.getSettingsDataBlocks(this.version);
-        if (!dataBlocksArray) {
-            this.log.debug('no settings data blocks defined, no settings data will be requested'); 
-            return;
-        }
-        this.lastSettingsIndex %= dataBlocksArray.length;
-        dataBlocks = dataBlocksArray[this.lastSettingsIndex++];
-        if (!dataBlocks) {
-            this.log.debug('no sensor data blocks defined, no data will be requested'); 
-            return;
-        }
-        for (i = 0; i < dataBlocks.length; i++, delayMultiplier++ ) {
-            setTimeout(this.request_data_block.bind(this, dataBlocks[i]), delayMultiplier * this.requestInterval + this.requestInitDelay);
-        }        
+        setTimeout(this.request_data_block.bind(this, datablockToRequest), this.requestInitDelay);
 
     }
 
@@ -417,10 +416,11 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.idmProtocolState = 0; // this is the first contact to get the verison, we are back to idle
             }
             if (this.need_to_send_data) {
-            
-            }
-            if (this.requesting_data) {
                 
+            }
+
+            if (this.requesting_data) {
+                this.request_data();                
             }
         } else {
           this.log.info('not sure what to do, idm-protocol-state ' + this.idmProtocolStateToText());
