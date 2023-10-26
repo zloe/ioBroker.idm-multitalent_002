@@ -175,7 +175,8 @@ class IdmMultitalent002 extends utils.Adapter {
     secondSetValueOffset = 600; // after which delay a value is set the second time (seems to be required in most cases)
     send_count = 0;
     send_state = 0;
-    
+    // returns true if something was written (init or set value message)
+    // returns false if nothing has been written
     write_data_to_heatpump(first_call) {
 
         this.log.debug('********* check if data has to be sent, max sent at once: ' + this.maxWrites);
@@ -200,8 +201,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.send_count++;
             }
             return true;
-           }
-           else {
+           } else {
             return false;
            }
     }
@@ -370,9 +370,9 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.setConnected(false, true);
                 return;
             }
-            this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
             this.idmProtocolState = 0;
-            this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+            this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
+            if (!this.need_to_send_data) this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
             return;
         }
         var text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
@@ -384,12 +384,10 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             } 
             this.setStateAsync(protocolState, text, true);
+
             this.idmProtocolState = 0;
             this.need_to_send_data= this.write_data_to_heatpump(!this.need_to_send_data);
-            if (!this.need_to_send_data) {
-                // no more data to be sent, ... now we can read data again, start with an init
-                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
-            }
+            if (!this.need_to_send_data) this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
             return;
         }
         if (text.slice(0,1) ==="V") { // received answer to init message, if the first one after connection set the state
@@ -404,14 +402,9 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.setStateAsync('idm_control_version', this.version, true);
                 this.setConnected(true);
                 this.CreateStates();
-                // this.idmProtocolState = 0; // this is the first contact to get the verison, we are back to idle
             }
             if (this.need_to_send_data) {
-                if (this.write_data_to_heatpump(!this.need_to_send_data)) {
-                    this.need_to_send_data = true;
-                } else {
-                    this.need_to_send_data = false;
-                }               
+                this.need_to_send_data = this.write_data_to_heatpump(false);
             }
             if (!this.need_to_send_data) {
                 this.request_data();                
