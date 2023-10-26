@@ -45,7 +45,6 @@ class IdmMultitalent002 extends utils.Adapter {
 
     statesCreated;
     statesSubscribed;
-    cyclicDataHandler;
     version;
     connectedToIDM;
     sendQueue = new Queue();
@@ -451,11 +450,8 @@ class IdmMultitalent002 extends utils.Adapter {
           if (err && this.log) this.log.error('Can not update connected state: ' + err);
           else if (this.log) this.log.debug('connected set to ' + this.connectedToIDM);
         });
-        if (this.connectedToIDM && this.version && !this.cyclicDataHandler) { // connected, set interval for data readout
-          this.log.debug('creating cyclic timer to request data every ' + Math.max(this.config.pollinterval, this.requestInterval*8/1000) + ' seconds');
-          // TODO: start only once
-          this.cyclicDataHandler = setInterval(this.write_data_to_heatpump.bind(this), Math.max(this.config.pollinterval * 1000, this.requestInterval*8));
-          this.log.debug('timer id ' + this.cyclicDataHandler);
+        if (this.connectedToIDM && this.version) { // connected, set interval for data readout
+
           if(this.resendInterval) {
               clearInterval(this.resendInterval);
               this.resendInterval = undefined;
@@ -465,11 +461,6 @@ class IdmMultitalent002 extends utils.Adapter {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = undefined;
           }
-        }
-        if(!this.connectedToIDM && this.cyclicDataHandler) { // disconnectd, clear interval
-          this.log.debug('clear cyclic timer');
-          clearInterval(this.cyclicDataHandler);
-          this.cyclicDataHandler = undefined;
         }
       } else {
           if (isConnected === false && this.resendInterval) {
@@ -606,10 +597,6 @@ class IdmMultitalent002 extends utils.Adapter {
     onUnload(callback) {
         try {
             this.setConnected(false);
-            if (this.cyclicDataHandler) {
-                clearInterval(this.cyclicDataHandler);
-                this.cyclicDataHandler = undefined;               
-            }
             if (this.reconnectTimer) {
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = undefined;
