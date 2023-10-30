@@ -52,7 +52,7 @@ class IdmMultitalent002 extends utils.Adapter {
     requestInitDelay = 700;
     requestDataBlockDelay = 700;
     requestDataContentDelay = 1500;
-    maxRequestDataContentDelay = 4000;
+    maxRequestDataContentDelay = 2500;
     stateNameMap = new Map();
 
     idmProtocolState = -1; 
@@ -258,7 +258,7 @@ class IdmMultitalent002 extends utils.Adapter {
      */
      request_data_block(dataBlock) {
         if (dataBlock === '07') {
-            this.log.info('requesting data block ' + dataBlock);
+            this.log.info('requesting data block ' + dataBlock + ' requestDataContentDelay currently ' + this.requestDataContentDelay);
         } else {
             this.log.debug('requesting data block ' + dataBlock);
         }
@@ -281,7 +281,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (this.requestingSensorData) {
             var dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
             if (!dataBlocks) {
-                this.log.info('no sensor data blocks defined, no data will be requested'); 
+                this.log.warn('no sensor data blocks defined, no data will be requested'); 
                 this.requestingSensorData = false;
                 return;
             }
@@ -415,9 +415,9 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         } else {
             if (protocolState ==='E1' || protocolState === 'E2') {
-                this.log.info('data content request error, trying to increase wait time. Now: ' + this.requestDataContentDelay +
-                                ', Max: ' + this.maxRequestDataContentDelay + ', New: ' + this.requestDataBlockDelay + 50);
-                this.requestDataBlockDelay = Math.max(this.requestDataBlockDelay + 50, this.maxRequestDataContentDelay);
+                this.log.warn('data content request error, trying to increase wait time. Now: ' + this.requestDataContentDelay +
+                                ', Max: ' + this.maxRequestDataContentDelay + ', New: ' + (this.requestDataContentDelay + 50));
+                this.requestDataContentDelay = Math.min(this.requestDataContentDelay + 50, this.maxRequestDataContentDelay);
                 this.idmProtocolState = 0;
                 this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 return;
@@ -425,6 +425,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.log.warn('not sure what to do, idm-protocol-state ' + this.idmProtocolStateToText());
             this.log.warn('unknown protocol state ' + protocolState + ' data=' + text);
             this.log.warn('trying to send init message to restart communication');
+            this.idmProtocolState = 0;
             this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
         }
       } else if (state > 3) {
