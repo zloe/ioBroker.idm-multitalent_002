@@ -47,7 +47,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.0.4 (2023-10-30)
 * (zloe) writing values fix to include scaling factor in datastructure
 
 ### 1.0.3 (2023-10-30)
