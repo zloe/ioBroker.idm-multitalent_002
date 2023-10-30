@@ -47,7 +47,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.0.2 (2023-10-30)
 * (zloe) changes to data definitions
 * (zloe) fixed retry after error message from heatpump again
 
