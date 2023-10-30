@@ -87,12 +87,13 @@ class IdmMultitalent002 extends utils.Adapter {
      * @param {any} description
      * @param {any} functionNr
      * @param {any} length
+     * @param {any} factor
      * @param {any} unitOfMeasure
      * @param {any} minVal
      * @param {any} maxVal
      * @param {any} block
      */
-    async createIDMState(stateName, writable = false, description, functionNr, length, unitOfMeasure, minVal, maxVal, block) {
+    async createIDMState(stateName, writable = false, description, functionNr, length, factor, unitOfMeasure, minVal, maxVal, block) {
         await this.setObjectNotExistsAsync(stateName, {
             type: 'state',
             common: {
@@ -110,7 +111,7 @@ class IdmMultitalent002 extends utils.Adapter {
             native: {},
         });  
 
-        this.stateNameMap.set(stateName, { function: functionNr, writable: writable, length: length, unit: unitOfMeasure, min: minVal, max: maxVal, block: block});
+        this.stateNameMap.set(stateName, { function: functionNr, writable: writable, length: length, factor: factor, unit: unitOfMeasure, min: minVal, max: maxVal, block: block});
         //this.log.debug('added to stateNameMap: ' + this.namespace + '.' + stateName + ' === ' + JSON.stringify(this.stateNameMap.get(stateName)));
         if (writable) {
             this.log.silly('subscribing to state ' + stateName + ' ***************');
@@ -655,7 +656,7 @@ class IdmMultitalent002 extends utils.Adapter {
      */
     sendValue(definition, value) {
         if (definition.writable) {
-        //this.log.debug('********* all prerequisites met, enqueuing data to be sent');
+        this.log.info('********* all prerequisites met, enqueuing data to be sent, value = ' + value + ' factor = ' + definition.factor);
         this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length, definition.factor));
         }
     }
