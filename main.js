@@ -650,13 +650,13 @@ class IdmMultitalent002 extends utils.Adapter {
     //    }
     // }
     /**
-     * @param {{ function: any; length: any; writable: any}} definition
+     * @param {{ function: any; length: any; writable: any; factor: any}} definition
      * @param {string | number | boolean | null} value
      */
     sendValue(definition, value) {
         if (definition.writable) {
         //this.log.debug('********* all prerequisites met, enqueuing data to be sent');
-        this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length));
+        this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length, definition.factor));
         }
     }
 
