@@ -51,8 +51,11 @@ class IdmMultitalent002 extends utils.Adapter {
     maxWrites = 5;  // max values to be set in one "loop"
     requestInitDelay = 700;
     requestDataBlockDelay = 700;
-    requestDataContentDelay = 1500;
-    maxRequestDataContentDelay = 2500;
+    normalDataContentDelay = 1400; // for normal datablocks
+    slowDataContentDelay = 2209; // for longer datablocks 
+    currentDataContentDelay = this.normalDataContentDelay;
+    maxNormalDataContentDelay = 2500;
+    maxSlowDataContentDelay = 4009;
     stateNameMap = new Map();
 
     idmProtocolState = -1; 
@@ -253,15 +256,21 @@ class IdmMultitalent002 extends utils.Adapter {
         }
     }
 
+;
     // request a particular data block
     /**
      * @param {string} dataBlock
      */
      request_data_block(dataBlock) {
         if (dataBlock === '07') {
-            this.log.info('requesting data block ' + dataBlock + ' requestDataContentDelay currently ' + this.requestDataContentDelay);
+            this.log.info('requesting data block ' + dataBlock + ' normalDataContentDelay ' + this.normalDataContentDelay + ' slow... ' + this.slowDataContentDelay);
         } else {
             this.log.debug('requesting data block ' + dataBlock);
+        }
+        if (dataBlock === '04') { // todo: make this configurable! Currently if we request Datablock 04 we give the control more time to prepare the data
+            this.currentDataContentDelay = this.slowDataContentDelay;
+        } else {
+            this.currentDataContentDelay = this.normalDataContentDelay;
         }
         // this.send_init(); // directly send init, no delay needed
         // assume that the answer is sent within one second
@@ -366,7 +375,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             }
             this.idmProtocolState = 4;
-            setTimeout(this.request_data_content.bind(this), this.requestDataContentDelay); // request the data content
+            setTimeout(this.request_data_content.bind(this), this.currentDataContentDelay); // request the data content
             return;
         }
         if (protocolState === 'S1') { // have to be in idmProtocolState 6
@@ -416,9 +425,15 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         } else {
             if (protocolState ==='E1' || protocolState === 'E2') {
-                this.log.warn('data content request error, trying to increase wait time. Now: ' + this.requestDataContentDelay +
-                                ', Max: ' + this.maxRequestDataContentDelay + ', New: ' + (this.requestDataContentDelay + 50));
-                this.requestDataContentDelay = Math.min(this.requestDataContentDelay + 50, this.maxRequestDataContentDelay);
+                if (this.currentDataContentDelay === this.slowDataContentDelay) {
+                    this.log.warn('data content request error on slow datablocks, trying to increase wait time. Now: ' + this.currentDataContentDelay +
+                                    ', Max: ' + this.maxSlowDataContentDelay + ', New: ' + (this.slowDataContentDelay + 50));
+                    this.slowDataContentDelay = Math.min(this.slowDataContentDelay + 50, this.maxSlowDataContentDelay);
+                } else {
+                    this.log.warn('data content request error on normal datablocks, trying to increase wait time. Now: ' + this.currentDataContentDelay +
+                                    ', Max: ' + this.maxNormalDataContentDelay + ', New: ' + (this.normalDataContentDelay + 50));
+                    this.requestDataContentDelay = Math.min(this.normalDataContentDelay + 50, this.maxNormalDataContentDelay);
+                }
                 this.idmProtocolState = 0;
                 this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 return;
