@@ -22,7 +22,7 @@ Currently following versions are supported (if your version is not listed but yo
 * TERRA061001  - idm712 (idm712100)... supported, one experimental installation
 * EVR-II071102 - idm750 (idm750100)... experimentally, no known installation, issues with data definitions
 * EVR-II100201 - EVR752 (EVR752101)... support in development currently, ATTENTION: unstable as of May 2023
-* ????130601   - ?????? (?????????)... new version my control will be updated in November 2023, so soon after it should be supported
+* ????130601   - S_H726 (S_H726100)... new version my control will be updated in November 2023, so soon after it should be supported
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
@@ -47,6 +47,10 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) preparing version 130601 support
+* (zloe) updated dependencies
+
 ### 1.0.4 (2023-10-30)
 * (zloe) writing values fix to include scaling factor in datastructure
 
