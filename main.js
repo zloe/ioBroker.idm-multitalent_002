@@ -52,7 +52,7 @@ class IdmMultitalent002 extends utils.Adapter {
     requestInitDelay = 600;
     requestDataBlockDelay = 600;
     normalDataContentDelay = 800; // for all datablocks
-    retryDataContentDelay = 200; // for all datablocks
+    retryDataContentDelay = 250; // for all datablocks
     maxRetries = 20; //adter that many retries we start requesting data from scratch
     totalRetries = 0;
     totalRequests = 0;
@@ -311,7 +311,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.requestingSensorData = true;
         }
 
-        setTimeout(this.request_data_block.bind(this, datablockToRequest), this.requestInitDelay);
+        setTimeout(this.request_data_block.bind(this, datablockToRequest), this.requestDataBlockDelay);
 
     }
 
