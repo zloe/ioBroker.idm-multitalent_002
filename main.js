@@ -54,6 +54,8 @@ class IdmMultitalent002 extends utils.Adapter {
     normalDataContentDelay = 800; // for all datablocks
     retryDataContentDelay = 200; // for all datablocks
     maxRetries = 20; //adter that many retries we start requesting data from scratch
+    totalRetries = 0;
+    totalRequests = 0;
     stateNameMap = new Map();
 
     idmProtocolState = -1; 
@@ -261,7 +263,8 @@ class IdmMultitalent002 extends utils.Adapter {
      */
      request_data_block(dataBlock) {
         if (dataBlock === '07') {
-            this.log.info('requesting data block ' + dataBlock);
+            this.log.info('requesting data block ' + dataBlock + ', total requests ' + this.totalRequests + 
+                          ', average retries ' + (this.totalRequests > 0 ? this.totalRetries / this.totalRequests : 0));
         } else {
             this.log.debug('requesting data block ' + dataBlock);
         }
@@ -367,6 +370,7 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             this.idmProtocolState = 4;
             this.retry_count = 0;
+            this.totalRequests ++;
             setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
             return;
         }
@@ -383,6 +387,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             }
             this.retry_count++;
+            this.totalRetries++;
             this.log.debug('retry data request ' + this.retry_count);
             this.idmProtocolState = 4;
             setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
