@@ -383,7 +383,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             }
             this.retry_count++;
-            this.log.debug('retry data request');
+            this.log.debug('retry data request ' + this.retry_count);
             this.idmProtocolState = 4;
             setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
             return;
