@@ -47,7 +47,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.1.1 (2023-11-04)
 * (zloe) optimizing protocol
 * (zloe) updated dependencies
 
