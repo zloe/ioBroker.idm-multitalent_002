@@ -49,13 +49,11 @@ class IdmMultitalent002 extends utils.Adapter {
     connectedToIDM;
     sendQueue = new Queue();
     maxWrites = 5;  // max values to be set in one "loop"
-    requestInitDelay = 700;
-    requestDataBlockDelay = 700;
-    normalDataContentDelay = 1400; // for normal datablocks
-    slowDataContentDelay = 2209; // for longer datablocks 
-    currentDataContentDelay = this.normalDataContentDelay;
-    maxNormalDataContentDelay = 2500;
-    maxSlowDataContentDelay = 4009;
+    requestInitDelay = 600;
+    requestDataBlockDelay = 600;
+    normalDataContentDelay = 800; // for all datablocks
+    retryDataContentDelay = 200; // for all datablocks
+    maxRetries = 20; //adter that many retries we start requesting data from scratch
     stateNameMap = new Map();
 
     idmProtocolState = -1; 
@@ -263,20 +261,11 @@ class IdmMultitalent002 extends utils.Adapter {
      */
      request_data_block(dataBlock) {
         if (dataBlock === '07') {
-            this.log.info('requesting data block ' + dataBlock + ' normalDataContentDelay ' + this.normalDataContentDelay + ' slow... ' + this.slowDataContentDelay);
+            this.log.info('requesting data block ' + dataBlock);
         } else {
             this.log.debug('requesting data block ' + dataBlock);
         }
-        if (dataBlock === '04') { // todo: make this configurable! Currently if we request Datablock 04 we give the control more time to prepare the data
-            this.currentDataContentDelay = this.slowDataContentDelay;
-        } else {
-            this.currentDataContentDelay = this.normalDataContentDelay;
-        }
-        // this.send_init(); // directly send init, no delay needed
-        // assume that the answer is sent within one second
-        // TODO: this needs to be done in receive data, ...
         setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
-        
     }
 
     lastSettingsIndex = 0; // used to iterate settings data blocks
@@ -340,10 +329,12 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     need_to_send_data = false;
+    retry_count = 0;
     // callback for data received from control
     // this will be the main method for handling the state machine and communication with the heatpump
     // we have the "internal" receiving state ( 1.. receiving data, 2.. receiving checksum, 3.. finished, all above 3 are error states)
     // then the protocolState ( 
+    //      NR.. data request not ready, retry!
     //      E0.. too short packet, 
     //      E1.. request data error, 
     //      E2.. request data - invalid response, 
@@ -375,7 +366,26 @@ class IdmMultitalent002 extends utils.Adapter {
                 return;
             }
             this.idmProtocolState = 4;
-            setTimeout(this.request_data_content.bind(this), this.currentDataContentDelay); // request the data content
+            this.retry_count = 0;
+            setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
+            return;
+        }
+        if (protocolState === 'NR') {
+            if (this.idmProtocolState !== 5) {
+                this.log.warn('receive_data: wrong state, should be in 5 but we are in ' + this.idmProtocolState + ' resetting connection');
+                this.setConnected(false, true);
+                return;
+            }
+            if (this.retry_count > this.maxRetries) {
+                this.log.warn('too many data content request retries (' + this.retry_count + '), retry whole request.');
+                this.idmProtocolState = 0;
+                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                return;
+            }
+            this.retry_count++;
+            this.log.debug('retry data request');
+            this.idmProtocolState = 4;
+            setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
             return;
         }
         if (protocolState === 'S1') { // have to be in idmProtocolState 6
@@ -425,15 +435,7 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         } else {
             if (protocolState ==='E1' || protocolState === 'E2') {
-                if (this.currentDataContentDelay === this.slowDataContentDelay) {
-                    this.log.warn('data content request error on slow datablocks, trying to increase wait time. Now: ' + this.currentDataContentDelay +
-                                    ', Max: ' + this.maxSlowDataContentDelay + ', New: ' + (this.slowDataContentDelay + 50));
-                    this.slowDataContentDelay = Math.min(this.slowDataContentDelay + 50, this.maxSlowDataContentDelay);
-                } else {
-                    this.log.warn('data content request error on normal datablocks, trying to increase wait time. Now: ' + this.currentDataContentDelay +
-                                    ', Max: ' + this.maxNormalDataContentDelay + ', New: ' + (this.normalDataContentDelay + 50));
-                    this.requestDataContentDelay = Math.min(this.normalDataContentDelay + 50, this.maxNormalDataContentDelay);
-                }
+                this.log.warn('data content request error, retry whole request.');
                 this.idmProtocolState = 0;
                 this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 return;

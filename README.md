@@ -47,6 +47,10 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) optimizing protocol
+* (zloe) updated dependencies
+
 ### 1.1.0 (2023-11-02)
 * (zloe) initial version TERRA130601 - S_H726100 support
 * (zloe) updated dependencies
