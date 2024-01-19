@@ -48,7 +48,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.2.0 (2024-01-19)
 * (zloe) adding support for idm722100
 
 ### 1.1.1 (2023-11-04)
