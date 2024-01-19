@@ -20,6 +20,7 @@ Read sensor data and read and write settings of a iDM heatpump with multitalent.
 Currently following versions are supported (if your version is not listed but you are interested please contact me):
 * TERRA050701  - idm701 (idm701100)... mostly supported, one installation, running since April 6th, 2022
 * TERRA061001  - idm712 (idm712100)... supported, one experimental installation
+* EVR-070110   - idm722 (idm722100)... in development
 * EVR-II071102 - idm750 (idm750100)... experimentally, no known installation, issues with data definitions
 * EVR-II100201 - EVR752 (EVR752101)... support in development currently, ATTENTION: unstable as of May 2023
 * TERRA130601  - S_H726 (S_H726100)... supported for most values with 2 heating circuits
@@ -47,6 +48,9 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) adding support for idm722100
+
 ### 1.1.1 (2023-11-04)
 * (zloe) optimizing protocol
 * (zloe) updated dependencies
@@ -126,7 +130,7 @@ Settings of the serial adapter:
 ## License
 MIT License
 
-Copyright (c) 2023 zloe <klaus@zloebl.net>
+Copyright (c) 2024 zloe <klaus@zloebl.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -242,4 +246,4 @@ For later updates, the above procedure is not necessary. Just do the following:
 1. Overwrite the changed files in the adapter directory (`/opt/iobroker/node_modules/iobroker.idm-multitalent_002`)
 1. Execute `iobroker upload idm-multitalent_002` on the ioBroker host
 
-Copyright (c) 2023 zloe <klaus@zloebl.net>
+Copyright (c) 2024 zloe <klaus@zloebl.net>
