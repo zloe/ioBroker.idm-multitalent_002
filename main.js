@@ -408,7 +408,10 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             this.idmProtocolState = 0;
             this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
-            if (!this.need_to_send_data) this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+            if (!this.need_to_send_data) {
+                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.log.debug('set time to send init in order to request next data block');
+            }
             return;
         }
         var text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
@@ -423,7 +426,10 @@ class IdmMultitalent002 extends utils.Adapter {
 
             this.idmProtocolState = 0;
             this.need_to_send_data= this.write_data_to_heatpump(!this.need_to_send_data);
-            if (!this.need_to_send_data) this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+            if (!this.need_to_send_data) {
+                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.log.debug('set time to send init in order to request next data block');
+            }
             return;
         }
         if (text.slice(0,1) ==="V") { // received answer to init message, if the first one after connection set the state
@@ -441,6 +447,7 @@ class IdmMultitalent002 extends utils.Adapter {
             }
             if (this.need_to_send_data) {
                 this.need_to_send_data = this.write_data_to_heatpump(false);
+                this.log.debug('checked if we have to send data after init reply received');
             }
             if (!this.need_to_send_data) {
                 this.request_data();                
@@ -459,8 +466,10 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
         }
       } else if (state > 3) {
+        this.log.warn('wrong state in receiving data, state is ' + state + ' resetting the transmission and retrying to continue communication');
         idm.reset();
-      }
+        this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
+    }
 
     }
 
