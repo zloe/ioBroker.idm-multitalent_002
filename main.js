@@ -50,7 +50,7 @@ class IdmMultitalent002 extends utils.Adapter {
     sendQueue = new Queue();
     maxWrites = 5;  // max values to be set in one "loop"
     requestInitDelay = 600;
-    requestDataBlockDelay = 600;
+    requestDataBlockDelay = 1000;
     normalDataContentDelay = 850; // for all datablocks
     retryDataContentDelay = 250; // for all datablocks
     currentRequests = 0;
@@ -83,6 +83,22 @@ class IdmMultitalent002 extends utils.Adapter {
         }
     }
 
+    speedAdjusted = false;
+    AdjustSpeed() {
+        if (this.speedAdjusted) return;
+        var factor = idm.speed[this.version];
+        if (factor != null) {
+            if (factor != 100 && factor > 0) {
+                this.log.info('adjusting speed to ' + factor + '%');
+                factor = 100 / factor;
+                this.requestInitDelay =         Math.round(this.requestInitDelay * factor);
+                this.requestDataBlockDelay =    Math.round(this.requestDataBlockDelay * factor);
+                this.normalDataContentDelay =   Math.round(this.normalDataContentDelay * factor);
+                this.retryDataContentDelay =    Math.round(this.retryDataContentDelay * factor);
+                this.speedAdjusted = true;
+            }
+        }
+    }
     setIDMState(stateName, value) {
         this.setStateAsync(stateName, value, true);
     }
@@ -159,6 +175,11 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     sendSetValueMessage(item) {
+        if (this.sendSetValueMessageTimeout1 == null) {
+            this.sendSetValueMessageTimeout2 = null;
+        } else {
+            this.sendSetValueMessageTimeout1 = null;
+        }
         if (this.idmProtocolState !== 2 && this.idmProtocolState !== 0) {
             this.log.warn('wrong state, should be in 2 but we are in ' + this.idmProtocolState + ' resetting connection');
             this.setConnected(false, true);
@@ -196,13 +217,13 @@ class IdmMultitalent002 extends utils.Adapter {
             if (this.send_state === 0) {
                 this.itemToBeSent = this.sendQueue.dequeue();
                 this.log.info('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
-                if (this.client) setTimeout(this.send_init.bind(this), this.setValueDelay);
+                if (this.client) this.sendInitTimer = setTimeout(this.send_init.bind(this), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 1) {
-                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
+                if (this.client) this.sendSetValueMessageTimeout1 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 2) {
-                if (this.client) setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
+                if (this.client) this.sendSetValueMessageTimeout2 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
                 this.send_state=0;
                 this.send_count++;
             }
@@ -218,8 +239,15 @@ class IdmMultitalent002 extends utils.Adapter {
         this.send_init();
     }
 
+    sendInitTimer;
+    sendDataBlockRequestTimer;
+    sendDataContentTimer;
+    sendSetValueMessageTimeout1;
+    sendSetValueMessageTimeout2;
+
     // send the init message to the control
     send_init() {
+        this.sendInitTimer = null;
         if (this.connectedToIDM === false) {
             this.log.info('sending initial init message to heatpump');
         }
@@ -244,6 +272,7 @@ class IdmMultitalent002 extends utils.Adapter {
      * @param {string} dataBlock
      */
     send_data_block_request(dataBlock) {
+        this.sendDataBlockRequestTimer = null;
         if (this.idmProtocolState !== 2) {
             if (this.idmProtocolState == -1) { this.log.info('send_data_block_request: not connected, ignore'); return;}
             this.log.warn('send_data_block_request: wrong state, should be in 2 but we are in ' + this.idmProtocolState + ' resetting connection');
@@ -273,7 +302,7 @@ class IdmMultitalent002 extends utils.Adapter {
         } else {
             this.log.debug('requesting data block ' + dataBlock);
         }
-        setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
+        this.sendDataBlockRequestTimer = setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
     }
 
     lastSettingsIndex = 0; // used to iterate settings data blocks
@@ -316,12 +345,13 @@ class IdmMultitalent002 extends utils.Adapter {
             this.requestingSensorData = true;
         }
 
-        setTimeout(this.request_data_block.bind(this, datablockToRequest), this.requestDataBlockDelay);
+        this.request_data_block(datablockToRequest);
 
     }
 
     // send a data content request to the control
     request_data_content() {
+        this.sendDataContentTimer = null;
         if (this.idmProtocolState !== 4) {
             if (this.idmProtocolState == -1) { this.log.info('request_data_content: not connected, ignore'); return;}
             this.log.warn('request_data_content: wrong state, should be in 4 but we are in ' + this.idmProtocolState + ' resetting connection');
@@ -341,7 +371,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // callback for data received from control
     // this will be the main method for handling the state machine and communication with the heatpump
     // we have the "internal" receiving state ( 1.. receiving data, 2.. receiving checksum, 3.. finished, all above 3 are error states)
-    // then the protocolState ( 
+    // then the protocolState  (derived from received data) ( 
     //      NR.. data request not ready, retry!
     //      E0.. too short packet, 
     //      E1.. request data error, 
@@ -350,7 +380,7 @@ class IdmMultitalent002 extends utils.Adapter {
     //      R1.. request data ok, 
     //      S1.. set value ok, 
     //      U1.. unknown response)
-    // and the idmProtocolState 
+    // and the idmProtocolState (derived from what "we" requested)
     //      -1.. not connected
     //       0.. idle or data received --> 1 or 6
     //       1.. init sent, waiting for answer --> 2
@@ -361,8 +391,8 @@ class IdmMultitalent002 extends utils.Adapter {
     //       6.. data set value sent, waiting for ack  --> 0
     receive_data(data) {
       var state = idm.add_to_packet(data);
-      this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
       if (state == 3) { // data packed received completely, let's check what we've got
+        this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
         var received_data = idm.get_data_packet();
         idm.reset();   // reset the packet reader to be ready for the next packet
         var protocolState = idm.protocol_state(received_data);
@@ -377,7 +407,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.retry_count = 0;
             this.totalRequests ++;
             this.currentRequests ++;
-            setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
+            this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
             return;
         }
         if (protocolState === 'NR') {
@@ -389,7 +419,7 @@ class IdmMultitalent002 extends utils.Adapter {
             if (this.retry_count > this.maxRetries) {
                 this.log.warn('too many data content request retries (' + this.retry_count + '), retry whole request.');
                 this.idmProtocolState = 0;
-                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 return;
             }
             this.retry_count++;
@@ -397,7 +427,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.currentRetries++;
             this.log.debug('retry data request ' + this.retry_count);
             this.idmProtocolState = 4;
-            setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
+            this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
             return;
         }
         if (protocolState === 'S1') { // have to be in idmProtocolState 6
@@ -409,8 +439,8 @@ class IdmMultitalent002 extends utils.Adapter {
             this.idmProtocolState = 0;
             this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
             if (!this.need_to_send_data) {
-                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
-                this.log.debug('set time to send init in order to request next data block');
+                this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.log.debug('set timer to send init in order to request next data block');
             }
             return;
         }
@@ -427,7 +457,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.idmProtocolState = 0;
             this.need_to_send_data= this.write_data_to_heatpump(!this.need_to_send_data);
             if (!this.need_to_send_data) {
-                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 this.log.debug('set time to send init in order to request next data block');
             }
             return;
@@ -444,6 +474,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.setStateAsync('idm_control_version', this.version, true);
                 this.setConnected(true);
                 this.CreateStates();
+                this.AdjustSpeed();
             }
             if (this.need_to_send_data) {
                 this.need_to_send_data = this.write_data_to_heatpump(false);
@@ -456,21 +487,27 @@ class IdmMultitalent002 extends utils.Adapter {
             if (protocolState ==='E1' || protocolState === 'E2') {
                 this.log.warn('data content request error, retry whole request.');
                 this.idmProtocolState = 0;
-                this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
+                this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay);
                 return;
             }
             this.log.warn('not sure what to do, idm-protocol-state ' + this.idmProtocolStateToText());
             this.log.warn('unknown protocol state ' + protocolState + ' data=' + text);
             this.log.warn('trying to send init message to restart communication');
             this.idmProtocolState = 0;
-            this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
+            this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
         }
       } else if (state > 3) {
+        this.log.debug('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
         this.log.warn('wrong state in receiving data, state is ' + state + ' resetting the transmission and retrying to continue communication');
         idm.reset();
-        this.idmProtocolState = 0;
-        this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
-    }
+        // clear all timers to avoid confusion
+        if (this.sendInitTimer) {this.clearTimeout(this.sendInitTimer);this.sendInitTimer = null;}
+        if (this.sendDataBlockRequestTimer) {this.clearTimeout(this.sendDataBlockRequestTimer);this.sendDataBlockRequestTimer = null;}
+        if (this.sendDataContentTimer) {this.clearTimeout(this.sendDataContentTimer);this.sendDataContentTimer = null;}
+        if (this.sendSetValueMessageTimeout1) {this.clearTimeout(this.sendSetValueMessageTimeout1);this.sendSetValueMessageTimeout1 = null;}
+        if (this.sendSetValueMessageTimeout2) {this.clearTimeout(this.sendSetValueMessageTimeout2);this.sendSetValueMessageTimeout2 = null;}
+        this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);        
+      }
 
     }
 
