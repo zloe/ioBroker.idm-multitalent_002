@@ -48,7 +48,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.2.2 (2024-01-21)
 * (zloe) fix handling of data transmission problems which lead to stopping requesting data
 
 ### 1.2.1 (2024-01-20)
