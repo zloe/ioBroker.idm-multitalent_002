@@ -500,6 +500,7 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
         this.log.warn('wrong state in receiving data, state is ' + state + ' resetting the transmission and retrying to continue communication');
         idm.reset();
+        this.idmProtocolState = 0;
         // clear all timers to avoid confusion
         if (this.sendInitTimer) {this.clearTimeout(this.sendInitTimer);this.sendInitTimer = null;}
         if (this.sendDataBlockRequestTimer) {this.clearTimeout(this.sendDataBlockRequestTimer);this.sendDataBlockRequestTimer = null;}
