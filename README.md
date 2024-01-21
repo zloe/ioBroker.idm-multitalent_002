@@ -48,7 +48,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.2.4 (2024-01-21)
 * (zloe) further improve logging and handling of transmission errors
 
 ### 1.2.3 (2024-01-21)
