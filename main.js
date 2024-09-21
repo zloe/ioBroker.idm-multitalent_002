@@ -391,7 +391,7 @@ class IdmMultitalent002 extends utils.Adapter {
     receive_data(data) {
       // first set reset the reconnectTimer as we received data and then set it again immediately
       this.setReconnectHandlerTimeout();
-      
+
       var state = idm.add_to_packet(data);
       if (state == 3) { // data packed received completely, let's check what we've got
         this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
@@ -530,6 +530,7 @@ class IdmMultitalent002 extends utils.Adapter {
      * restart communication after heatpump or serial server were offline
      */
     reconnectHandler() {
+        this.log.info('reconnection attempt from reconnect-timer');
         this.setConnected(false, true);
     }
     /**
@@ -544,21 +545,22 @@ class IdmMultitalent002 extends utils.Adapter {
         this.log.debug('setting connected state to: ' + this.connectedToIDM);
 
         if (isConnected === false) {
-          if (this.client) this.client.destroy();
-          this.client = null;
-          this.idmProtocolState = -1;
-          if (reconnect) {
-            this.log.info('reconnection requested');
-            if (this.resendInterval) {
-                clearInterval(this.resendInterval);
-                this.resendInterval = undefined;
+            if (this.client) this.client.destroy();
+            this.client = null;
+            this.idmProtocolState = -1;
+            if (reconnect) {
+                this.log.info('reconnection requested');
+                if (this.resendInterval) {
+                    clearInterval(this.resendInterval);
+                    this.resendInterval = undefined;
+                }
+                if(!this.reconnectTimer) {
+                    this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+                    this.log.info('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
+                }
             }
-            if(!this.reconnectTimer) {
-                this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
-                this.log.info('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
-            }
-          }
         }
+            
         this.setState('info.connection', this.connectedToIDM, true, (err) => {
           // analyse if the state could be set (because of permissions)
           if (err && this.log) this.log.error('Can not update connected state: ' + err);
@@ -577,15 +579,15 @@ class IdmMultitalent002 extends utils.Adapter {
           }
         }
       } else {
-          if (isConnected === false && this.resendInterval) {
+          if (isConnected === false) {
               this.idmProtocolState = -1;
               this.log.info('waiting for answer from heatpump, got disconnected from TCP to SERIAL adapter, stopping resend and try to reconnect');
-              clearInterval(this.resendInterval);
+              if (this.resendInterval) clearInterval(this.resendInterval);
               this.resendInterval = undefined;
-              if(!this.reconnectTimer) {
-                this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
-                this.log.info('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
-            }
+
+              if (this.reconnectTimer) this.clearTimeout(this.reconnectTimer);
+              this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+              this.log.info('reconnect timer set to ' + this.config.reconnectinterval + ' sec');
           }
       }
 
@@ -650,7 +652,7 @@ class IdmMultitalent002 extends utils.Adapter {
     
     }
 
-    reconnectTimer; // timer for tcp connection retries
+
     resendInterval;    // time for missing answers from heatpump
 
     socketRecycleTime = 5000;
@@ -662,19 +664,20 @@ class IdmMultitalent002 extends utils.Adapter {
     }
 
     startConnection() {
-        if (this.client) this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
-
+        if (this.client) {
+            this.client.connect(this.config.tcpserverport, this.config.tcpserverip, this.socketConnectHandler.bind(this));
+            this.client.on('error', this.socketErrorHandler.bind(this));
+        }
         // create an timeout if connection does not get established after specified timeout
         this.reconnectTimer = setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
     }
 
     socketConnectHandler() {
-        this.log.debug('connection established');
+        this.log.info('connection established');
         if (this.client) {
             this.client.on('data', this.receive_data.bind(this));
             this.client.on('close', this.socketCloseHandler.bind(this));
             this.client.on('disconnect', this.socketDisconnectHandler.bind(this));
-            this.client.on('error', this.socketErrorHandler.bind(this));
         }
         if (this.reconnectTimer) {
             this.log.debug('clearing reconnect timer as we are connected');
@@ -700,6 +703,8 @@ class IdmMultitalent002 extends utils.Adapter {
 
     socketErrorHandler() {
         this.idmProtocolState = -1;
+        this.log.info('connection error');
+        this.setConnected(false, true);
     }
 
     /**

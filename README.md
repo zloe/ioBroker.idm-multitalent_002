@@ -49,7 +49,7 @@ Settings of the serial adapter:
 
 ## Changelog
 ### **WORK IN PROGRESS**
-* (zloe) ???
+* (zloe) fixed reconnect handling
 
 ### 1.2.5 (2024-01-21)
 * (zloe) further fixes in error handling
