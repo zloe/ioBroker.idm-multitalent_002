@@ -42,7 +42,6 @@ class IdmMultitalent002 extends utils.Adapter {
         this.on('unload', this.onUnload.bind(this));
     }
 
-
     statesCreated;
     statesSubscribed;
     version;
@@ -390,6 +389,9 @@ class IdmMultitalent002 extends utils.Adapter {
     //       5.. data content request sent, waiting for data --> 0 
     //       6.. data set value sent, waiting for ack  --> 0
     receive_data(data) {
+      // first set reset the reconnectTimer as we received data and then set it again immediately
+      this.setReconnectHandlerTimeout();
+      
       var state = idm.add_to_packet(data);
       if (state == 3) { // data packed received completely, let's check what we've got
         this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
@@ -512,6 +514,24 @@ class IdmMultitalent002 extends utils.Adapter {
 
     }
 
+    reconnectTimer;
+    /**
+     * set restartHandler timeout
+     */
+    setReconnectHandlerTimeout() {
+        if (this.reconnectTimer) {
+            this.clearTimeout(this.reconnectTimer);
+            this.log.debug('cleared reconnect timer');
+        }
+        this.reconnectTimer = setTimeout(this.reconnectHandler.bind(this), this.config.reconnectinterval * 1000);
+        this.log.debug('set new reconnect timer');
+    }
+    /**
+     * restart communication after heatpump or serial server were offline
+     */
+    reconnectHandler() {
+        this.setConnected(false, true);
+    }
     /**
      * when connected, then we start the data readout from the heatpump here with a call to "handle_communication"
      * @param {boolean} isConnected
