@@ -48,7 +48,7 @@ Settings of the serial adapter:
 ```
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.2.6 (2024-09-21)
 * (zloe) fixed reconnect handling
 
 ### 1.2.5 (2024-01-21)
