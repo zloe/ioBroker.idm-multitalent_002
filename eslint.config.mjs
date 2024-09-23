@@ -2,14 +2,26 @@ export default [
   {
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'module'
+      sourceType: 'module',
+      globals: {
+        // Mocha globals
+        describe: 'readonly',
+        it: 'readonly',
+        before: 'readonly',
+        after: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly'
+      }
     },
-    env: {
-      es2021: true,
-      node: true,
-      mocha: true
+    linterOptions: {
+      // Set Node.js global variables
+      globals: {
+        global: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        module: 'readonly'
+      }
     },
-    plugins: [],
     rules: {
       indent: ['error', 4, { SwitchCase: 1 }],
       'no-console': 'off',
