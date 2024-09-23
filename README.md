@@ -19,12 +19,14 @@ IDM agreed to the publishing of this work.
 Read sensor data and read and write settings of a iDM heatpump with multitalent.002 control.
 
 Currently following versions are supported (if your version is not listed but you are interested please contact me):
-* TERRA050701  - idm701 (idm701100)... supported, one installation
-* TERRA061001  - idm712 (idm712100)... supported, one installation
-* EVR-070110   - idm722 (idm722100)... supported, one installation
-* EVR-II071102 - idm750 (idm750100)... experimentally, no known installation, issues with data definitions
-* EVR-II100201 - EVR752 (EVR752101)... support in development currently, one experimental installation
-* TERRA130601  - S_H726 (S_H726100)... supported, one installation
+| SW Name | ID in firmware | status |
+| :------ | -------------- | -----: |
+| TERRA050701 | idm701 (idm701100) | supported, one installation |
+| TERRA061001 | idm712 (idm712100) | supported, one installation |
+| EVR-070110 | idm722 (idm722100) | supported, one installation |
+| EVR-II071102 | idm750 (idm750100) | experimentally, no known installation, issues with data definitions |
+| EVR-II100201 | EVR752 (EVR752101) | support in development currently, one experimental installation |
+| TERRA130601 | S_H726 (S_H726100) | supported, one installation |
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
