@@ -10,12 +10,9 @@ export default [
         before: 'readonly',
         after: 'readonly',
         beforeEach: 'readonly',
-        afterEach: 'readonly'
-      }
-    },
-    linterOptions: {
-      // Set Node.js global variables
-      globals: {
+        afterEach: 'readonly',
+
+        // Node.js globals
         global: 'readonly',
         process: 'readonly',
         __dirname: 'readonly',
