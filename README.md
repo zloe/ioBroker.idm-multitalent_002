@@ -20,7 +20,7 @@ Read sensor data and read and write settings of a iDM heatpump with multitalent.
 
 Currently following versions are supported (if your version is not listed but you are interested please contact me):
 | SW Name | ID in firmware | status |
-| :------ | -------------- | -----: |
+| :------ | :------------- | :----- |
 | TERRA050701 | idm701 (idm701100) | supported, one installation |
 | TERRA061001 | idm712 (idm712100) | supported, one installation |
 | EVR-070110 | idm722 (idm722100) | supported, one installation |
