@@ -1,6 +1,5 @@
 export default [
   {
-    root: true,
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module'
