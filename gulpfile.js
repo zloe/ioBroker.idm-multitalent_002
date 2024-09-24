@@ -76,7 +76,7 @@ function writeWordJs(data, src) {
             let line = '';
             for (const lang in data[word]) {
                 if (data[word].hasOwnProperty(lang)) {
-                    line += '"' + lang + '": "' + padRight(data[word][lang].replace(/"/g, '\\"').replace(/\\/g, '\\\\') + '",', 50) + ' ';
+                    line += '"' + lang + '": "' + padRight(data[word][lang].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",', 50) + ' ';
                 }
             }
             if (line) {
