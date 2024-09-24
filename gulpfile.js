@@ -32,7 +32,7 @@ function lang2data(lang) {
         if (lang.hasOwnProperty(w)) {
             count++;
             const key = '    "' + w.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": ';
-            str += key + '"' + lang[w].replace(/"/g, '\\"') + '",\n';
+            str += key + '"' + lang[w].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",\n';
         }
     }
     if (!count) {
