@@ -1,6 +1,3 @@
-import tsParser from "@typescript-eslint/parser";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
-
 export default [
     {
         files: [
@@ -34,10 +31,6 @@ export default [
             'prefer-const': 'error',
             quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
             semi: ['error', 'always'],
-
-            // TypeScript-specific rules
-            "@typescript-eslint/no-unused-vars": "error",
-            "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
         }
     }
 ];
