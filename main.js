@@ -156,7 +156,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // create the states
     async CreateStates() {
         this.log.debug('creating states');
-        let dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+        const dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
 
         if (!dataBlocks) {
             this.log.warn('no data blocks defined, no states will be created');
@@ -165,7 +165,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
         idm.mapStatenames(this.version, this.createIDMState.bind(this));
         await dataBlocks.forEach(async element => {
-            let stateName = 'Data_block_' + idm_u.get_byte(element);
+            const stateName = 'Data_block_' + idm_u.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
                 type: 'state',
                 common: {
@@ -194,7 +194,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setConnected(false, true);
             return;
         }
-        let message = new Uint8Array(item.length);
+        const message = new Uint8Array(item.length);
         for (let i = 0; i < item.length; i++) {
             message[i] = item[i];
         }
@@ -269,7 +269,7 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
 
-        let init_message = idm.create_init_message();
+        const init_message = idm.create_init_message();
         this.log.silly('init message: ' + idm.get_protocol_string(init_message));
         if (this.client) {
             this.client.write(init_message);
@@ -294,7 +294,7 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
         this.log.debug('sending request');
-        let requestMessage = idm.create_request_data_block_message(dataBlock);
+        const requestMessage = idm.create_request_data_block_message(dataBlock);
         if (this.client) {
             this.client.write(requestMessage);
             this.idmProtocolState = 3;
@@ -327,7 +327,7 @@ class IdmMultitalent002 extends utils.Adapter {
         let datablockToRequest = '';
         // request loop for all known sensor data blocks
         if (this.requestingSensorData) {
-            let dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
+            const dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
             if (!dataBlocks) {
                 this.log.warn('no sensor data blocks defined, no data will be requested');
                 this.requestingSensorData = false;
@@ -346,7 +346,7 @@ class IdmMultitalent002 extends utils.Adapter {
         } else {
 
             // request the next settings datablock
-            let dataBlocks = idm.getSettingsDataBlocks(this.version);
+            const dataBlocks = idm.getSettingsDataBlocks(this.version);
             if (!dataBlocks) {
                 this.log.info('no settings data blocks defined, no settings data will be requested');
                 this.requestingSensorData = true;
@@ -373,7 +373,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setConnected(false, true);
             return;
         }
-        let message = idm.create_request_data_content_message();
+        const message = idm.create_request_data_content_message();
         this.log.debug('requesting data content');
         if (this.client) {
             this.client.write(message);
@@ -408,12 +408,12 @@ class IdmMultitalent002 extends utils.Adapter {
         // first set reset the reconnectTimer as we received data and then set it again immediately
         this.setReconnectHandlerTimeout();
 
-        let state = idm.add_to_packet(data);
+        const state = idm.add_to_packet(data);
         if (state == 3) { // data packed received completely, let's check what we've got
             this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
-            let received_data = idm.get_data_packet();
+            const received_data = idm.get_data_packet();
             idm.reset(); // reset the packet reader to be ready for the next packet
-            let protocolState = idm.protocol_state(received_data);
+            const protocolState = idm.protocol_state(received_data);
             this.log.debug('protocol state ' + protocolState);
             if (protocolState === 'R1') { // successful data request, we have to be in state 3 and move to 4
                 if (this.idmProtocolState !== 3) {
@@ -462,7 +462,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 }
                 return;
             }
-            let text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
+            const text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
             this.log.debug('received data: ' + received_data.length + ' - ' + text);
             if (protocolState.slice(0, 4) == 'Data') { // received a data block, setting the according state
                 if (this.idmProtocolState !== 5) {
