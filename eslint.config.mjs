@@ -1,5 +1,9 @@
 export default [
     {
+        files: [
+          "./*.{js,ts}",     // Include JavaScript files in the root folder
+          "lib/**/*.{js,ts}" // Include JavaScript files in the lib folder and subfolders
+        ],            
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
