@@ -31,7 +31,7 @@ function lang2data(lang) {
     for (const w in lang) {
         if (lang.hasOwnProperty(w)) {
             count++;
-            const key = '    "' + w.replace(/"/g, '\\"') + '": ';
+            const key = '    "' + w.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": ';
             str += key + '"' + lang[w].replace(/"/g, '\\"') + '",\n';
         }
     }
