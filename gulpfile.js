@@ -72,7 +72,7 @@ function writeWordJs(data, src) {
     text += 'systemDictionary = {\n';
     for (const word in data) {
         if (data.hasOwnProperty(word)) {
-            text += '    ' + padRight('"' + word.replace(/"/g, '\\"') + '": {', 50);
+            text += '    ' + padRight('"' + word.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": {', 50);
             let line = '';
             for (const lang in data[word]) {
                 if (data[word].hasOwnProperty(lang)) {
