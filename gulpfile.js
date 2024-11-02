@@ -31,8 +31,8 @@ function lang2data(lang) {
     for (const w in lang) {
         if (lang.hasOwnProperty(w)) {
             count++;
-            const key = '    "' + w.replace(/"/g, '\\"') + '": ';
-            str += key + '"' + lang[w].replace(/"/g, '\\"') + '",\n';
+            const key = '    "' + w.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": ';
+            str += key + '"' + lang[w].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",\n';
         }
     }
     if (!count) {
@@ -72,11 +72,12 @@ function writeWordJs(data, src) {
     text += 'systemDictionary = {\n';
     for (const word in data) {
         if (data.hasOwnProperty(word)) {
-            text += '    ' + padRight('"' + word.replace(/"/g, '\\"') + '": {', 50);
+            text += '    ' + padRight('"' + word.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": {', 50);
             let line = '';
             for (const lang in data[word]) {
                 if (data[word].hasOwnProperty(lang)) {
-                    line += '"' + lang + '": "' + padRight(data[word][lang].replace(/"/g, '\"').replace(/\/g, '\\') + '",', 50) + ' ';                }
+                    line += '"' + lang + '": "' + padRight(data[word][lang].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",', 50) + ' ';
+                }
             }
             if (line) {
                 line = line.trim();
@@ -210,7 +211,7 @@ async function translateNotExisting(obj, baseText, yandex) {
     }
 
     if (t) {
-        for (let l in languages) {
+        for (const l in languages) {
             if (!obj[l]) {
                 const time = new Date().getTime();
                 obj[l] = await translate(t, l, yandex);
@@ -292,9 +293,9 @@ gulp.task('translate', async function (done) {
     if (iopackage && iopackage.common) {
         if (iopackage.common.news) {
             console.log('Translate News');
-            for (let k in iopackage.common.news) {
+            for (const k in iopackage.common.news) {
                 console.log('News: ' + k);
-                let nw = iopackage.common.news[k];
+                const nw = iopackage.common.news[k];
                 await translateNotExisting(nw, null, yandex);
             }
         }
@@ -308,14 +309,14 @@ gulp.task('translate', async function (done) {
         }
 
         if (fs.existsSync('./admin/i18n/en/translations.json')) {
-            let enTranslations = require('./admin/i18n/en/translations.json');
-            for (let l in languages) {
+            const enTranslations = require('./admin/i18n/en/translations.json');
+            for (const l in languages) {
                 console.log('Translate Text: ' + l);
                 let existing = {};
                 if (fs.existsSync('./admin/i18n/' + l + '/translations.json')) {
                     existing = require('./admin/i18n/' + l + '/translations.json');
                 }
-                for (let t in enTranslations) {
+                for (const t in enTranslations) {
                     if (!existing[t]) {
                         existing[t] = await translate(enTranslations[t], l, yandex);
                     }
