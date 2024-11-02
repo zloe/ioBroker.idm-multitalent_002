@@ -51,7 +51,7 @@ class IdmMultitalent002 extends utils.Adapter {
     requestInitDelay = 600;
     requestDataBlockDelay = 1000;
     normalDataContentDelay = 850; // for all datablocks
-    retryDataContentDelay = 250; // for all datablocks
+    retryDataContentDelay = 270; // for all datablocks
     currentRequests = 0;
     currentRetries = 0;
     maxRetries = 20; //adter that many retries we start requesting data from scratch
