@@ -51,7 +51,7 @@ class IdmMultitalent002 extends utils.Adapter {
     maxWrites = 5; // max values to be set in one "loop"
     requestInitDelay = 600;
     requestDataBlockDelay = 1000;
-    normalDataContentDelay = 850; // for all datablocks
+    normalDataContentDelay = 900; // for all datablocks
     retryDataContentDelay = 270; // for all datablocks
     currentRequests = 0;
     currentRetries = 0;
