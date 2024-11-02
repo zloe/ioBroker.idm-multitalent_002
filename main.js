@@ -51,8 +51,8 @@ class IdmMultitalent002 extends utils.Adapter {
     maxWrites = 5; // max values to be set in one "loop"
     requestInitDelay = 600;
     requestDataBlockDelay = 1000;
-    normalDataContentDelay = 850; // for all datablocks
-    retryDataContentDelay = 250; // for all datablocks
+    normalDataContentDelay = 1000; // for all datablocks
+    retryDataContentDelay = 300; // for all datablocks
     currentRequests = 0;
     currentRetries = 0;
     maxRetries = 20; //after that many retries we start requesting data from scratch
@@ -308,7 +308,7 @@ class IdmMultitalent002 extends utils.Adapter {
         if (dataBlock === '07') {
             this.log.info('requesting data block ' + dataBlock + ', total requests ' + this.totalRequests +
                 ', current retries ' + this.currentRetries + ' for ' + this.currentRequests + ' requests' +
-                ', average retries ' + (this.totalRequests > 0 ? this.totalRetries / this.totalRequests : 0));
+                ', average retries ' + (this.totalRequests > 0 ? Math.round(this.totalRetries / this.totalRequests * 100)/100 : 0));
             this.currentRequests = 0;
             this.currentRetries = 0;
         } else {
