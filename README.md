@@ -51,8 +51,8 @@ Settings of the serial adapter:
 ```
 
 Example screenshots of objects:
-![Heizung](resources/ioBrokerAdapter-Heizung.jpg)
 ![Heizkreis A](resources/ioBrokerAdapter-HKA.jpg)
+![Heizung](resources/ioBrokerAdapter-Heizung.jpg)
 ![Warmwasser](resources/ioBrokerAdapter-Warmwasser.jpg)
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
