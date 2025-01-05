@@ -50,6 +50,12 @@ Settings of the serial adapter:
  UART FIFO      Disable
 ```
 
+Example screenshots of objects:
+![Heizung](resources/ioBrokerAdapter-Heizung.jpg)
+![Heizkreis A](resources/ioBrokerAdapter-HKA.jpg)
+![Warmwasser](resources/ioBrokerAdapter-Warmwasser.jpg)
+![Status](resources/ioBrokerAdapter-Status.jpg)
+
 ## Changelog
 ### 1.2.6 (2024-09-21)
 * (zloe) fixed reconnect handling
