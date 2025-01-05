@@ -38,7 +38,7 @@ During bootup of the heatpump control (e.g. after a power loss) no values should
 
 Example installation:
 
-![system overview](idm%20RS422%20Anschluss.drawio.png)
+![system overview](resources/idm%20RS422%20Anschluss.drawio.png)
 
 Settings of the serial adapter:
 ```
