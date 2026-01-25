@@ -35,7 +35,7 @@
     "chai": "^5.3.3",
     "axios": "^1.13.2",
     "chai-as-promised": "^8.0.2",
-    "eslint": "^9.30.0",
+    "eslint": "^9.39.2",
     "gulp": "^5.0.1",
     "mocha": "^11.7.5",
     "proxyquire": "^2.1.3",
