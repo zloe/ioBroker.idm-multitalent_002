@@ -33,7 +33,7 @@
     "@types/sinon": "^21.0.1",
     "@types/sinon-chai": "^4.0.0",
     "chai": "^6.2.2",
-    "axios": "^1.15.0",
+    "axios": "^1.15.2",
     "chai-as-promised": "^8.0.2",
     "eslint": "^10.2.0",
     "gulp": "^5.0.1",
