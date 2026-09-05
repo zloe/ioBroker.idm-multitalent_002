@@ -7,13 +7,7 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
-const {
-    time
-} = require('console');
 const net = require('net');
-const {
-    isFunction
-} = require('util');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -109,7 +103,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
     }
     setIDMState(stateName, value) {
-        this.setStateAsync(stateName, value, true);
+        this.setStateAsync(stateName, value, true).catch(e => this.log.error('failed to set state ' + stateName + ': ' + e));
     }
 
     /**
@@ -163,8 +157,11 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
 
-        idm.mapStatenames(this.version, this.createIDMState.bind(this));
-        await dataBlocks.forEach(async element => {
+        // Wait for every state to actually be created before flagging statesCreated/statesSubscribed -
+        // Array.prototype.forEach does not await its (async) callback, so this used to mark the states
+        // as created while most of the setObjectNotExistsAsync calls were still in flight.
+        await idm.mapStatenames(this.version, this.createIDMState.bind(this));
+        for (const element of dataBlocks) {
             const stateName = 'Data_block_' + idm_u.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
                 type: 'state',
@@ -177,16 +174,23 @@ class IdmMultitalent002 extends utils.Adapter {
                 },
                 native: {},
             });
-        });
+        }
         this.statesSubscribed = true;
         this.statesCreated = true;
         this.log.debug('states created');
     }
 
+    // Called twice for the same item: once from sendSetValueMessageTimeout1 and once (a bit
+    // later) from sendSetValueMessageTimeout2, because the heatpump seems to need the value
+    // sent a second time in most cases. We don't know which of the two timers fired here, so
+    // we infer it from the fact that timer 1 is guaranteed to fire (and be nulled out) before
+    // timer 2 ever does, and null out whichever timer just triggered this call.
     sendSetValueMessage(item) {
         if (this.sendSetValueMessageTimeout1 == null) {
+            // timer 1 already fired earlier, so this call came from timer 2
             this.sendSetValueMessageTimeout2 = null;
         } else {
+            // this call came from timer 1 firing for the first time
             this.sendSetValueMessageTimeout1 = null;
         }
         if (this.idmProtocolState !== 2 && this.idmProtocolState !== 0) {
@@ -201,7 +205,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
         if (this.client) {
             this.client.write(message);
-            this.log.info('sent: ' + idm.get_protocol_string(message));
+            this.log.debug('sent: ' + idm.get_protocol_string(message));
             this.idmProtocolState = 6;
         }
     }
@@ -225,17 +229,17 @@ class IdmMultitalent002 extends utils.Adapter {
             this.log.debug('********* found data to be sent, state: ' + this.send_state);
             if (this.send_state === 0) {
                 this.itemToBeSent = this.sendQueue.dequeue();
-                this.log.info('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
+                this.log.debug('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
                 if (this.client)
-                    this.sendInitTimer = setTimeout(this.send_init.bind(this), this.setValueDelay);
+                    this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 1) {
                 if (this.client)
-                    this.sendSetValueMessageTimeout1 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
+                    this.sendSetValueMessageTimeout1 = this.setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
                 this.send_state++;
             } else if (this.send_state === 2) {
                 if (this.client)
-                    this.sendSetValueMessageTimeout2 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
+                    this.sendSetValueMessageTimeout2 = this.setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
                 this.send_state = 0;
                 this.send_count++;
             }
@@ -299,7 +303,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.client.write(requestMessage);
             this.idmProtocolState = 3;
         }
-    };
+    }
     // request a particular data block
     /**
      * @param {string} dataBlock
@@ -314,7 +318,7 @@ class IdmMultitalent002 extends utils.Adapter {
         } else {
             this.log.debug('requesting data block ' + dataBlock);
         }
-        this.sendDataBlockRequestTimer = setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
+        this.sendDataBlockRequestTimer = this.setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
     }
 
     lastSettingsIndex = 0; // used to iterate settings data blocks
@@ -324,7 +328,7 @@ class IdmMultitalent002 extends utils.Adapter {
     request_data() {
         this.log.debug('requesting data for ' + this.version);
         this.haveData = true;
-        let datablockToRequest = '';
+        let datablockToRequest;
         // request loop for all known sensor data blocks
         if (this.requestingSensorData) {
             const dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
@@ -335,7 +339,9 @@ class IdmMultitalent002 extends utils.Adapter {
             }
 
             if (!this.statesCreated) {
-                this.CreateStates(); // create the states according to the connected version
+                // not awaited here (this method is not async) - catch so a rejection doesn't
+                // surface as an unhandled promise rejection
+                this.CreateStates().catch(e => this.log.error('failed to create states: ' + e)); // create the states according to the connected version
             }
             datablockToRequest = dataBlocks[this.lastSensorIndex++];
             if (this.lastSensorIndex >= dataBlocks.length) {
@@ -425,7 +431,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.retry_count = 0;
                 this.totalRequests++;
                 this.currentRequests++;
-                this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
+                this.sendDataContentTimer = this.setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
                 return;
             }
             if (protocolState === 'NR') {
@@ -445,7 +451,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.currentRetries++;
                 this.log.debug('retry data request ' + this.retry_count);
                 this.idmProtocolState = 4;
-                this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
+                this.sendDataContentTimer = this.setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
                 return;
             }
             if (protocolState === 'S1') { // have to be in idmProtocolState 6
@@ -470,7 +476,7 @@ class IdmMultitalent002 extends utils.Adapter {
                     this.setConnected(false, true);
                     return;
                 }
-                this.setStateAsync(protocolState, text, true);
+                this.setStateAsync(protocolState, text, true).catch(e => this.log.error('failed to set state ' + protocolState + ': ' + e));
 
                 this.idmProtocolState = 0;
                 this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
@@ -489,9 +495,10 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.idmProtocolState = 2;
                 if (!this.connectedToIDM) {
                     this.version = text.slice(9);
-                    this.setStateAsync('idm_control_version', this.version, true);
+                    this.setStateAsync('idm_control_version', this.version, true)
+                        .catch(e => this.log.error('failed to set idm_control_version: ' + e));
                     this.setConnected(true);
-                    this.CreateStates();
+                    this.CreateStates().catch(e => this.log.error('failed to create states: ' + e));
                     this.AdjustSpeed();
                 }
                 if (this.need_to_send_data) {
@@ -554,7 +561,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.clearTimeout(this.reconnectTimer);
             this.log.debug('cleared reconnect timer');
         }
-        this.reconnectTimer = setTimeout(this.reconnectHandler.bind(this), this.config.reconnectinterval * 1000);
+        this.reconnectTimer = this.setTimeout(this.reconnectHandler.bind(this), this.config.reconnectinterval * 1000);
         this.log.debug('set new reconnect timer');
     }
     /**
@@ -583,7 +590,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 if (reconnect) {
                     this.log.info('reconnection requested');
                     if (this.resendInterval) {
-                        clearInterval(this.resendInterval);
+                        this.clearInterval(this.resendInterval);
                         this.resendInterval = undefined;
                     }
                     if (!this.reconnectTimer) {
@@ -603,12 +610,12 @@ class IdmMultitalent002 extends utils.Adapter {
             if (this.connectedToIDM && this.version) { // connected, set interval for data readout
 
                 if (this.resendInterval) {
-                    clearInterval(this.resendInterval);
+                    this.clearInterval(this.resendInterval);
                     this.resendInterval = undefined;
                 }
                 if (this.reconnectTimer) {
                     this.log.debug('clearing reconnect timeout as we are connected');
-                    clearTimeout(this.reconnectTimer);
+                    this.clearTimeout(this.reconnectTimer);
                     this.reconnectTimer = undefined;
                 }
             }
@@ -617,7 +624,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.idmProtocolState = -1;
                 this.log.info('waiting for answer from heatpump, got disconnected from TCP to SERIAL adapter, stopping resend and try to reconnect');
                 if (this.resendInterval)
-                    clearInterval(this.resendInterval);
+                    this.clearInterval(this.resendInterval);
                 this.resendInterval = undefined;
 
                 if (this.reconnectTimer)
@@ -682,7 +689,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
         // limit restart frequencies to acceptable values
 
-        setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
+        this.setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
 
     }
 
@@ -693,7 +700,7 @@ class IdmMultitalent002 extends utils.Adapter {
     connectAndRead() {
         this.log.debug('trying to connect to ' + this.config.tcpserverip + ':' + this.config.tcpserverport);
         this.client = new net.Socket();
-        setTimeout(this.startConnection.bind(this), this.socketRecycleTime);
+        this.setTimeout(this.startConnection.bind(this), this.socketRecycleTime);
     }
 
     startConnection() {
@@ -702,7 +709,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.client.on('error', this.socketErrorHandler.bind(this));
         }
         // create an timeout if connection does not get established after specified timeout
-        this.reconnectTimer = setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+        this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
     }
 
     socketConnectHandler() {
@@ -714,11 +721,11 @@ class IdmMultitalent002 extends utils.Adapter {
         }
         if (this.reconnectTimer) {
             this.log.debug('clearing reconnect timer as we are connected');
-            clearTimeout(this.reconnectTimer);
+            this.clearTimeout(this.reconnectTimer);
             this.reconnectTimer = undefined;
         }
         // now all is prepared we can start "talking" to our heatpump
-        this.resendInterval = setInterval(this.send_first_init.bind(this), this.config.reconnectinterval * 1000);
+        this.resendInterval = this.setInterval(this.send_first_init.bind(this), this.config.reconnectinterval * 1000);
         this.send_first_init(); // this triggers the first communication with the heatpump
     }
 
@@ -748,22 +755,41 @@ class IdmMultitalent002 extends utils.Adapter {
         try {
             this.setConnected(false);
             if (this.reconnectTimer) {
-                clearTimeout(this.reconnectTimer);
+                this.clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = undefined;
             }
             if (this.resendInterval) {
-                clearInterval(this.resendInterval);
+                this.clearInterval(this.resendInterval);
                 this.resendInterval = undefined;
             }
 
-            // Here you must clear all timeouts or intervals that may still be active
-            // clearTimeout(timeout1);
-            // clearTimeout(timeout2);
-            // ...
-            // clearInterval(interval1);
+            // Clear every other timer the communication state machine may have scheduled.
+            // Leaving any of these running past unload means they can still fire on a
+            // destroyed socket / a terminated adapter instance afterwards.
+            if (this.sendInitTimer) {
+                this.clearTimeout(this.sendInitTimer);
+                this.sendInitTimer = undefined;
+            }
+            if (this.sendDataBlockRequestTimer) {
+                this.clearTimeout(this.sendDataBlockRequestTimer);
+                this.sendDataBlockRequestTimer = undefined;
+            }
+            if (this.sendDataContentTimer) {
+                this.clearTimeout(this.sendDataContentTimer);
+                this.sendDataContentTimer = undefined;
+            }
+            if (this.sendSetValueMessageTimeout1) {
+                this.clearTimeout(this.sendSetValueMessageTimeout1);
+                this.sendSetValueMessageTimeout1 = undefined;
+            }
+            if (this.sendSetValueMessageTimeout2) {
+                this.clearTimeout(this.sendSetValueMessageTimeout2);
+                this.sendSetValueMessageTimeout2 = undefined;
+            }
             this.client && this.client.destroy();
             callback();
         } catch (e) {
+            if (this.log) this.log.error('error during unload: ' + e);
             callback();
         }
     }

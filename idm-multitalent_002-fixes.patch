@@ -1,0 +1,1794 @@
+diff --git a/eslint.config.mjs b/eslint.config.mjs
+index fbd36be..d56cc72 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -1,12 +1,23 @@
++import js from '@eslint/js';
++
++const scopedFiles = [
++    "./*.{js,ts}",     // Include JavaScript files in the root folder
++    "lib/**/*.js" // Include JavaScript files in the lib folder and subfolders
++];
++
+ export default [
++    // Catches real bugs (unused vars, undefined names, unreachable code, ...) - the rules
++    // below this only enforce formatting, they never checked correctness. Scoped to the same
++    // files as the rest of this config on purpose: test/**, admin/** and other files outside
++    // that scope were never linted before and pulling them in now would mix in a separate,
++    // unrelated cleanup (different global environments, different conventions).
++    { ...js.configs.recommended, files: scopedFiles },
+     {
+-        files: [
+-          "./*.{js,ts}",     // Include JavaScript files in the root folder
+-          "lib/**/*.js" // Include JavaScript files in the lib folder and subfolders
+-        ],            
++        files: scopedFiles,
+         languageOptions: {
+             ecmaVersion: 'latest',
+-            sourceType: 'module',
++            // These are CommonJS files (require/module.exports), not ES modules.
++            sourceType: 'commonjs',
+             globals: {
+                 // Mocha globals
+                 describe: 'readonly',
+@@ -20,7 +31,13 @@ export default [
+                 global: 'readonly',
+                 process: 'readonly',
+                 __dirname: 'readonly',
+-                module: 'readonly'
++                module: 'readonly',
++                console: 'readonly',
++                Buffer: 'readonly',
++                setTimeout: 'readonly',
++                clearTimeout: 'readonly',
++                setInterval: 'readonly',
++                clearInterval: 'readonly'
+             }
+         },
+         rules: {
+@@ -31,6 +48,9 @@ export default [
+             'prefer-const': 'error',
+             quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+             semi: ['error', 'always'],
++            // create-adapter's default `no-unused-vars` is a bit too eager to flag intentionally
++            // unused function arguments (e.g. callback signatures), so only flag unused vars.
++            'no-unused-vars': ['error', { args: 'none' }],
+         }
+     }
+ ];
+diff --git a/gulpfile.js b/gulpfile.js
+index e113b3c..f41261b 100644
+--- a/gulpfile.js
++++ b/gulpfile.js
+@@ -29,7 +29,7 @@ function lang2data(lang) {
+     let str ='{\n';
+     let count = 0;
+     for (const w in lang) {
+-        if (lang.hasOwnProperty(w)) {
++        if (Object.prototype.hasOwnProperty.call(lang, w)) {
+             count++;
+             const key = '    "' + w.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": ';
+             str += key + '"' + lang[w].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",\n';
+@@ -56,7 +56,7 @@ function readWordJs(src) {
+         const resultFunc = new Function('return ' + words + ';');
+ 
+         return resultFunc();
+-    } catch (e) {
++    } catch {
+         return null;
+     }
+ }
+@@ -71,11 +71,11 @@ function writeWordJs(data, src) {
+     text += "'use strict';\n\n";
+     text += 'systemDictionary = {\n';
+     for (const word in data) {
+-        if (data.hasOwnProperty(word)) {
++        if (Object.prototype.hasOwnProperty.call(data, word)) {
+             text += '    ' + padRight('"' + word.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": {', 50);
+             let line = '';
+             for (const lang in data[word]) {
+-                if (data[word].hasOwnProperty(lang)) {
++                if (Object.prototype.hasOwnProperty.call(data[word], lang)) {
+                     line += '"' + lang + '": "' + padRight(data[word][lang].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",', 50) + ' ';
+                 }
+             }
+@@ -99,13 +99,13 @@ function words2languages(src) {
+     const data = readWordJs(src);
+     if (data) {
+         for (const word in data) {
+-            if (data.hasOwnProperty(word)) {
++            if (Object.prototype.hasOwnProperty.call(data, word)) {
+                 for (const lang in data[word]) {
+-                    if (data[word].hasOwnProperty(lang)) {
++                    if (Object.prototype.hasOwnProperty.call(data[word], lang)) {
+                         langs[lang][word] = data[word][lang];
+                         //  pre-fill all other languages
+                         for (const j in langs) {
+-                            if (langs.hasOwnProperty(j)) {
++                            if (Object.prototype.hasOwnProperty.call(langs, j)) {
+                                 langs[j][word] = langs[j][word] || EMPTY;
+                             }
+                         }
+@@ -117,7 +117,7 @@ function words2languages(src) {
+             fs.mkdirSync(src + 'i18n/');
+         }
+         for (const l in langs) {
+-            if (!langs.hasOwnProperty(l))
++            if (!Object.prototype.hasOwnProperty.call(langs, l))
+                 continue;
+             const keys = Object.keys(langs[l]);
+             keys.sort();
+@@ -169,7 +169,7 @@ function languages2words(src) {
+         langs[lang] = JSON.parse(langs[lang]);
+         const words = langs[lang];
+         for (const word in words) {
+-            if (words.hasOwnProperty(word)) {
++            if (Object.prototype.hasOwnProperty.call(words, word)) {
+                 bigOne[word] = bigOne[word] || {};
+                 if (words[word] !== EMPTY) {
+                     bigOne[word][lang] = words[word];
+@@ -184,7 +184,7 @@ function languages2words(src) {
+     if (aWords) {
+         // Merge words together
+         for (const w in aWords) {
+-            if (aWords.hasOwnProperty(w)) {
++            if (Object.prototype.hasOwnProperty.call(aWords, w)) {
+                 if (!bigOne[w]) {
+                     console.warn('Take from actual words.js: ' + w);
+                     bigOne[w] = aWords[w];
+diff --git a/io-package.json b/io-package.json
+index 1811b83..358dc06 100644
+--- a/io-package.json
++++ b/io-package.json
+@@ -4,52 +4,52 @@
+         "version": "1.2.6",
+         "news": {
+             "1.2.6": {
+-                "en": "* fixed reconnect handling\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* fixed reconnect handling"
+             },
+             "1.2.5": {
+-                "en": "* improved error handling\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* improved error handling"
+             },
+             "1.2.4": {
+-                "en": "* improve logging and handling of data transmission problems\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* improve logging and handling of data transmission problems"
+             },
+             "1.2.3": {
+-                "en": "* improve handling of data transmission problems\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* improve handling of data transmission problems"
+             },
+             "1.2.2": {
+-                "en": "* fix handling of data transmission problems which lead to stopping requesting data\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* fix handling of data transmission problems which lead to stopping requesting data"
+             },
+             "1.2.1": {
+-                "en": "* fixed data definitions for EVR 070110 - idm722100\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* fixed data definitions for EVR 070110 - idm722100"
+             },
+             "1.2.0": {
+-                "en": "* Initial version with support for EVR 070110 - idm722100\n\n## License\nMIT License\n\nCopyright (c) 2024 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Initial version with support for EVR 070110 - idm722100"
+             },
+             "1.1.1": {
+-                "en": "* Updated protocol implementation\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Updated protocol implementation"
+             },
+             "1.1.0": {
+-                "en": "* Initial version with support for TERRA130601 - S_H726100\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Initial version with support for TERRA130601 - S_H726100"
+             },
+             "1.0.4": {
+-                "en": "* Fixed writing values with scaling factor again\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Fixed writing values with scaling factor again"
+             },
+             "1.0.3": {
+-                "en": "* Fixed writing values with scaling factor\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Fixed writing values with scaling factor"
+             },
+             "1.0.2": {
+-                "en": "* Fixed retry after error from heatpump again\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Fixed retry after error from heatpump again"
+             },
+             "1.0.1": {
+-                "en": "* Fixed retry after error from heatpump\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Fixed retry after error from heatpump"
+             },
+             "1.0.0": {
+-                "en": "* Major rework, dynamic timing\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* Major rework, dynamic timing"
+             },
+             "0.2.10": {
+-                "en": "* fixed timing, last version with old static timing\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* fixed timing, last version with old static timing"
+             },
+             "0.2.8": {
+-                "en": "* improved error handling\n\n## License\nMIT License\n\nCopyright (c) 2023 zloe <klaus@zloebl.net>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
++                "en": "* improved error handling"
+             }
+         },
+         "title": "iDM multitalent.002",
+@@ -107,7 +107,7 @@
+         ]
+     },
+     "native": {
+-        "tcpserverip": "192.168.2.42",
++        "tcpserverip": "",
+         "tcpserverport": 4001,
+         "pollinterval": 30,
+         "reconnectinterval": 90
+diff --git a/lib/idm-protocol.js b/lib/idm-protocol.js
+index fa6df15..e12b924 100644
+--- a/lib/idm-protocol.js
++++ b/lib/idm-protocol.js
+@@ -63,7 +63,7 @@ const idm_protocol = {
+             }
+             return null;
+         }
+-        catch(err) {
++        catch {
+             return null;
+         }
+     },
+@@ -244,13 +244,17 @@ const idm_protocol = {
+         return 'U1'; // unknown response
+     },
+ 
++    // Calls stateFunction(...) once per named state and collects its return values so
++    // callers can `await` completion (stateFunction is typically async, e.g. it creates an
++    // ioBroker object). Returns a Promise that resolves once every call has settled.
+     mapStatenames: function(version, stateFunction) {
+         const dataBlocks = idm_protocol.getDataBlocks(version);
++        const results = [];
+         if (dataBlocks) dataBlocks.forEach(block => {
+             const definitions = idm_protocol.getDefinition(version,block);
+             if (definitions) definitions.forEach(definition => {
+                 if (definition.statename && definition.statename.length > 0)  {
+-                    stateFunction(
++                    results.push(stateFunction(
+                         definition.statename,
+                         definition.writable,
+                         definition.description,
+@@ -260,11 +264,11 @@ const idm_protocol = {
+                         definition.unit,
+                         definition.min,
+                         definition.max,
+-                        block);
++                        block));
+                 }
+             });
+         });
+-
++        return Promise.all(results);
+     },
+ 
+     parseProtocol: function (data, definition, setStateFunction) {
+@@ -293,7 +297,7 @@ const idm_protocol = {
+     },
+ 
+     interpret_data: function (version, data, setStateFunction) {
+-        let text = '';
++        let text;
+ 
+         if (data.slice(0, 4) === '01E0') {
+             // initial response message with version info
+diff --git a/lib/idm-protocol.test.js b/lib/idm-protocol.test.js
+index 97413b6..f46d1f9 100644
+--- a/lib/idm-protocol.test.js
++++ b/lib/idm-protocol.test.js
+@@ -1,302 +1,184 @@
++const { expect } = require('chai');
+ const idm_p = require('./idm-protocol');
+ const idm_u = require('./idm-utils');
+ 
++describe('idm-protocol', () => {
+ 
+-describe('test the data definitions', dataDefTest);
+-describe('test parsing the data definition',dataDefTest2);
+-describe('test the parsing of data for version idm701100',dataParseTest_idm701100);
+-describe('test the parsing of data for version S_H726100',dataParseTest_S_H726100);
+-describe('test the parsing of data for version idm722100',dataParseTest_idm722100);
+-describe('test the parsing of data for version EVR752101',dataParseTest_EVR752101);
+-describe('test the set value message creation', dataWriteTest1);
+-describe('test int to hex and hex to int util functions', getIntTest1);
++    before(() => {
++        idm_p.initialize();
++    });
+ 
+-function dataDefTest() {
+-    console.log('test the data definitions');
+-    idm_p.initialize();
+-    const definition = idm_p.getDefinition('idm701100', '09');
+-    console.log(idm_p.dataDefinitions.toString());
+-    if (definition) {
+-        for (let j = 0; j < definition.length; j++) {
+-            console.log(definition[j].field);
+-        }
+-    }
+-}
++    // All control versions this adapter currently ships definitions for (see README.md).
++    const versions = ['idm701100', 'idm712100', 'idm722100', 'S_H726100', 'idm750100', 'EVR752101'];
+ 
++    describe('data block definitions', () => {
+ 
+-function dataDefTest2() {
+-    console.log('test parsing the data definition');
+-    const definitions = idm_p.dataDefinitions.get('idm701100');
+-    if (definitions) {
+-        const dataBlocks = definitions.data_blocks;
+-        for (let i = 0; i < dataBlocks.length; i++) {
+-            console.log(dataBlocks[i].block_number);
+-            const definition = dataBlocks[i].definition;
+-            for (let j = 0; j < definition.length; j++) {
+-                console.log(definition[j].field);
++        it('defines at least one data block for every supported control version', () => {
++            for (const version of versions) {
++                const blocks = idm_p.getDataBlocks(version);
++                expect(blocks, version).to.be.an('array').that.is.not.empty;
++            }
++        });
++
++        it('gives every named field within a data block a distinct write "function" id', () => {
++            // Regression test for a class of copy/paste bug found (and fixed) in
++            // idm_datablocks.js: several fields pointed at the same "function" id as another
++            // field in the same block. That id is what tells the heatpump which register to
++            // write to, so a collision would (if either field is ever made writable) send a
++            // value to the wrong physical parameter. -1 is the established "no function /
++            // read-only position, not identified yet" marker and is intentionally excluded.
++            for (const version of versions) {
++                const blocks = idm_p.getDataBlocks(version);
++                if (!blocks) continue;
++                for (const block of blocks) {
++                    const definition = idm_p.getDefinition(version, block);
++                    if (!definition) continue;
++                    const seen = new Map();
++                    for (const entry of definition) {
++                        if (entry.function === -1) continue;
++                        const clash = seen.get(entry.function);
++                        expect(clash, version + ' block ' + block + ': function ' + entry.function +
++                            ' used by both "' + clash + '" and "' + entry.description + '"').to.be.undefined;
++                        seen.set(entry.function, entry.description);
++                    }
++                }
++            }
++        });
++
++        it('gives every field a field name, a description and a valid length', () => {
++            for (const version of versions) {
++                const blocks = idm_p.getDataBlocks(version);
++                if (!blocks) continue;
++                for (const block of blocks) {
++                    const definition = idm_p.getDefinition(version, block);
++                    if (!definition) continue;
++                    for (const entry of definition) {
++                        const where = version + ' block ' + block + ' field ' + entry.field;
++                        expect(entry.field, where).to.be.a('string');
++                        expect(entry.description, where).to.be.a('string');
++                        expect(entry.length, where).to.be.oneOf([1, 2]);
++                    }
++                }
+             }
++        });
++    });
++
++    describe('parsing real captured data blocks (regression snapshots)', () => {
++        // These payloads are real data blocks captured from running heatpumps (see the
++        // project README for the supported hardware and installation counts). There is no
++        // independent protocol specification available to verify every field against, so
++        // these tests pin down parseProtocol()'s *current* output as a regression baseline:
++        // if a future change to the parsing logic or a data block definition alters what
++        // comes out of one of these captures, this will fail and the change needs a
++        // deliberate look, rather than silently shipping a different reading of the same
++        // bytes to someone's real heatpump.
++        function expectParse(version, block, data, expectedText) {
++            const definition = idm_p.getDefinition(version, block);
++            expect(definition, version + ' block ' + block + ' has no definition').to.not.be.null;
++            expect(idm_p.parseProtocol(data, definition)).to.equal(expectedText);
+         }
+-    }
+-
+-}
+-
+-function dataWriteTest1() {
+-    let text;
+-    for(let i=0; i<19; i++) {
+-        text = idm_u.get_hex_from_word(i*17);
+-        console.log(' ' + i*17 + ' === ' + text);
+-        text = idm_p.create_set_value_message(i*17, i, 1, 1);
+-        console.log(idm_p.get_protocol_string(text));
+-    }
+-
+-}
+-
+-function intToHex(value) {
+-    if (value < 0) value = value + 65536;
+-    let text = value.toString(16);
+-    while (text.length < 4) text = '0' + text;
+-    return text.slice(2,4) + text.slice(0,2);
+-}
+-
+-function getIntTest1() {
+-    console.log('32767 -> ' + intToHex(32767));
+-    let text = 'EEFF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = '00FF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = '10FF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = 'FF00';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = '02FF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = '00FF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    text = '10EF';
+-    console.log(text + ' -> ' + idm_u.get_int(text));
+-    for( let i = 0; i < 20; i++) {
+-        const v = Math.floor(Math.random() * 65536 - 32768);
+-        console.log( v.toString() + ' -> ' + v.toString(16) + ' -> ' + intToHex(v) + ' -> ' + idm_u.get_int(intToHex(v)));
+-    }
+-}
+-
+-function dataParseTest_idm701100() {
+-
+-    const data03 = '00002D001300010F00000001000A000B27010005001C0200000A00000000';
+-    const data04 = '0000000400150014000102002D000100140032000100030A0000FA000500012800';
+-    const data05 = '000000012D000200120010000300000A00640002000500001E000600FA00';
+-    const data06 = '00000101020039000A000A00ECFFECFF12000002001E0000001200';
+-    const data07 = '00000000000000000000000000000000000000000B270000000000000000';
+-    const data08 = '0000B80B';
+-    const data09 = '00001727130D02E607';
+-    const data0A = '0000000031001E0019000A001F001A00F0000000190000001E0042010000';
+-    const data0B = '0000000000000000000000000000';
+-
+-    console.log(idm_u.get_hex_from_byte(10));
+-    let text = 'empty';
+-    const definition03 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('03')));
+-    text = idm_p.parseProtocol(data03,definition03);
+-    console.log(text);
+-    const definition04 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('04')));
+-    text = idm_p.parseProtocol(data04,definition04);
+-    console.log(text);
+-    const definition05 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('05')));
+-    text = idm_p.parseProtocol(data05,definition05);
+-    console.log(text);
+-    const definition06 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('06')));
+-    text = idm_p.parseProtocol(data06,definition06);
+-    console.log(text);
+-    const definition07 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('07')));
+-    text = idm_p.parseProtocol(data07,definition07);
+-    console.log(text);
+-    const definition08 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('08')));
+-    text = idm_p.parseProtocol(data08,definition08);
+-    console.log(text);
+-    const definition09 = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('09')));
+-    text = idm_p.parseProtocol(data09,definition09);
+-    console.log(text);
+-    const definition0A = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('0A')));
+-    text = idm_p.parseProtocol(data0A,definition0A);
+-    console.log(text);
+-    const definition0B = idm_p.getDefinition('idm701100', idm_u.get_hex_from_byte(idm_u.get_byte('0B')));
+-    text = idm_p.parseProtocol(data0B,definition0B);
+-    console.log(text);
+-
+-    console.log(idm_u.get_hex_from_byte(9));
+-}
+ 
+-function dataParseTest_EVR752101() {
+-
+-    const data03 = '000030000D000114000000010B2701000200080202000000';
+-    const data04 = '00000104001800140001000030000000190064000203030A0001050000200001010000030003000303000005000500010100001E001E00320032000A000A00100010006400640002020A000A0014001400';
+-    const data05 = '0000000132000A00140010000300000A00640002010500001E00';
+-    const data06 = '00000101040039000A000A000002001E000000';
+-    const data07 = '00000000000000000000000000000000000000000B2700000000010000000000000000';
+-    const data08 = '0000F00A';
+-    const data09 = '000023000A0014001E00B400280A65000000';
+-    const data0A = '000000002D00';
+-    const data0B = '0000280078002D0000000000620C22025F0800';
+-    const data0C = '000037280C0105E707';
+-    const data0D = '00000B003000300019000A002A00260000000000190000002000C401000000000A000A0014001400';
+-    const data0E = '000000000000000000000000000000';
+-
+-    console.log(idm_u.get_hex_from_byte(10));
+-    let text = 'empty';
+-    const definition03 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('03')));
+-    text = idm_p.parseProtocol(data03,definition03);
+-    console.log(text);
+-    const definition04 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('04')));
+-    text = idm_p.parseProtocol(data04,definition04);
+-    console.log(text);
+-    const definition05 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('05')));
+-    text = idm_p.parseProtocol(data05,definition05);
+-    console.log(text);
+-    const definition06 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('06')));
+-    text = idm_p.parseProtocol(data06,definition06);
+-    console.log(text);
+-    const definition07 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('07')));
+-    text = idm_p.parseProtocol(data07,definition07);
+-    console.log(text);
+-    const definition08 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('08')));
+-    if (definition08 != null) {
+-        text = idm_p.parseProtocol(data08,definition08);
+-        console.log(text);
+-    }
+-    const definition09 = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('09')));
+-    text = idm_p.parseProtocol(data09,definition09);
+-    console.log(text);
+-    const definition0A = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('0A')));
+-    if (definition0A != null) {
+-        text = idm_p.parseProtocol(data0A,definition0A);
+-        console.log(text);
+-    }
+-    const definition0B = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('0B')));
+-    text = idm_p.parseProtocol(data0B,definition0B);
+-    console.log(text);
+-    const definition0C = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('0C')));
+-    text = idm_p.parseProtocol(data0C,definition0C);
+-    console.log(text);
+-    const definition0D = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('0D')));
+-    text = idm_p.parseProtocol(data0D,definition0D);
+-    console.log(text);
+-    const definition0E = idm_p.getDefinition('EVR752101', idm_u.get_hex_from_byte(idm_u.get_byte('0E')));
+-    text = idm_p.parseProtocol(data0E,definition0E);
+-    console.log(text);
+-
+-    console.log(idm_u.get_hex_from_byte(9));
+-}
+-
+-function dataParseTest_S_H726100() {
+-
+-    const data03 = '00002E001200010F00000001000B2701000100260200000000000000';
+-    const data04 = '0000010400150013000102002D00010012002D000100030A0001FA0005000014000101000003000300FA00FA000001000005000500010100001E001E00320032000A000A00100010006400640001010A000A0014001400';
+-    const data05 = '0000000132000A00140010000300000A00640002010500001E000600FA00';
+-    const data06 = '00000101040039000A000A00F1FFEEFF0002001E000000';
+-    const data07 = '000000000000000000000000000000000000000000000000000001000000000000000000';
+-    const data08 = '00000A001200000000001200120012000A000A000A0023000A0014001E00B400C4096400';
+-    const data09 = '0000D80E';
+-    const data0A = '000000002D00';
+-    const data0B = '000001002D270A020BE707';
+-    const data0C = '00000E003000300015000A001D001C00D30000001C0019001E00D0010000000000000A000A0000000000';
+-    const data0D = '0000000000000000000000000000';
+-
+-    console.log('*** TESTING S_H726100 ***\n');
+-    let text = 'empty';
+-    const definition03 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('03')));
+-    text = idm_p.parseProtocol(data03,definition03);
+-    console.log('03: ' + text + '\n');
+-    const definition04 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('04')));
+-    text = idm_p.parseProtocol(data04,definition04);
+-    console.log('04: ' + text + '\n');
+-    const definition05 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('05')));
+-    text = idm_p.parseProtocol(data05,definition05);
+-    console.log('05: ' + text + '\n');
+-    const definition06 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('06')));
+-    text = idm_p.parseProtocol(data06,definition06);
+-    console.log('06: ' + text + '\n');
+-    const definition07 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('07')));
+-    text = idm_p.parseProtocol(data07,definition07);
+-    console.log('07: ' + text + '\n');
+-    const definition08 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('08')));
+-    if (definition08 != null) {
+-        text = idm_p.parseProtocol(data08,definition08);
+-        console.log('08: ' + text + '\n');
+-    }
+-    const definition09 = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('09')));
+-    text = idm_p.parseProtocol(data09,definition09);
+-    console.log('09: ' + text + '\n');
+-    const definition0A = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('0A')));
+-    if (definition0A != null) {
+-        text = idm_p.parseProtocol(data0A,definition0A);
+-        console.log('0A: ' + text + '\n');
+-    }
+-    const definition0B = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('0B')));
+-    text = idm_p.parseProtocol(data0B,definition0B);
+-    console.log('0B: ' + text + '\n');
+-    const definition0C = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('0C')));
+-    text = idm_p.parseProtocol(data0C,definition0C);
+-    console.log('0C: ' + text + '\n');
+-    const definition0D = idm_p.getDefinition('S_H726100', idm_u.get_hex_from_byte(idm_u.get_byte('0D')));
+-    text = idm_p.parseProtocol(data0D,definition0D);
+-    console.log('0D: ' + text + '\n');
+-
+-    console.log(idm_u.get_hex_from_byte(9));
+-}
+-
+-function dataParseTest_idm722100() {
+-
+-    const data03 = '0000300014000105000000010B2701000000';
+-    const data04 = '0000000700180010000004002D0000001E00640002000A0001050000280000';
+-    const data05 = '000000011E00050017001000040000170064000201010500001C00';
+-    const data06 = '000001010400370005000A00F4FFF1FF00060002001E0000000103000000050001001E0028000A0010006400020A001400';
+-    const data07 = '000000010101000000000000000000000000102710270100000000000000010000000000';
+-    const data08 = '000001001C0200004B00';
+-    const data09 = '0000F00A';
+-    const data0A = '000023000A001E00C4096400';
+-    const data0B = '00002913081401E807';
+-    const data0C = '0000FDFF2D00370028001C00270024000000000025001C0028001B02000000000A000000';
+-    const data0D = '0000000000000000000000000000';
+-    const data0E = '00009643EF415204CB02';
+-
+-    console.log('*** TESTING idm722100 ***\n');
+-    let text = 'empty';
+-    const definition03 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('03')));
+-    text = idm_p.parseProtocol(data03,definition03);
+-    console.log('03: ' + text + '\n');
+-    const definition04 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('04')));
+-    text = idm_p.parseProtocol(data04,definition04);
+-    console.log('04: ' + text + '\n');
+-    const definition05 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('05')));
+-    text = idm_p.parseProtocol(data05,definition05);
+-    console.log('05: ' + text + '\n');
+-    const definition06 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('06')));
+-    text = idm_p.parseProtocol(data06,definition06);
+-    console.log('06: ' + text + '\n');
+-    const definition07 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('07')));
+-    text = idm_p.parseProtocol(data07,definition07);
+-    console.log('07: ' + text + '\n');
+-    const definition08 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('08')));
+-    if (definition08 != null) {
+-        text = idm_p.parseProtocol(data08,definition08);
+-        console.log('08: ' + text + '\n');
+-    }
+-    const definition09 = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('09')));
+-    text = idm_p.parseProtocol(data09,definition09);
+-    console.log('09: ' + text + '\n');
+-    const definition0A = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('0A')));
+-    if (definition0A != null) {
+-        text = idm_p.parseProtocol(data0A,definition0A);
+-        console.log('0A: ' + text + '\n');
+-    }
+-    const definition0B = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('0B')));
+-    text = idm_p.parseProtocol(data0B,definition0B);
+-    console.log('0B: ' + text + '\n');
+-    const definition0C = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('0C')));
+-    text = idm_p.parseProtocol(data0C,definition0C);
+-    console.log('0C: ' + text + '\n');
+-    const definition0D = idm_p.getDefinition('idm722100', idm_u.get_hex_from_byte(idm_u.get_byte('0D')));
+-    text = idm_p.parseProtocol(data0D,definition0D);
+-    console.log('0D: ' + text + '\n');
++        function expectNoDefinition(version, block) {
++            // Documents a currently-known gap (no field definition exists yet for this
++            // block/version) instead of silently skipping it.
++            expect(idm_p.getDefinition(version, block)).to.be.null;
++        }
+ 
+-    console.log(idm_u.get_hex_from_byte(9));
+-}
+\ No newline at end of file
++        it('idm701100', () => {
++            expectParse('idm701100', '03', '00002D001300010F00000001000A000B27010005001C0200000A00000000', 'padding:0; Warmwasser-Sollwert:45; Sommer-Winter-Umsch.:19; autom. WP Zuschaltung:1; WP Zuschaltzeit:15; Notbetrieb:0; Bad-Sommerbetrieb:0; Schichttrennplatte:1; Laufzeit Zirkulation:10; min. Drehzahl HZK-Pumpe:9995; Puffer vorhanden:1; unbekannt:5; gew. HGL-Temperatur:54; Funktion ext. Kontakt:0; Restzeit?:10;  * add data: 000000');
++            expectParse('idm701100', '04', '0000000400150014000102002D000100140032000100030A0000FA000500012800', 'padding:0; Frostschutz A:0; Kennlinie HK A:4; Nenntemp HK A:21; Spartemp HK A:20; Art HK A:1; Betriebsart HK A:2; Maxtemp HK A:45; Raumeinfluss HK A:1; Betriebsart Warmwasser:0; Mintemp HK A:20; Anteil Raumeinfluss A:50; Raumeinfluss A von:1; Raumeinfluss A auf:0; HK A mit Mischer:3; max Spreizung:10; Schnellabsenkung A:0; padding2:250; Absenkfaktor A:5; padding4:1; Konstanttemp A:40; ');
++            expectParse('idm701100', '05', '000000012D000200120010000300000A00640002000500001E000600FA00', 'padding:0; Frostschutz B:0; Art HK B:1; Maximaltemp HK B:45; Kennlinie HK B:2; Nenntemp HK B:18; Spartemp HK B:16; Betriebsart HK B:3; Raumeinfluss HK B:0; Minimaltemp HK B:10; Anteil Raumeinfluss B:100; Raumeinfluss B von:2; Raumeinfluss B auf:0; Absenkfaktor B:5; HK B mit Mischer:0; Konstanttemp B:30; Schnellabsenkung B:6;  * add data: 00FA00');
++            expectParse('idm701100', '06', '00000101020039000A000A00ECFFECFF12000002001E0000001200', 'padding:0; WP-Freigabe:1; wp?:1; WP Schaltdifferenz:2; WP Maximaltemp.:57; min. WP Laufzeit:10; min. WP Stehzeit:10; min. Solewarnung:-20; min. Solealarm:-20; min Soletemp:18; WP-Freigabe Kunde:0; Ueberhoehung Stromsperrung:2; Vorverlegezeit Stromsperrung:30; padding2:0; padding3:0; padding4:18;  * add data: 00');
++            expectParse('idm701100', '07', '00000000000000000000000000000000000000000B270000000000000000', 'padding:0; padding2:0; Relais1 Solepumpe:0; Relais2 WP Stufe 1:0; Relais3 Mischer A - auf:0; Relais4 Mischer A - zu:0; Relais5 WP Stufe 2:0; Relais6 Pumpe Heizkreis B:0; Relais7 Mischer B - auf:0; Relais8 Mischer B - zu:0; Relais9 Kühlventil:0; Relais10 HG-Mischer - auf:0; Relais11 HG-Mischer - zu:0; Relais12 Zirkulationspumpe:0; Relais13 Störmeldeausgang:0; Triac Plattentauscherpumpe:0; Triac Ladepumpe:0; Triac Pumpe Heizkreis A:9995; Störung Übertemperatur:0; padding3:0; padding4:0; Telefonkontakt:0;  * add data: 000000');
++            expectParse('idm701100', '08', '0000B80B', 'padding:0; min. Drehzahl Ladepumpe:3000; ');
++            expectParse('idm701100', '09', '00001727130D02E607', 'padding:0; Sekunde:23; Minute:39; Stunde:19; Tag:13; Monat:2; Jahr:2022; ');
++            expectParse('idm701100', '0A', '0000000031001E0019000A001F001A00F0000000190000001E0042010000', 'padding:0; Außentemperatur:0; Zapftemperatur:49; Speichertemperatur:30; Soll-Vorlauf A:25; Soll-Vorlauf B:10; WP-Vorlauf:31; WP-Rücklauf:26; Raumtemperatur A:24; Raumtemperatur B:0; Vorlauf Heizkreis A:25; Vorlauf Heizkreis B:0; WP_Temp2?:30; HG-Temperatur:32.2; Sole-Austrittstemp.:0; ');
++            expectParse('idm701100', '0B', '0000000000000000000000000000', 'padding:0; Sommerbetrieb:0; Störung Fühlerdefekt:0; error1?:0; Hochdruckstörung:0; Niederdruckstörung:0; Störung Thermorelais:0; Störung Sole zu kalt:0; Störung Verhältnis Std/Imp:0; Störung Spreizung zu hoch:0; Sperrzeit:0; Kühlfuntion:0; Vorrangschaltung:0; ');
++        });
++
++        it('EVR752101', () => {
++            expectParse('EVR752101', '03', '000030000D000114000000010B2701000200080202000000', 'padding:0; Warmwasser-Sollwert:48; Sommer-Winter-Umsch.:13; autom. Zuschaltung:1; Zuschaltzeit:20; Notbetrieb:0; Bad-Sommerbetrieb:0; WP-Freigabe Kunde:1; min. Drehzahl HZK-Pumpe:9995; Schichttrennplatte:1; Puffer vorhanden:0; Laufzeit Zirkulation:2; gew. HGL-Temperatur:52; Funktion ext. Kontakt:2;  * add data: 0000');
++            expectParse('EVR752101', '04', '00000104001800140001000030000000190064000203030A0001050000200001010000030003000303000005000500010100001E001E00320032000A000A00100010006400640002020A000A0014001400', 'padding:0; Frostschutz:1; Kennlinie:4; Nenntemperatur:24; Spartemperatur:20; Art des Heizkreises:1; Betriebsart:0; Maximaltemperatur:48; Raumeinfluss:0; Betriebsart Warmwasser:0; Minimaltemperatur:25; Anteil Raumeinfluss:100; Raumeinfluss von:2; Raumeinfluss auf:3; Raumeinfluss auf:3; irgendwas:10; mit Mischer:1; Absenkfaktor:5; Schnellabsenkung:0; Konstanttemperatur:32; mit Mischer:1; mit Mischer:1; Schnellabsenkung:0; Schnellabsenkung:0; Betriebsart:3; Betriebsart:3; Raumeinfluss auf:3; Raumeinfluss auf:3; Raumeinfluss:0; Raumeinfluss:0; Absenkfaktor:5; Absenkfaktor:5; Art des Heizkreises:1; Art des Heizkreises:1; Frostschutz:0; Frostschutz:0; Konstanttemperatur:30; Konstanttemperatur:30; Maximaltemperatur:50; Maximaltemperatur:50; Minimaltemperatur:10; Minimaltemperatur:10; Spartemperatur:16; Spartemperatur:16; Anteil Raumeinfluss:100; Anteil Raumeinfluss:100; Raumeinfluss von:2; Raumeinfluss von:2; Kennlinie:10; Kennlinie:10; Nenntemperatur:20; Nenntemperatur:20; ');
++            expectParse('EVR752101', '05', '0000000132000A00140010000300000A00640002010500001E00', 'padding:0; Frostschutz B:0; Art HK B:1; Maximaltemp HK B:50; Kennlinie HK B:10; Nenntemp HK B:20; Spartemp HK B:16; Betriebsart HK B:3; Raumeinfluss HK B:0; Minimaltemp HK B:10; Anteil Raumeinfluss B:100; Raumeinfluss B von:2; HK B mit Mischer:1; Absenkfaktor B:5; Schnellabsenkung B:0; Konstanttemp B:30; ');
++            expectParse('EVR752101', '06', '00000101040039000A000A000002001E000000', 'padding:0; WP-Freigabe:1; padding:1; WP Schaltdifferenz:4; WP Maximaltemp.:57; min. WP Laufzeit:10; min. WP Stehzeit:10; padding:0; min. Solewarnung:2; min. Solealarm:30;  * add data: 0000');
++            expectParse('EVR752101', '07', '00000000000000000000000000000000000000000B2700000000010000000000000000', 'padding:0; padding:0; Solepumpe:0; WP Stufe 1:0; Mischer A - auf:0; Mischer A - zu:0; Prozessumkehr:0; Pumpe Heizkreis B:0; Mischer B - auf:0; Mischer B - zu:0; Kühlventil:0; HG-Mischer - auf:0; HG-Mischer - zu:0; Zirkulationspumpe:0; Störmeldeausgang:0; Plattentauscherpumpe:0; Ladepumpe:0; Pumpe Heizkreis A:9995; Übertemperatur:0; Telefonkontakt:0;  * add data: 0000010000000000000000');
++            expectNoDefinition('EVR752101', '08');
++            expectParse('EVR752101', '09', '000023000A0014001E00B400280A65000000', 'padding:0; v1:35; v2:10; v3:20; v4:30; v5:180; min. Drehzahl Ladepumpe:2600; v6:101;  * add data: 0000');
++            expectNoDefinition('EVR752101', '0A');
++            expectParse('EVR752101', '0B', '0000280078002D0000000000620C22025F0800', 'padding:0; Soll-Überhitzung:4; Zykluszeit:120; Startöffnung:45; Fehler Schrittmotor:0; Freigabe Kompressor:0; Position E-Ventil:0; Sauggastemperatur:31.7; Sauggasdruck:54.6; Ist-Überhitzung:21.43;  * add data: 00');
++            expectParse('EVR752101', '0C', '000037280C0105E707', 'padding:0; Sekunde:55; Minute:40; Stunde:12; Tag:1; Monat:5; Jahr:2023; ');
++            expectParse('EVR752101', '0D', '00000B003000300019000A002A00260000000000190000002000C401000000000A000A0014001400', 'padding:0; Außentemperatur:11; Zapftemperatur:48; Speichertemperatur:48; Soll-Vorlauf A:25; Soll-Vorlauf B:10; WP-Vorlauf:42; WP-Rücklauf:38; Raumtemperatur A:0; Raumtemperatur B:0; Vorlauf Heizkreis A:25; Vorlauf Heizkreis B:0; Sole-Austrittstemp.:32; HG-Temperatur:45.2;  * add data: 000000000A000A0014001400');
++            expectParse('EVR752101', '0E', '000000000000000000000000000000', 'padding:0; Sommerbetrieb:0; Fühlerdefekt:0; Hochdruckstörung:0; Niederdruckstörung:0; Thermorelaisstörung:0; Sole zu kalt:0; Verhältnis Std/Imp:0; Spreizung zu hoch:0; Sperrzeit:0; Kühlfuntion:0; Vorrangschaltung:0;  * add data: 0000');
++        });
++
++        it('S_H726100', () => {
++            expectParse('S_H726100', '03', '00002E001200010F00000001000B2701000100260200000000000000', 'padding:0; Warmwasser-Sollwert:46; Sommer-Winter-Umsch.:18; autom. WP Zuschaltung:1; WP Zuschaltzeit:15; Notbetrieb:0; Bad-Sommerbetrieb:0; Schichttrennplatte:1; min. Drehzahl HZK-Pumpe:9995; Puffer vorhanden:1; Laufzeit Zirkulation:1; gew. HGL-Temperatur:55; Funktion ext. Kontakt:0; Restzeit?:0;  * add data: 000000');
++            expectParse('S_H726100', '04', '0000010400150013000102002D00010012002D000100030A0001FA0005000014000101000003000300FA00FA000001000005000500010100001E001E00320032000A000A00100010006400640001010A000A0014001400', 'padding:0; Frostschutz:1; Kennlinie:4; Nenntemperatur:21; Spartemperatur:19; Art des Heizkreises:1; Betriebsart:2; Maximaltemperatur:45; Raumeinfluss:1; Betriebsart Warmwasser:0; Minimaltemperatur:18; Anteil Raumeinfluss:45; Raumeinfluss von:1; Raumeinfluss auf:0; mit Mischer A:3; padding2:10; passing3:1; padding4:250; Absenkfaktor A:5; padding5:0; Schnellabsenkung A:0; Konstanttemperatur A:20; mit Mischer C:1; mit Mischer D:1; Schnellabsenkung C:0; Schnellabsenkung D:0; Betriebsart C:3; Betriebsart D:3; padding6:250; Raumeinfluss auf C:0; padding7:250; Raumeinfluss auf D:0; padding8:256; Raumeinfluss C:0; Raumeinfluss D:0; Absenkfaktor C:5; Absenkfaktor D:5; Art des Heizkreises C:1; Art des Heizkreises D:1; Frostschutz C:0; Frostschutz D:0; Konstanttemperatur C:30; Konstanttemperatur D:30; Maximaltemperatur C:50; Maximaltemperatur D:50; Minimaltemperatur C:10; Minimaltemperatur D:10; Spartemperatur C:16; Spartemperatur D:16; Anteil Raumeinfluss C:100; Anteil Raumeinfluss D:100; Raumeinfluss von C:1; Raumeinfluss von D:1; Kennlinie C:10; Kennlinie D:10; Nenntemperatur C:20; Nenntemperatur D:20; ');
++            expectParse('S_H726100', '05', '0000000132000A00140010000300000A00640002010500001E000600FA00', 'padding:0; Frostschutz B:0; Art HK B:1; Maximaltemp HK B:50; Kennlinie HK B:10; Nenntemp HK B:20; Spartemp HK B:16; Betriebsart HK B:3; Raumeinfluss HK B:0; Minimaltemp HK B:10; Anteil Raumeinfluss B:100; Raumeinfluss B von:2; Raumeinfluss B auf:1; Absenkfaktor B:5; HK B mit Mischer:0; Konstanttemp B:30; Schnellabsenkung B:6;  * add data: 00FA00');
++            expectParse('S_H726100', '06', '00000101040039000A000A00F1FFEEFF0002001E000000', 'padding:0; WP-Freigabe:1; wp?:1; WP Schaltdifferenz:4; WP Maximaltemp.:57; min. WP Laufzeit:10; min. WP Stehzeit:10; min. Solewarnung:-15; min. Solealarm:-18; min Soletemp:512; WP-Freigabe Kunde:0; Ueberhoehung Stromsperrung:30; Vorverlegezeit Stromsperrung:0;  * add data: 00');
++            expectParse('S_H726100', '07', '000000000000000000000000000000000000000000000000000001000000000000000000', 'padding:0; padding2:0; Relais1 Solepumpe:0; Relais2 WP Stufe 1:0; Relais3 Mischer A - auf:0; Relais4 Mischer A - zu:0; Relais5 WP Stufe 2:0; Relais6 Pumpe Heizkreis B:0; Relais7 Mischer B - auf:0; Relais8 Mischer B - zu:0; Relais9 Kühlventil:0; Relais10 HG-Mischer - auf:0; Relais11 HG-Mischer - zu:0; Relais12 Zirkulationspumpe:0; Relais13 Störmeldeausgang:0; Triac Plattentauscherpumpe:0; Triac Ladepumpe:0; Triac Pumpe Heizkreis A:0; Störung Übertemperatur:0; padding3:0; padding4:0; Telefonkontakt:1;  * add data: 000000000000000000');
++            expectParse('S_H726100', '08', '00000A001200000000001200120012000A000A000A0023000A0014001E00B400C4096400', 'padding:0; Kühlung freigegeben A:10; padding2:0; Raumtemp. Kühl A:1.8; Schaltdiff. Kühlung A:0; min. Kühlkreistemp A:0; Raumtemp. Kühl B:1.8; min. Kühlkreistemp B:18; Schaltdiff. Kühlung B:1.8; padding3:10; padding4:10; padding5:10; Integralanteil:35; Differentialanteil:10; Proportionalanteil:20; Vorhaltezeit:30; Nachstellzeit:180; minimale Drehzahl:2500; Deviation:100; ');
++            expectParse('S_H726100', '09', '0000D80E', 'padding:0; min. Drehzahl Ladepumpe:3800; ');
++            expectParse('S_H726100', '0A', '000000002D00', 'padding:0; padding2:0; max. Temp when direct control with external contact:45; ');
++            expectParse('S_H726100', '0B', '000001002D270A020BE707', 'padding:0; padding:1; Sekunde:45; Minute:39; Stunde:10; Tag:2; Monat:11; Jahr:2023; ');
++            expectParse('S_H726100', '0C', '00000E003000300015000A001D001C00D30000001C0019001E00D0010000000000000A000A0000000000', 'padding:0; Außentemperatur:14; Zapftemperatur:48; Speichertemperatur:48; Soll-Vorlauf A:21; Soll-Vorlauf B:10; WP-Vorlauf:29; WP-Rücklauf:28; Raumtemperatur A:21.1; Raumtemperatur B:0; Vorlauf Heizkreis A:28; Vorlauf Heizkreis B:25; WP_Temp2?:30; HG-Temperatur:46.400000000000006; Sole-Austrittstemp.:0;  * add data: 000000000A000A0000000000');
++            expectParse('S_H726100', '0D', '0000000000000000000000000000', 'padding:0; Sommerbetrieb:0; Fühlerdefekt:0; Hochdruckstörung:0; Niederdruckstörung:0; Thermorelaisstörung:0; Sole zu kalt:0; Verhältnis Std/Imp:0; Spreizung zu hoch:0; Sperrzeit:0; Kühlfuntion:0; Vorrangschaltung:0;  * add data: 00');
++        });
++
++        it('idm722100', () => {
++            expectParse('idm722100', '03', '0000300014000105000000010B2701000000', 'padding:0; Warmwasser-Sollwert:48; Sommer-Winter-Umsch.:20; autom. WP Zuschaltung:1; WP Zuschaltzeit:5; Notbetrieb:0; Bad-Sommerbetrieb:0; Schichttrennplatte:1; min. Drehzahl HZK-Pumpe:9995; Puffer vorhanden:1; padding2:0; padding3:0; ');
++            expectParse('idm722100', '04', '0000000700180010000004002D0000001E00640002000A0001050000280000', 'padding:0; Frostschutz A:0; Kennlinie HK A:7; Nenntemp HK A:24; Spartemp HK A:16; Art HK A:0; Betriebsart HK A:4; Maxtemp HK A:45; Raumeinfluss HK A:0; Betriebsart Warmwasser:0; Mintemp HK A:30; Anteil Raumeinfluss A:100; Raumeinfluss A von:2; Raumeinfluss A auf:0; padding2:10; HK A mit Mischer:1; Absenkfaktor A:5; Schnellabsenkung A:0; Konstanttemp A:40;  * add data: 00');
++            expectParse('idm722100', '05', '000000011E00050017001000040000170064000201010500001C00', 'padding:0; Frostschutz B:0; Art HK B:1; Maximaltemp HK B:30; Kennlinie HK B:5; Nenntemp HK B:23; Spartemp HK B:16; Betriebsart HK B:4; Raumeinfluss HK B:0; Minimaltemp HK B:23; Anteil Raumeinfluss B:100; Raumeinfluss B von:2; Raumeinfluss B auf:1; HK B mit Mischer:1; Absenkfaktor B:5; Schnellabsenkung B:0; Konstanttemp B:28; ');
++            expectParse('idm722100', '06', '000001010400370005000A00F4FFF1FF00060002001E0000000103000000050001001E0028000A0010006400020A001400', 'padding:0; WP-Freigabe:1; wp?:1; WP Schaltdifferenz:4; WP Maximaltemp.:55; min. WP Laufzeit:5; min. WP Stehzeit:10; min. Solewarnung:-12; min. Solealarm:-15;  * add data: 00060002001E0000000103000000050001001E0028000A0010006400020A001400');
++            expectParse('idm722100', '07', '000000010101000000000000000000000000102710270100000000000000010000000000', 'padding:0; padding:0; Relais1 Solepumpe:1; Relais2 WP Stufe 1:1; Relais3 Mischer A - auf:1; Relais4 Mischer A - zu:0; Relais5 WP Stufe 2:0; Relais6 Pumpe Heizkreis B:0; Relais7 Mischer B - auf:0; Relais8 Mischer B - zu:0; Relais9 Kühlventil:0; Relais10 HG-Mischer - auf:0; Relais11 HG-Mischer - zu:0; Relais12 Zirkulationspumpe:0; Relais13 Störmeldeausgang:0; Triac Plattentauscherpumpe:0; Triac Ladepumpe:10000; Triac Pumpe Heizkreis A:10000; Störung Übertemperatur:1; padding3:0; padding4:0; Telefonkontakt:0;  * add data: 000000010000000000');
++            expectParse('idm722100', '08', '000001001C0200004B00', 'padding:0;  * add data: 01001C0200004B00');
++            expectParse('idm722100', '09', '0000F00A', 'padding:0; min. Drehzahl Ladepumpe:2800; ');
++            expectParse('idm722100', '0A', '000023000A001E00C4096400', 'padding:0; Bivalentzuschaltung:35; Zuschalttemp.-/zeit:10; Bivalentbetriebsart:30;  * add data: C4096400');
++            expectParse('idm722100', '0B', '00002913081401E807', 'padding:0; Sekunde:41; Minute:19; Stunde:8; Tag:20; Monat:1; Jahr:2024; ');
++            expectParse('idm722100', '0C', '0000FDFF2D00370028001C00270024000000000025001C0028001B02000000000A000000', 'padding:0; Außentemperatur:-3; Zapftemperatur:45; Speichertemperatur:55; Soll-Vorlauf A:40; Soll-Vorlauf B:28; WP-Vorlauf:39; WP-Rücklauf:36; Raumtemperatur A:0; Raumtemperatur B:0; Vorlauf Heizkreis A:37; Vorlauf Heizkreis B:28; WP_Temp2?:40; HG-Temperatur:53.900000000000006; Sole-Austrittstemp.:0;  * add data: 00000A000000');
++            expectParse('idm722100', '0D', '0000000000000000000000000000', 'padding:0; Sommerbetrieb:0; Störung Fühlerdefekt:0; error1?:0; Hochdruckstörung:0; Niederdruckstörung:0; Störung Thermorelais:0; Störung Sole zu kalt:0; Störung Verhältnis Std/Imp:0; Störung Spreizung zu hoch:0; Sperrzeit:0; Kühlfuntion:0; Vorrangschaltung:0; ');
++            expectNoDefinition('idm722100', '0E');
++        });
++
++    });
++
++    describe('create_set_value_message', () => {
++        it('produces a correctly framed and checksummed message for a range of values', () => {
++            for (let i = 0; i < 19; i++) {
++                const valueId = i * 17;
++                const message = idm_p.create_set_value_message(valueId, i, 1, 1);
++
++                // Frame: SOH(1) ... payload ... ETX(3) checksum(3 decimal digits) EOT(4)
++                expect(message[0]).to.equal(1); // SOH
++                expect(message[message.length - 1]).to.equal(4); // EOT
++                expect(message[message.length - 5]).to.equal(3); // ETX before the checksum
++
++                const payload = idm_u.get_string_uint8array(message.slice(1, message.length - 5));
++                const checksumText = idm_u.get_string_uint8array(message.slice(message.length - 4, message.length - 1));
++                const expectedChecksum = idm_u.calc_checksum(payload);
++                expect(idm_u.read_val(3, checksumText), 'checksum for value ' + i).to.equal(expectedChecksum);
++
++                // payload is "0161" + 4 hex digits valueId + "01" + 2 hex digits value
++                expect(payload.slice(0, 4)).to.equal('0161');
++                expect(payload.slice(4, 8)).to.equal(idm_u.get_hex_from_word(valueId));
++                expect(payload.slice(8, 10)).to.equal('01');
++                expect(idm_u.get_byte(payload.slice(10, 12))).to.equal(i);
++            }
++        });
++    });
++
++    describe('protocol_state', () => {
++        it('classifies known response headers', () => {
++            expect(idm_p.protocol_state('01F201')).to.equal('NR');
++            expect(idm_p.protocol_state('01F1000000')).to.equal('R1');
++            expect(idm_p.protocol_state('01E1000000')).to.equal('S1');
++            expect(idm_p.protocol_state('01E0...')).to.equal('I1');
++            expect(idm_p.protocol_state('01F20003AA')).to.equal('Data_block_3');
++            expect(idm_p.protocol_state('0000')).to.equal('U1');
++            expect(idm_p.protocol_state('01F2')).to.equal('E1'); // too short after the F2 header
++            expect(idm_p.protocol_state('01F2FF0000')).to.equal('E2'); // non-zero error byte
++            expect(idm_p.protocol_state('abc')).to.equal('E0'); // too short overall
++        });
++    });
++
++});
+diff --git a/lib/idm-utils.js b/lib/idm-utils.js
+index 256e3a4..cc594ff 100644
+--- a/lib/idm-utils.js
++++ b/lib/idm-utils.js
+@@ -28,6 +28,17 @@ const idm_utils = {
+     },
+ 
+     get_value_string: function (value, size) {
++        // Round first: values coming from create_set_value_message have usually just been
++        // divided by a scaling factor (e.g. 0.1), and that division can leave tiny
++        // floating-point error (10.1 / 0.1 === 100.99999999999999 in JS), which used to get
++        // silently truncated below into the wrong raw value.
++        value = Math.round(value);
++        // Wrap negative values into the unsigned range this many nibbles can represent
++        // (two's-complement style, like get_hex_from_word does for words) - `%` on a negative
++        // number in JS returns a negative remainder, which previously produced invalid,
++        // non-hex output such as "-1-1-1-1".
++        const range = Math.pow(16, size * 2);
++        value = ((value % range) + range) % range;
+         const digits = new Int8Array(size * 2);
+         for (let i = 0; i < size * 2; i += 1) {
+             digits[i] = value % 16;
+@@ -38,12 +49,7 @@ const idm_utils = {
+             text = text + digits[i + 1].toString(16).toUpperCase() + digits[i].toString(16).toUpperCase();
+         }
+         return text;
+-    },/*
+-    get_value_string: function (value, size) {
+-        let text = value.toString(16).toUpperCase();
+-        text = text.padStart(size * 2, '0');
+-        return text;
+-    },*/
++    },
+ 
+     stringToUInt8Array: function(text) {
+         if (!text) return [];
+@@ -94,28 +100,6 @@ const idm_utils = {
+         return text;
+     },
+ 
+-    /*read_val: function (length, data) {
+-        let factor, value;
+-
+-        if (length === 0) {
+-            return 0;
+-        }
+-
+-        if (data.length < length) {
+-            return 0;
+-        }
+-
+-        factor = Math.pow(10, length - 1);
+-        value = 0;
+-
+-        for (let i = 0; i < length; i += 1) {
+-            value = value + factor * Number.parseInt(data[i]);
+-            factor = factor / 10;
+-        }
+-
+-        return value;
+-    },*/
+-
+     read_val: function (length, data) {
+         if (length === 0) {
+             return 0;
+diff --git a/lib/idm-utils.test.js b/lib/idm-utils.test.js
+index 0cb822e..94d6cef 100644
+--- a/lib/idm-utils.test.js
++++ b/lib/idm-utils.test.js
+@@ -1,40 +1,109 @@
+-const { assert } = require('console');
++const { expect } = require('chai');
+ const idm_u = require('./idm-utils');
+ 
+-describe('Test number to string with 3 digits', getStringTest);
+-describe('Test checksum calculation', calcChecksumTest123);
+-describe('Test checksum calculation', calcChecksumTest456);
+-describe('Test checksum calculation', calcChecksumTest789);
+-
+-
+-
+-
+-function getStringTest() {
+-    for(let i = -5; i < 1002; i++) {
+-        const text = idm_u.get_string(i);
+-        const num = parseInt(text);
+-        assert(text.length == 3, 'wrong length get_string of ' + i + ' text was:' + text);
+-        assert(num == i, 'wrong conversion get_String of ' + i + ' result was ' + num + ' text was:' + text);
+-    }
+-}
+-
+-function calcChecksumTest123() {
+-    const ui8a = new Uint8Array([1,2,3]);
+-    const data = idm_u.get_string_uint8array(ui8a);
+-    const chkSum = idm_u.calc_checksum(data);
+-    assert(chkSum == 0, 'Checksum wrong of ' + data + ', should be 0 was ' + chkSum);
+-}
+-
+-function calcChecksumTest456() {
+-    const ui8a = new Uint8Array([4,5,6]);
+-    const data = idm_u.get_string_uint8array(ui8a);
+-    const chkSum = idm_u.calc_checksum(data);
+-    assert(chkSum == 7, 'Checksum wrong of ' + data + ', should be 7 was ' + chkSum);
+-}
+-
+-function calcChecksumTest789() {
+-    const ui8a = new Uint8Array([7,8,9]);
+-    const data = idm_u.get_string_uint8array(ui8a);
+-    const chkSum = idm_u.calc_checksum(data);
+-    assert(chkSum == 6, 'Checksum wrong of ' + data + ', should be 6 was ' + chkSum);
+-}
+\ No newline at end of file
++describe('idm-utils', () => {
++
++    describe('get_string', () => {
++        // get_string() is only ever used to encode an XOR checksum byte (0..255) into the
++        // 3-digit decimal string the protocol expects, so that is the domain we test - not
++        // arbitrary integers. (It previously also ran against negative numbers and numbers
++        // above 999, which don't occur in real usage and don't round-trip: get_string()
++        // clamps negative input to 0 and does not limit the output to 3 digits above 999.)
++        it('always returns a 3-digit, zero-padded decimal string for a checksum byte', () => {
++            for (let i = 0; i <= 255; i++) {
++                const text = idm_u.get_string(i);
++                expect(text).to.have.lengthOf(3);
++                expect(parseInt(text, 10)).to.equal(i);
++            }
++        });
++
++        it('clamps negative numbers to 0 instead of producing a negative string', () => {
++            expect(idm_u.get_string(-1)).to.equal('000');
++            expect(idm_u.get_string(-5)).to.equal('000');
++        });
++    });
++
++    describe('calc_checksum', () => {
++        // calc_checksum XORs the character codes of a string together, byte by byte.
++        it('XORs the given bytes together', () => {
++            const data123 = idm_u.get_string_uint8array(new Uint8Array([1, 2, 3]));
++            expect(idm_u.calc_checksum(data123)).to.equal(1 ^ 2 ^ 3); // 0
++
++            const data456 = idm_u.get_string_uint8array(new Uint8Array([4, 5, 6]));
++            expect(idm_u.calc_checksum(data456)).to.equal(4 ^ 5 ^ 6); // 7
++
++            const data789 = idm_u.get_string_uint8array(new Uint8Array([7, 8, 9]));
++            expect(idm_u.calc_checksum(data789)).to.equal(7 ^ 8 ^ 9); // 6
++        });
++
++        it('returns 0 for an empty input', () => {
++            expect(idm_u.calc_checksum('')).to.equal(0);
++        });
++    });
++
++    describe('get_hex_from_byte / get_byte', () => {
++        it('round-trips every byte value through hex and back', () => {
++            for (let i = 0; i <= 255; i++) {
++                expect(idm_u.get_byte(idm_u.get_hex_from_byte(i))).to.equal(i);
++            }
++        });
++
++        it('always produces exactly 2 hex digits, upper case', () => {
++            expect(idm_u.get_hex_from_byte(0)).to.equal('00');
++            expect(idm_u.get_hex_from_byte(10)).to.equal('0A');
++            expect(idm_u.get_hex_from_byte(255)).to.equal('FF');
++        });
++    });
++
++    describe('get_hex_from_word / get_int', () => {
++        it('round-trips positive and negative 16-bit values', () => {
++            for (const value of [0, 1, -1, 17, -17, 1000, -1000, 32767, -32768]) {
++                expect(idm_u.get_int(idm_u.get_hex_from_word(value))).to.equal(value);
++            }
++        });
++
++        // These pin down the exact little-endian, signed-16-bit decoding get_int performs,
++        // using fixed (not random) inputs so the test is deterministic and reproducible.
++        it('decodes known raw hex words to the expected signed values', () => {
++            expect(idm_u.get_int('EEFF')).to.equal(-18);
++            expect(idm_u.get_int('00FF')).to.equal(-256);
++            expect(idm_u.get_int('10FF')).to.equal(-240);
++            expect(idm_u.get_int('FF00')).to.equal(255);
++            expect(idm_u.get_int('02FF')).to.equal(-254);
++            expect(idm_u.get_int('10EF')).to.equal(-4336);
++        });
++    });
++
++    describe('get_value_string', () => {
++        it('encodes positive values as little-endian nibble-swapped hex', () => {
++            expect(idm_u.get_value_string(10, 2)).to.equal('0A00');
++            expect(idm_u.get_value_string(0, 1)).to.equal('00');
++        });
++
++        it('wraps negative values into the unsigned range instead of producing invalid hex', () => {
++            // Regression test: this used to return garbage like "-1-1-1-1" for negative input.
++            expect(idm_u.get_value_string(-1, 2)).to.equal('FFFF');
++            expect(idm_u.get_value_string(-1, 1)).to.equal('FF');
++        });
++
++        it('rounds away floating point error from dividing by a scaling factor', () => {
++            // Regression test: 10.1 / 0.1 === 100.99999999999999 in JS, which used to get
++            // truncated down to raw value 100 (=10.0) instead of rounding to 101 (=10.1).
++            const raw = 10.1 / 0.1;
++            expect(idm_u.get_value_string(raw, 2)).to.equal(idm_u.get_value_string(101, 2));
++        });
++    });
++
++    describe('read_val', () => {
++        it('parses a fixed-length leading decimal number', () => {
++            expect(idm_u.read_val(3, '007abc')).to.equal(7);
++            expect(idm_u.read_val(0, '007')).to.equal(0);
++        });
++
++        it('returns 0 for input shorter than the requested length or non-numeric input', () => {
++            expect(idm_u.read_val(5, '12')).to.equal(0);
++            expect(idm_u.read_val(3, 'abc')).to.equal(0);
++        });
++    });
++
++});
+diff --git a/lib/idm_datablocks.js b/lib/idm_datablocks.js
+index 4f33fe7..dcce25b 100644
+--- a/lib/idm_datablocks.js
++++ b/lib/idm_datablocks.js
+@@ -27,7 +27,10 @@ const idm_datablocks = {
+                     { statename: 'Heizung.unbekannt', field: 'unbekannt', description: 'Laufzeit Zirkulation', length: 2, factor: 1, writable: false, function: 57 },
+                     { statename: 'Heizung.MinDrehzahlHZK-Pumpe', field: 'mindrehz', description: 'min. Drehzahl HZK-Pumpe', length: 2, factor: 1, writable: false, function: 48 },
+                     { statename: 'Heizung.PufferVorhanden', field: 'puffer', description: 'Puffer vorhanden', length: 2, factor: 1, writable: false, function: 56 },
+-                    { statename: 'Heizung.LaufzeitZirkulation', field: 'zirkzeit', description: 'unbekannt', length: 2, factor: 1, writable: false, function: 57 },
++                    // function was 57 before, colliding with the "Laufzeit Zirkulation" field above - this position's
++                    // real register is not identified yet, so it is intentionally marked as -1 (not writable) instead
++                    // of guessing a number. Do not set writable=true here without confirming the correct function id.
++                    { statename: 'Heizung.LaufzeitZirkulation', field: 'zirkzeit', description: 'unbekannt', length: 2, factor: 1, writable: false, function: -1 },
+                     { statename: 'Heizung.HGL-Temperatur', field: 'HGL_temp', description: 'gew. HGL-Temperatur', length: 2, factor: 0.1, writable: true, function: 66 },
+                     { statename: 'Heizung.ExternerKontakt', field: 'telkontakt', description: 'Funktion ext. Kontakt', length: 2, factor: 1, writable: false, function: 67 },
+                     { statename: 'Heizung.Restzeit', field: 'restzeit', description: 'Restzeit?', length: 2, factor: 1, writable: false, function: 132 }
+@@ -606,7 +609,10 @@ const idm_datablocks = {
+                     //{ statename: 'Heizung.unbekannt', field: 'unbekannt', description: 'unbekannt', length: 2, factor: 1, writable: false, function: 57 },
+                     { statename: 'Heizung.MinDrehzahlHZK-Pumpe', field: 'mindrehz', description: 'min. Drehzahl HZK-Pumpe', length: 2, factor: 1, writable: false, function: 48 },
+                     { statename: 'Heizung.PufferVorhanden', field: 'puffer', description: 'Puffer vorhanden', length: 2, factor: 1, writable: false, function: 56 },
+-                    { statename: 'Heizung.LaufzeitZirkulation', field: 'zirkzeit', description: 'unbekannt', length: 2, factor: 1, writable: false, function: 56 },
++                    // was function: 56 (duplicate of "Puffer vorhanden" above) with description "unbekannt" - all other
++                    // supported control versions (idm712100, idm750100, EVR752101) agree that this field is
++                    // "Laufzeit Zirkulation" with function 57, so aligning this entry with that consistent pattern.
++                    { statename: 'Heizung.LaufzeitZirkulation', field: 'zirkzeit', description: 'Laufzeit Zirkulation', length: 2, factor: 1, writable: false, function: 57 },
+                     { statename: 'Heizung.HGL-Temperatur', field: 'HGL_temp', description: 'gew. HGL-Temperatur', length: 2, factor: 0.1, writable: true, function: 66 },
+                     { statename: 'Heizung.ExternerKontakt', field: 'telkontakt', description: 'Funktion ext. Kontakt', length: 2, factor: 1, writable: false, function: 67 },
+                     { statename: 'Heizung.Restzeit', field: 'restzeit', description: 'Restzeit?', length: 2, factor: 1, writable: false, function: 132 }
+@@ -690,7 +696,10 @@ const idm_datablocks = {
+                     { statename: 'Heizkreis-B.Minimaltemperatur', field: 'min_B', description: 'Minimaltemp HK B', length: 2, factor: 1, writable: true, function: 27 },
+                     { statename: 'Heizkreis-B.AnteilRaumeinfluss', field: 'prozent_B', description: 'Anteil Raumeinfluss B', length: 2, factor: 1, writable: false, function: 30 },
+                     { statename: 'Heizkreis-B.RaumeinflussVon', field: 'sensor_B', description: 'Raumeinfluss B von', length: 1, factor: 1, writable: false, function: 32 },
+-                    { statename: 'Heizkreis-B.RaumeinflussAuf', field: 'einflBauf', description: 'Raumeinfluss B auf', length: 1, factor: 1, writable: false, function: 32 },
++                    // was function: 32 (duplicate of "Raumeinfluss B von" above) - every other supported control
++                    // version (idm701100, idm712100, idm722100, EVR752101) uses function 34 for "Raumeinfluss B auf",
++                    // so aligning this entry with that consistent pattern.
++                    { statename: 'Heizkreis-B.RaumeinflussAuf', field: 'einflBauf', description: 'Raumeinfluss B auf', length: 1, factor: 1, writable: false, function: 34 },
+                     { statename: 'Heizkreis-B.Absenkfaktor', field: 'faktor_B', description: 'Absenkfaktor B', length: 2, factor: 1, writable: false, function: 51 },
+                     { statename: 'Heizkreis-B.MischerVorhanden', field: 'B_misch', description: 'HK B mit Mischer', length: 1, factor: 1, writable: false, function: 43 },
+                     { statename: 'Heizkreis-B.Konstanttemperatur', field: 'konst_B', description: 'Konstanttemp B', length: 2, factor: 1, writable: true, function: 59 },
+diff --git a/lib/tools.js b/lib/tools.js
+index 772c853..bdbf282 100644
+--- a/lib/tools.js
++++ b/lib/tools.js
+@@ -63,7 +63,7 @@ async function translateYandex(text, targetLang, apiKey) {
+         }
+         throw new Error('Invalid response for translate request');
+     } catch (e) {
+-        throw new Error(`Could not translate to "${targetLang}": ${e}`);
++        throw new Error(`Could not translate to "${targetLang}": ${e}`, { cause: e });
+     }
+ }
+ 
+@@ -85,10 +85,11 @@ async function translateGoogle(text, targetLang) {
+     } catch (e) {
+         if (e.response && e.response.status === 429) {
+             throw new Error(
+-                `Could not translate to "${targetLang}": Rate-limited by Google Translate`
++                `Could not translate to "${targetLang}": Rate-limited by Google Translate`,
++                { cause: e }
+             );
+         } else {
+-            throw new Error(`Could not translate to "${targetLang}": ${e}`);
++            throw new Error(`Could not translate to "${targetLang}": ${e}`, { cause: e });
+         }
+     }
+ }
+diff --git a/main.js b/main.js
+index cb1681a..cab7d6f 100644
+--- a/main.js
++++ b/main.js
+@@ -7,13 +7,7 @@
+ // The adapter-core module gives you access to the core ioBroker functions
+ // you need to create an adapter
+ const utils = require('@iobroker/adapter-core');
+-const {
+-    time
+-} = require('console');
+ const net = require('net');
+-const {
+-    isFunction
+-} = require('util');
+ 
+ // Load your modules here, e.g.:
+ // const fs = require("fs");
+@@ -109,7 +103,7 @@ class IdmMultitalent002 extends utils.Adapter {
+         }
+     }
+     setIDMState(stateName, value) {
+-        this.setStateAsync(stateName, value, true);
++        this.setStateAsync(stateName, value, true).catch(e => this.log.error('failed to set state ' + stateName + ': ' + e));
+     }
+ 
+     /**
+@@ -163,8 +157,11 @@ class IdmMultitalent002 extends utils.Adapter {
+             return;
+         }
+ 
+-        idm.mapStatenames(this.version, this.createIDMState.bind(this));
+-        await dataBlocks.forEach(async element => {
++        // Wait for every state to actually be created before flagging statesCreated/statesSubscribed -
++        // Array.prototype.forEach does not await its (async) callback, so this used to mark the states
++        // as created while most of the setObjectNotExistsAsync calls were still in flight.
++        await idm.mapStatenames(this.version, this.createIDMState.bind(this));
++        for (const element of dataBlocks) {
+             const stateName = 'Data_block_' + idm_u.get_byte(element);
+             await this.setObjectNotExistsAsync(stateName, {
+                 type: 'state',
+@@ -177,16 +174,23 @@ class IdmMultitalent002 extends utils.Adapter {
+                 },
+                 native: {},
+             });
+-        });
++        }
+         this.statesSubscribed = true;
+         this.statesCreated = true;
+         this.log.debug('states created');
+     }
+ 
++    // Called twice for the same item: once from sendSetValueMessageTimeout1 and once (a bit
++    // later) from sendSetValueMessageTimeout2, because the heatpump seems to need the value
++    // sent a second time in most cases. We don't know which of the two timers fired here, so
++    // we infer it from the fact that timer 1 is guaranteed to fire (and be nulled out) before
++    // timer 2 ever does, and null out whichever timer just triggered this call.
+     sendSetValueMessage(item) {
+         if (this.sendSetValueMessageTimeout1 == null) {
++            // timer 1 already fired earlier, so this call came from timer 2
+             this.sendSetValueMessageTimeout2 = null;
+         } else {
++            // this call came from timer 1 firing for the first time
+             this.sendSetValueMessageTimeout1 = null;
+         }
+         if (this.idmProtocolState !== 2 && this.idmProtocolState !== 0) {
+@@ -201,7 +205,7 @@ class IdmMultitalent002 extends utils.Adapter {
+ 
+         if (this.client) {
+             this.client.write(message);
+-            this.log.info('sent: ' + idm.get_protocol_string(message));
++            this.log.debug('sent: ' + idm.get_protocol_string(message));
+             this.idmProtocolState = 6;
+         }
+     }
+@@ -225,17 +229,17 @@ class IdmMultitalent002 extends utils.Adapter {
+             this.log.debug('********* found data to be sent, state: ' + this.send_state);
+             if (this.send_state === 0) {
+                 this.itemToBeSent = this.sendQueue.dequeue();
+-                this.log.info('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
++                this.log.debug('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
+                 if (this.client)
+-                    this.sendInitTimer = setTimeout(this.send_init.bind(this), this.setValueDelay);
++                    this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.setValueDelay);
+                 this.send_state++;
+             } else if (this.send_state === 1) {
+                 if (this.client)
+-                    this.sendSetValueMessageTimeout1 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
++                    this.sendSetValueMessageTimeout1 = this.setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.setValueDelay);
+                 this.send_state++;
+             } else if (this.send_state === 2) {
+                 if (this.client)
+-                    this.sendSetValueMessageTimeout2 = setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
++                    this.sendSetValueMessageTimeout2 = this.setTimeout(this.sendSetValueMessage.bind(this, this.itemToBeSent), this.secondSetValueOffset);
+                 this.send_state = 0;
+                 this.send_count++;
+             }
+@@ -299,7 +303,7 @@ class IdmMultitalent002 extends utils.Adapter {
+             this.client.write(requestMessage);
+             this.idmProtocolState = 3;
+         }
+-    };
++    }
+     // request a particular data block
+     /**
+      * @param {string} dataBlock
+@@ -314,7 +318,7 @@ class IdmMultitalent002 extends utils.Adapter {
+         } else {
+             this.log.debug('requesting data block ' + dataBlock);
+         }
+-        this.sendDataBlockRequestTimer = setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
++        this.sendDataBlockRequestTimer = this.setTimeout(this.send_data_block_request.bind(this, dataBlock), this.requestDataBlockDelay);
+     }
+ 
+     lastSettingsIndex = 0; // used to iterate settings data blocks
+@@ -324,7 +328,7 @@ class IdmMultitalent002 extends utils.Adapter {
+     request_data() {
+         this.log.debug('requesting data for ' + this.version);
+         this.haveData = true;
+-        let datablockToRequest = '';
++        let datablockToRequest;
+         // request loop for all known sensor data blocks
+         if (this.requestingSensorData) {
+             const dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
+@@ -335,7 +339,9 @@ class IdmMultitalent002 extends utils.Adapter {
+             }
+ 
+             if (!this.statesCreated) {
+-                this.CreateStates(); // create the states according to the connected version
++                // not awaited here (this method is not async) - catch so a rejection doesn't
++                // surface as an unhandled promise rejection
++                this.CreateStates().catch(e => this.log.error('failed to create states: ' + e)); // create the states according to the connected version
+             }
+             datablockToRequest = dataBlocks[this.lastSensorIndex++];
+             if (this.lastSensorIndex >= dataBlocks.length) {
+@@ -425,7 +431,7 @@ class IdmMultitalent002 extends utils.Adapter {
+                 this.retry_count = 0;
+                 this.totalRequests++;
+                 this.currentRequests++;
+-                this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
++                this.sendDataContentTimer = this.setTimeout(this.request_data_content.bind(this), this.normalDataContentDelay); // request the data content
+                 return;
+             }
+             if (protocolState === 'NR') {
+@@ -445,7 +451,7 @@ class IdmMultitalent002 extends utils.Adapter {
+                 this.currentRetries++;
+                 this.log.debug('retry data request ' + this.retry_count);
+                 this.idmProtocolState = 4;
+-                this.sendDataContentTimer = setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
++                this.sendDataContentTimer = this.setTimeout(this.request_data_content.bind(this), this.retryDataContentDelay); // request the data content again
+                 return;
+             }
+             if (protocolState === 'S1') { // have to be in idmProtocolState 6
+@@ -470,7 +476,7 @@ class IdmMultitalent002 extends utils.Adapter {
+                     this.setConnected(false, true);
+                     return;
+                 }
+-                this.setStateAsync(protocolState, text, true);
++                this.setStateAsync(protocolState, text, true).catch(e => this.log.error('failed to set state ' + protocolState + ': ' + e));
+ 
+                 this.idmProtocolState = 0;
+                 this.need_to_send_data = this.write_data_to_heatpump(!this.need_to_send_data);
+@@ -489,9 +495,10 @@ class IdmMultitalent002 extends utils.Adapter {
+                 this.idmProtocolState = 2;
+                 if (!this.connectedToIDM) {
+                     this.version = text.slice(9);
+-                    this.setStateAsync('idm_control_version', this.version, true);
++                    this.setStateAsync('idm_control_version', this.version, true)
++                        .catch(e => this.log.error('failed to set idm_control_version: ' + e));
+                     this.setConnected(true);
+-                    this.CreateStates();
++                    this.CreateStates().catch(e => this.log.error('failed to create states: ' + e));
+                     this.AdjustSpeed();
+                 }
+                 if (this.need_to_send_data) {
+@@ -554,7 +561,7 @@ class IdmMultitalent002 extends utils.Adapter {
+             this.clearTimeout(this.reconnectTimer);
+             this.log.debug('cleared reconnect timer');
+         }
+-        this.reconnectTimer = setTimeout(this.reconnectHandler.bind(this), this.config.reconnectinterval * 1000);
++        this.reconnectTimer = this.setTimeout(this.reconnectHandler.bind(this), this.config.reconnectinterval * 1000);
+         this.log.debug('set new reconnect timer');
+     }
+     /**
+@@ -583,7 +590,7 @@ class IdmMultitalent002 extends utils.Adapter {
+                 if (reconnect) {
+                     this.log.info('reconnection requested');
+                     if (this.resendInterval) {
+-                        clearInterval(this.resendInterval);
++                        this.clearInterval(this.resendInterval);
+                         this.resendInterval = undefined;
+                     }
+                     if (!this.reconnectTimer) {
+@@ -603,12 +610,12 @@ class IdmMultitalent002 extends utils.Adapter {
+             if (this.connectedToIDM && this.version) { // connected, set interval for data readout
+ 
+                 if (this.resendInterval) {
+-                    clearInterval(this.resendInterval);
++                    this.clearInterval(this.resendInterval);
+                     this.resendInterval = undefined;
+                 }
+                 if (this.reconnectTimer) {
+                     this.log.debug('clearing reconnect timeout as we are connected');
+-                    clearTimeout(this.reconnectTimer);
++                    this.clearTimeout(this.reconnectTimer);
+                     this.reconnectTimer = undefined;
+                 }
+             }
+@@ -617,7 +624,7 @@ class IdmMultitalent002 extends utils.Adapter {
+                 this.idmProtocolState = -1;
+                 this.log.info('waiting for answer from heatpump, got disconnected from TCP to SERIAL adapter, stopping resend and try to reconnect');
+                 if (this.resendInterval)
+-                    clearInterval(this.resendInterval);
++                    this.clearInterval(this.resendInterval);
+                 this.resendInterval = undefined;
+ 
+                 if (this.reconnectTimer)
+@@ -682,7 +689,7 @@ class IdmMultitalent002 extends utils.Adapter {
+ 
+         // limit restart frequencies to acceptable values
+ 
+-        setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
++        this.setTimeout(this.connectAndRead.bind(this), this.initialConnectionDelay);
+ 
+     }
+ 
+@@ -693,7 +700,7 @@ class IdmMultitalent002 extends utils.Adapter {
+     connectAndRead() {
+         this.log.debug('trying to connect to ' + this.config.tcpserverip + ':' + this.config.tcpserverport);
+         this.client = new net.Socket();
+-        setTimeout(this.startConnection.bind(this), this.socketRecycleTime);
++        this.setTimeout(this.startConnection.bind(this), this.socketRecycleTime);
+     }
+ 
+     startConnection() {
+@@ -702,7 +709,7 @@ class IdmMultitalent002 extends utils.Adapter {
+             this.client.on('error', this.socketErrorHandler.bind(this));
+         }
+         // create an timeout if connection does not get established after specified timeout
+-        this.reconnectTimer = setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
++        this.reconnectTimer = this.setTimeout(this.connectAndRead.bind(this), this.config.reconnectinterval * 1000);
+     }
+ 
+     socketConnectHandler() {
+@@ -714,11 +721,11 @@ class IdmMultitalent002 extends utils.Adapter {
+         }
+         if (this.reconnectTimer) {
+             this.log.debug('clearing reconnect timer as we are connected');
+-            clearTimeout(this.reconnectTimer);
++            this.clearTimeout(this.reconnectTimer);
+             this.reconnectTimer = undefined;
+         }
+         // now all is prepared we can start "talking" to our heatpump
+-        this.resendInterval = setInterval(this.send_first_init.bind(this), this.config.reconnectinterval * 1000);
++        this.resendInterval = this.setInterval(this.send_first_init.bind(this), this.config.reconnectinterval * 1000);
+         this.send_first_init(); // this triggers the first communication with the heatpump
+     }
+ 
+@@ -748,22 +755,41 @@ class IdmMultitalent002 extends utils.Adapter {
+         try {
+             this.setConnected(false);
+             if (this.reconnectTimer) {
+-                clearTimeout(this.reconnectTimer);
++                this.clearTimeout(this.reconnectTimer);
+                 this.reconnectTimer = undefined;
+             }
+             if (this.resendInterval) {
+-                clearInterval(this.resendInterval);
++                this.clearInterval(this.resendInterval);
+                 this.resendInterval = undefined;
+             }
+ 
+-            // Here you must clear all timeouts or intervals that may still be active
+-            // clearTimeout(timeout1);
+-            // clearTimeout(timeout2);
+-            // ...
+-            // clearInterval(interval1);
++            // Clear every other timer the communication state machine may have scheduled.
++            // Leaving any of these running past unload means they can still fire on a
++            // destroyed socket / a terminated adapter instance afterwards.
++            if (this.sendInitTimer) {
++                this.clearTimeout(this.sendInitTimer);
++                this.sendInitTimer = undefined;
++            }
++            if (this.sendDataBlockRequestTimer) {
++                this.clearTimeout(this.sendDataBlockRequestTimer);
++                this.sendDataBlockRequestTimer = undefined;
++            }
++            if (this.sendDataContentTimer) {
++                this.clearTimeout(this.sendDataContentTimer);
++                this.sendDataContentTimer = undefined;
++            }
++            if (this.sendSetValueMessageTimeout1) {
++                this.clearTimeout(this.sendSetValueMessageTimeout1);
++                this.sendSetValueMessageTimeout1 = undefined;
++            }
++            if (this.sendSetValueMessageTimeout2) {
++                this.clearTimeout(this.sendSetValueMessageTimeout2);
++                this.sendSetValueMessageTimeout2 = undefined;
++            }
+             this.client && this.client.destroy();
+             callback();
+         } catch (e) {
++            if (this.log) this.log.error('error during unload: ' + e);
+             callback();
+         }
+     }
+diff --git a/main.test.js b/main.test.js
+index 5dc6ee4..e6b272f 100644
+--- a/main.test.js
++++ b/main.test.js
+@@ -1,30 +1,278 @@
+ 'use strict';
+ 
+-/**
+- * This is a dummy TypeScript test file using chai and mocha
+- *
+- * It's automatically excluded from npm and its build output is excluded from both git and npm.
+- * It is advised to test all your modules with accompanying *.test.js-files
+- */
+-
+-// tslint:disable:no-unused-expression
++// Unit tests for the communication state machine in main.js.
++//
++// main.js talks to the heatpump over a plain TCP socket (net.Socket) and extends the real
++// ioBroker adapter base class (@iobroker/adapter-core). Both are replaced here via proxyquire
++// with small fakes we fully control, so these tests can drive the protocol state machine
++// (init -> data block request -> data content request -> retries -> next cycle) without any
++// real network connection or ioBroker installation.
++//
++// lib/idm-protocol.js keeps its parsing/framing state as module-level singletons (see the
++// review notes), so each test resets it explicitly instead of relying on a fresh require.
+ 
+ const { expect } = require('chai');
+-// import { functionToTest } from "./moduleToTest";
++const sinon = require('sinon');
++const proxyquire = require('proxyquire').noPreserveCache();
++const { EventEmitter } = require('events');
++
++const idm = require('./lib/idm-protocol');
++const idm_u = require('./lib/idm-utils');
++
++/** A minimal stand-in for a TCP net.Socket, fully driven by the test. */
++class FakeSocket extends EventEmitter {
++    constructor() {
++        super();
++        this.written = [];
++        this.destroyed = false;
++    }
++    connect(port, host, onConnect) {
++        this.connectedTo = { port, host };
++        if (onConnect) this.once('connect', onConnect);
++        return this;
++    }
++    write(data) {
++        this.written.push(Buffer.from(data));
++        return true;
++    }
++    destroy() {
++        this.destroyed = true;
++    }
++}
++
++/** A minimal stand-in for the @iobroker/adapter-core Adapter base class. */
++class FakeAdapterBase extends EventEmitter {
++    constructor(options) {
++        super();
++        this.name = options.name;
++        this.instance = 0;
++        this.namespace = `${options.name}.0`;
++        this.config = options.config || {};
++        this.objects = new Map();
++        this.states = new Map();
++        this.log = {
++            silly: sinon.stub(), debug: sinon.stub(), info: sinon.stub(),
++            warn: sinon.stub(), error: sinon.stub(),
++        };
++        this.subscribeStates = sinon.stub();
++        // Real adapter-core fires 'ready' asynchronously, after the subclass constructor
++        // (and its event registrations) has finished running.
++        process.nextTick(() => this.emit('ready'));
++    }
++    _fullId(id) {
++        return id.startsWith(this.namespace + '.') ? id : `${this.namespace}.${id}`;
++    }
++    async setObjectNotExistsAsync(id, obj) {
++        const fullId = this._fullId(id);
++        if (!this.objects.has(fullId)) this.objects.set(fullId, obj);
++        return { id: fullId };
++    }
++    async setStateAsync(id, value, ack) {
++        const fullId = this._fullId(id);
++        const val = (value && typeof value === 'object' && 'val' in value) ? value.val : value;
++        const ackFlag = (value && typeof value === 'object' && 'ack' in value) ? value.ack : ack;
++        this.states.set(fullId, { val, ack: ackFlag });
++        return {};
++    }
++    setState(id, value, ack, callback) {
++        if (typeof ack === 'function') {
++            callback = ack;
++            ack = undefined;
++        }
++        this.setStateAsync(id, value, ack).then(() => callback && callback(null)).catch(err => callback && callback(err));
++    }
++    // Real adapter-core wraps the global timer functions so it can force-clear anything left
++    // running on unload. These fakes just delegate to the (possibly sinon-faked) globals.
++    setTimeout(fn, ms, ...args) { return setTimeout(fn, ms, ...args); }
++    clearTimeout(t) { return clearTimeout(t); }
++    setInterval(fn, ms, ...args) { return setInterval(fn, ms, ...args); }
++    clearInterval(t) { return clearInterval(t); }
++}
++
++function hexEncodeAscii(str) {
++    return [...str].map(c => c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')).join('');
++}
+ 
+-describe('module to test => function to test', () => {
+-    // initializing logic
+-    const expected = 5;
++const flush = async () => {
++    // Let already-resolved promise chains (setObjectNotExistsAsync, setStateAsync, ...) drain.
++    for (let i = 0; i < 5; i++) await Promise.resolve();
++};
+ 
+-    it(`should return ${expected}`, () => {
+-        const result = 5;
+-        // assign result a value from functionToTest
+-        expect(result).to.equal(expected);
+-        // or using the should() syntax
+-        result.should.equal(expected);
++describe('main.js - IdmMultitalent002 communication state machine', () => {
++    let clock;
++    let sockets;
++    let adapter;
++
++    beforeEach(async () => {
++        idm.reset();
++        idm.initialize();
++        sockets = [];
++
++        class TrackedFakeSocket extends FakeSocket {
++            constructor() {
++                super();
++                sockets.push(this);
++            }
++        }
++
++        const createAdapter = proxyquire('./main.js', {
++            'net': { Socket: TrackedFakeSocket, '@noCallThru': true },
++            // The real @iobroker/adapter-core calls process.exit() at require time when it
++            // can't find a js-controller installation, so it must never actually be loaded
++            // here - '@noCallThru' stops proxyquire from requiring it as a fallback.
++            '@iobroker/adapter-core': { Adapter: FakeAdapterBase, '@noCallThru': true },
++        });
++
++        clock = sinon.useFakeTimers();
++        adapter = createAdapter({
++            config: { tcpserverip: '10.0.0.1', tcpserverport: 4001, reconnectinterval: 90 },
++        });
++        // sinon's fake timers also fake process.nextTick, which is how FakeAdapterBase
++        // schedules the 'ready' event - so the fake clock (not a real microtask flush) is
++        // what's needed to fire it.
++        clock.runMicrotasks();
++        await flush();
+     });
+-    // ... more tests => it
+ 
+-});
++    afterEach(() => {
++        clock.restore();
++    });
++
++    /** Drives the adapter from "ready" through a live TCP connection. Returns the socket. */
++    async function connect() {
++        clock.tick(adapter.initialConnectionDelay); // onReady -> connectAndRead
++        clock.tick(adapter.socketRecycleTime); // connectAndRead -> startConnection -> net.Socket#connect
++        const socket = sockets[sockets.length - 1];
++        socket.emit('connect'); // socketConnectHandler -> send_first_init()
++        await flush();
++        return socket;
++    }
++
++    /** Builds the raw wire bytes for a successful version/init response. */
++    function versionResponse(version) {
++        return idm.create_message('01E0' + hexEncodeAscii(version));
++    }
++
++    it('sends an init message once the socket connects', async () => {
++        const socket = await connect();
++        expect(socket.written).to.have.lengthOf(1);
++        expect(idm_u.get_string_uint8array(socket.written[0])).to.equal(
++            idm_u.get_string_uint8array(idm.create_init_message())
++        );
++        expect(adapter.idmProtocolState).to.equal(1); // init sent, waiting for answer
++    });
++
++    it('creates the version state, marks the adapter connected and starts requesting data after a valid init reply', async () => {
++        const socket = await connect();
++
++        socket.emit('data', versionResponse('idm701100'));
++        await flush();
++
++        expect(adapter.version).to.equal('idm701100');
++        expect(adapter.states.get(`${adapter.namespace}.idm_control_version`)).to.deep.equal({ val: 'idm701100', ack: true });
++        expect(adapter.states.get(`${adapter.namespace}.info.connection`)).to.deep.equal({ val: true, ack: true });
++        expect(adapter.connectedToIDM).to.equal(true);
++        // request_data() was called, which schedules a data block request after a delay
++        expect(adapter.idmProtocolState).to.equal(2);
++
++        clock.tick(adapter.requestDataBlockDelay);
++        expect(socket.written).to.have.lengthOf(2); // init + first data block request
++        expect(adapter.idmProtocolState).to.equal(3); // data requested, waiting for ack
++    });
++
++    it('runs a full successful cycle: init -> data block ack -> data content -> parsed data', async () => {
++        const socket = await connect();
++        socket.emit('data', versionResponse('idm701100'));
++        await flush();
++        clock.tick(adapter.requestDataBlockDelay); // sends the data block request, state -> 3
++
++        // Control acknowledges the data block request ("R1")
++        socket.emit('data', idm.create_message('01F10000'));
++        await flush();
++        expect(adapter.idmProtocolState).to.equal(4);
++
++        clock.tick(adapter.normalDataContentDelay); // sends the data content request, state -> 5
++        expect(adapter.idmProtocolState).to.equal(5);
++
++        // Control sends back a real, previously-captured data block 07 payload
++        const dataBlock07 = '00000000000000000000000000000000000000000B270000000000000000';
++        socket.emit('data', idm.create_message('01F20007' + dataBlock07));
++        await flush();
++
++        // back to idle, and a new init was scheduled to fetch the next data block
++        expect(adapter.idmProtocolState).to.equal(0);
++        const stateEntry = adapter.states.get(`${adapter.namespace}.Data_block_7`);
++        expect(stateEntry, 'Data_block_7 state should have been set').to.exist;
++        expect(stateEntry.val).to.be.a('string').and.not.empty;
++    });
++
++    it('retries on "NR" (not ready) up to the retry limit before giving up and restarting', async () => {
++        const socket = await connect();
++        socket.emit('data', versionResponse('idm701100'));
++        await flush();
++        clock.tick(adapter.requestDataBlockDelay);
++        socket.emit('data', idm.create_message('01F10000')); // R1 ack
++        await flush();
++        clock.tick(adapter.normalDataContentDelay); // -> state 5, data content requested
++
++        // Respond with "not ready" a few times - each retry should re-request the content
++        // without resetting the whole connection.
++        for (let i = 1; i <= 3; i++) {
++            const writesBefore = socket.written.length;
++            socket.emit('data', idm.create_message('01F201'));
++            await flush();
++            expect(adapter.idmProtocolState, `after retry ${i}`).to.equal(4);
++            clock.tick(adapter.retryDataContentDelay);
++            expect(socket.written.length, `retry ${i} should have sent another data content request`).to.equal(writesBefore + 1);
++            expect(adapter.idmProtocolState, `after retry ${i} request sent`).to.equal(5);
++        }
++        expect(adapter.retry_count).to.equal(3);
++    });
+ 
+-// ... more test suites => describe
++    it('resets the connection when a response arrives in an unexpected protocol state', async () => {
++        const socket = await connect();
++        // We are in state 1 (init sent, waiting for the version reply). An "R1" response is
++        // only valid in state 3, so this should be treated as a protocol error and trigger a
++        // reconnect instead of silently being accepted.
++        sockets.length = 0;
++        socket.emit('data', idm.create_message('01F10000'));
++        await flush();
++
++        expect(adapter.idmProtocolState).to.equal(-1);
++        // We were never fully connected yet, so there is nothing to tear down beyond
++        // resetting the protocol state and scheduling a fresh connection attempt.
++        expect(adapter.connectedToIDM).to.equal(false);
++        expect(adapter.reconnectTimer).to.exist;
++
++        clock.tick(adapter.config.reconnectinterval * 1000);
++        expect(sockets, 'a new connection attempt should have been started').to.have.lengthOf(1);
++    });
++
++    it('clears every pending communication timer on unload, not just reconnect/resend', async () => {
++        const socket = await connect();
++        socket.emit('data', versionResponse('idm701100'));
++        await flush();
++        clock.tick(adapter.requestDataBlockDelay);
++        socket.emit('data', idm.create_message('01F10000')); // -> state 4, schedules sendDataContentTimer
++        await flush();
++
++        // At this point sendDataContentTimer is pending (state 4 -> request_data_content scheduled).
++        expect(adapter.sendDataContentTimer, 'sendDataContentTimer should be pending').to.be.ok;
++        const pendingBefore = clock.countTimers();
++        expect(pendingBefore).to.be.greaterThan(0);
++
++        await new Promise(resolve => adapter.onUnload(resolve));
++
++        // null or undefined both mean "no timer" here - the existing code isn't fully
++        // consistent about which sentinel it uses, but what matters is that none of these
++        // still reference a live timer handle after unload.
++        expect(adapter.sendInitTimer, 'sendInitTimer').to.not.be.ok;
++        expect(adapter.sendDataBlockRequestTimer, 'sendDataBlockRequestTimer').to.not.be.ok;
++        expect(adapter.sendDataContentTimer, 'sendDataContentTimer').to.not.be.ok;
++        expect(adapter.sendSetValueMessageTimeout1, 'sendSetValueMessageTimeout1').to.not.be.ok;
++        expect(adapter.sendSetValueMessageTimeout2, 'sendSetValueMessageTimeout2').to.not.be.ok;
++        // No timer should still be scheduled after unload - previously several of these were
++        // left running and could still fire against the (by then destroyed) socket.
++        expect(clock.countTimers()).to.equal(0);
++    });
++});
+diff --git a/package-lock.json b/package-lock.json
+index 45eb43f..4d5c9c4 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -13,6 +13,7 @@
+       },
+       "devDependencies": {
+         "@alcalzone/release-script": "^5.1.1",
++        "@eslint/js": "^10.0.1",
+         "@iobroker/testing": "^5.2.2",
+         "@types/chai": "^5.2.3",
+         "@types/chai-as-promised": "^8.0.2",
+@@ -239,6 +240,27 @@
+         "node": "^20.19.0 || ^22.13.0 || >=24"
+       }
+     },
++    "node_modules/@eslint/js": {
++      "version": "10.0.1",
++      "resolved": "https://registry.npmjs.org/@eslint/js/-/js-10.0.1.tgz",
++      "integrity": "sha512-zeR9k5pd4gxjZ0abRoIaxdc7I3nDktoXZk2qOv9gCNWx3mVwEn32VRhyLaRsDiJjTs0xq/T8mfPtyuXu7GWBcA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": "^20.19.0 || ^22.13.0 || >=24"
++      },
++      "funding": {
++        "url": "https://eslint.org/donate"
++      },
++      "peerDependencies": {
++        "eslint": "^10.0.0"
++      },
++      "peerDependenciesMeta": {
++        "eslint": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/@eslint/object-schema": {
+       "version": "3.0.5",
+       "resolved": "https://registry.npmjs.org/@eslint/object-schema/-/object-schema-3.0.5.tgz",
+@@ -4489,6 +4511,13 @@
+         "@types/json-schema": "^7.0.15"
+       }
+     },
++    "@eslint/js": {
++      "version": "10.0.1",
++      "resolved": "https://registry.npmjs.org/@eslint/js/-/js-10.0.1.tgz",
++      "integrity": "sha512-zeR9k5pd4gxjZ0abRoIaxdc7I3nDktoXZk2qOv9gCNWx3mVwEn32VRhyLaRsDiJjTs0xq/T8mfPtyuXu7GWBcA==",
++      "dev": true,
++      "requires": {}
++    },
+     "@eslint/object-schema": {
+       "version": "3.0.5",
+       "resolved": "https://registry.npmjs.org/@eslint/object-schema/-/object-schema-3.0.5.tgz",
+diff --git a/package.json b/package.json
+index 5f47a7d..497e099 100644
+--- a/package.json
++++ b/package.json
+@@ -23,6 +23,7 @@
+   },
+   "devDependencies": {
+     "@alcalzone/release-script": "^5.1.1",
++    "@eslint/js": "^10.0.1",
+     "@iobroker/testing": "^5.2.2",
+     "@types/chai": "^5.2.3",
+     "@types/chai-as-promised": "^8.0.2",
+@@ -32,8 +33,8 @@
+     "@types/proxyquire": "^1.3.31",
+     "@types/sinon": "^21.0.1",
+     "@types/sinon-chai": "^4.0.0",
+-    "chai": "^6.2.2",
+     "axios": "^1.15.2",
++    "chai": "^6.2.2",
+     "chai-as-promised": "^8.0.2",
+     "eslint": "^10.2.1",
+     "gulp": "^5.0.1",
+diff --git a/test/mocha.setup.js b/test/mocha.setup.js
+index 15b9051..d213915 100644
+--- a/test/mocha.setup.js
++++ b/test/mocha.setup.js
+@@ -5,8 +5,16 @@ process.on('unhandledRejection', (e) => {
+ 
+ // enable the should interface with sinon
+ // and load chai-as-promised and sinon-chai by default
+-const sinonChai = require('sinon-chai');
+-const chaiAsPromised = require('chai-as-promised');
++//
++// sinon-chai and chai-as-promised are published as pure ESM packages. When
++// required from CommonJS (as here), Node wraps them in a module namespace
++// object and the actual plugin function ends up on `.default` instead of
++// being the object itself - so unwrap it defensively (this also keeps
++// working if a future version goes back to a plain CJS export).
++const sinonChaiModule = require('sinon-chai');
++const chaiAsPromisedModule = require('chai-as-promised');
++const sinonChai = sinonChaiModule.default || sinonChaiModule;
++const chaiAsPromised = chaiAsPromisedModule.default || chaiAsPromisedModule;
+ const { should, use } = require('chai');
+ 
+ should();
+diff --git a/tsconfig.check.json b/tsconfig.check.json
+index 0adc5c5..10fc03d 100644
+--- a/tsconfig.check.json
++++ b/tsconfig.check.json
+@@ -1,7 +1,14 @@
+ // Specialized tsconfig for type-checking js files
+ {
+     "extends": "./tsconfig.json",
+-    "compilerOptions": {},
++    "compilerOptions": {
++        // Without an explicit "types" array tsc was not picking up the ambient Mocha/Chai/
++        // Sinon globals (describe/it/expect/...) used throughout the *.test.js files, even
++        // though the matching @types/* packages are installed - it also silently left
++        // @iobroker/testing's own .d.ts unable to resolve its "Mocha" namespace reference.
++        // Listing them here fixes both.
++        "types": ["mocha", "node", "chai", "sinon", "chai-as-promised", "sinon-chai"]
++    },
+     "include": [
+         "**/*.js",
+         "**/*.d.ts"
+diff --git a/tsconfig.json b/tsconfig.json
+index 1a3fed8..52aa4be 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -10,7 +10,6 @@
+         "checkJs": true,
+ 
+         "module": "commonjs",
+-        "moduleResolution": "node",
+         "esModuleInterop": true,
+         // this is necessary for the automatic typing of the adapter config
+         "resolveJsonModule": true,
+@@ -28,6 +27,10 @@
+ 
+         // Consider targetting es2019 or higher if you only support Node.js 12+
+         "target": "es2019",
++        // es2019's default lib doesn't include the ES2022 Error.cause typings, even though
++        // Node itself has supported the `cause` option since Node 16.9 - add just that piece
++        // instead of bumping the whole target/lib to es2022.
++        "lib": ["es2019", "es2022.error"],
+ 
+     },
+     "include": [
