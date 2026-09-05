@@ -57,6 +57,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.2.9 (2026-09-05)
+* (zloe) switch npm deploy from the retired classic npm token to Trusted Publishing (OIDC) - both 1.2.7 and 1.2.8 failed to publish to npm because of this
+
 ### 1.2.8 (2026-09-05)
 * (zloe) fix repository checker issues (#298): add engines.node, German news translations, correct js-controller/admin dependency versions, add missing tier/licenseInformation, remove deprecated common.main/title, fix broken vscode schema link
 * (zloe) add .releaseconfig.json so io-package.json's version is kept in sync automatically on release
