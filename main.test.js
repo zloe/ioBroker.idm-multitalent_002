@@ -275,4 +275,117 @@ describe('main.js - IdmMultitalent002 communication state machine', () => {
         // left running and could still fire against the (by then destroyed) socket.
         expect(clock.countTimers()).to.equal(0);
     });
+
+    describe('AdjustSpeed', () => {
+        it('actually applies the configured speed factor for a version slower than 100% (regression: idm.speed is a Map, not a plain object)', async () => {
+            const socket = await connect();
+            socket.emit('data', versionResponse('idm722100')); // idm722100_speed is 75 in the data blocks file
+            await flush();
+
+            const factor = 100 / 75;
+            expect(adapter.speedAdjusted).to.be.true;
+            expect(adapter.requestInitDelay).to.equal(Math.round(600 * factor));
+            expect(adapter.requestDataBlockDelay).to.equal(Math.round(1000 * factor));
+            expect(adapter.normalDataContentDelay).to.equal(Math.round(1000 * factor));
+            expect(adapter.retryDataContentDelay).to.equal(Math.round(300 * factor));
+        });
+
+        it('leaves the default delays alone for a version at 100% speed', async () => {
+            const socket = await connect();
+            socket.emit('data', versionResponse('idm701100')); // idm701100_speed is 100
+            await flush();
+
+            expect(adapter.speedAdjusted).to.be.false;
+            expect(adapter.requestInitDelay).to.equal(600);
+        });
+    });
+
+    describe('writing values: min/max enforcement', () => {
+        /** Connects, reports idm701100, and waits for CreateStates() to finish populating stateNameMap. */
+        async function connectAndCreateStates() {
+            const socket = await connect();
+            socket.emit('data', versionResponse('idm701100'));
+            await flush();
+            await flush(); // CreateStates() runs unawaited from the response handler; give its
+            // internal chain (mapStatenames -> per-state setObjectNotExistsAsync) extra ticks
+            // to finish populating stateNameMap before the test proceeds.
+            return socket;
+        }
+
+        it('enqueues a write that is within the configured min/max range', async () => {
+            await connectAndCreateStates();
+            const id = `${adapter.namespace}.Heizkreis-A.Betriebsart`; // betrieb_A, min 0 / max 5
+
+            adapter.onStateChange(id, { val: 2, ack: false });
+            await flush();
+
+            expect(adapter.sendQueue.hasItems, 'value within range should have been enqueued').to.be.true;
+            expect(adapter.log.error.called, 'no error should have been logged').to.be.false;
+        });
+
+        it('rejects a write above the configured maximum and does not enqueue it', async () => {
+            await connectAndCreateStates();
+            const id = `${adapter.namespace}.Heizkreis-A.Betriebsart`; // betrieb_A, min 0 / max 5
+
+            adapter.onStateChange(id, { val: 42, ack: false });
+            await flush();
+
+            expect(adapter.sendQueue.hasItems, 'out-of-range value must never reach the send queue').to.be.false;
+            expect(adapter.log.error.calledOnce, 'an error should have been logged').to.be.true;
+            expect(adapter.log.error.firstCall.args[0]).to.match(/above the maximum/);
+        });
+
+        it('rejects a write below the configured minimum and does not enqueue it', async () => {
+            await connectAndCreateStates();
+            const id = `${adapter.namespace}.Heizkreis-A.Betriebsart`; // betrieb_A, min 0 / max 5
+
+            adapter.onStateChange(id, { val: -1, ack: false });
+            await flush();
+
+            expect(adapter.sendQueue.hasItems).to.be.false;
+            expect(adapter.log.error.calledOnce).to.be.true;
+            expect(adapter.log.error.firstCall.args[0]).to.match(/below the minimum/);
+        });
+
+        it('reverts the displayed value to the last acknowledged one after rejecting an out-of-range write', async () => {
+            await connectAndCreateStates();
+            const id = `${adapter.namespace}.Heizkreis-A.Betriebsart`;
+
+            // Simulate a previously received/accepted value of 1 (ack = true), as if it had
+            // come from the heat pump or from an earlier, accepted write.
+            adapter.setIDMState('Heizkreis-A.Betriebsart', 1);
+            await flush();
+            expect(adapter.states.get(id)).to.deep.equal({ val: 1, ack: true });
+
+            // The user (or a script) now writes an out-of-range value.
+            adapter.onStateChange(id, { val: 42, ack: false });
+            await flush();
+
+            // The state should have been reverted back to the last known-good value, not left
+            // showing 42 as if the heat pump had accepted it.
+            expect(adapter.states.get(id)).to.deep.equal({ val: 1, ack: true });
+            expect(adapter.sendQueue.hasItems).to.be.false;
+        });
+
+        it('still enqueues writes for fields with no configured min/max (unchanged behavior)', async () => {
+            await connectAndCreateStates();
+            const id = `${adapter.namespace}.Warmwasser.Sollwert`; // WW_soll - no min/max configured
+
+            adapter.onStateChange(id, { val: 999999, ack: false });
+            await flush();
+
+            expect(adapter.sendQueue.hasItems, 'fields without configured limits are not restricted').to.be.true;
+        });
+
+        it('does nothing for a non-writable state even if it somehow arrives with ack=false', async () => {
+            await connectAndCreateStates();
+            // Frostschutz A (frost_A) is read-only (writable: false)
+            const id = `${adapter.namespace}.Heizkreis-A.Frostschutz`;
+
+            adapter.onStateChange(id, { val: 1, ack: false });
+            await flush();
+
+            expect(adapter.sendQueue.hasItems).to.be.false;
+        });
+    });
 });

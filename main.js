@@ -28,6 +28,8 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.log.info('created');
         this.statesCreated = false;
         this.statesSubscribed = false;
+        // Load the bundled defaults now, so idm.* is usable even before onReady/config are
+        // available. onReady() re-runs this with the configured custom file (if any).
         idm.initialize();
         this.connectedToIDM = false;
         this.on('ready', this.onReady.bind(this));
@@ -53,6 +55,11 @@ class IdmMultitalent002 extends utils.Adapter {
     totalRetries = 0;
     totalRequests = 0;
     stateNameMap = new Map();
+    // Last value actually confirmed for a state - either read from the heat pump, or a write
+    // to it that was accepted and enqueued. Used to restore the displayed value if a write is
+    // rejected by sendValue() (out of range), so the UI doesn't keep showing a value that was
+    // never actually sent.
+    lastAckedValue = new Map();
 
     idmProtocolState = -1;
     // -1 for not connected
@@ -89,7 +96,9 @@ class IdmMultitalent002 extends utils.Adapter {
     AdjustSpeed() {
         if (this.speedAdjusted)
             return;
-        let factor = idm.speed[this.version];
+        // idm.speed is a Map, not a plain object - bracket access here always returned
+        // undefined, so speed adjustment (e.g. idm722100's 75%) never actually took effect.
+        let factor = idm.speed.get(this.version);
         if (factor != null) {
             if (factor != 100 && factor > 0) {
                 this.log.info('adjusting speed to ' + factor + '%');
@@ -103,6 +112,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
     }
     setIDMState(stateName, value) {
+        this.lastAckedValue.set(stateName, value);
         this.setStateAsync(stateName, value, true).catch(e => this.log.error('failed to set state ' + stateName + ': ' + e));
     }
 
@@ -643,6 +653,14 @@ class IdmMultitalent002 extends utils.Adapter {
     async onReady() {
         // Initialize your adapter here
 
+        // Reload the hardware data block definitions now that this.config is available: if
+        // "Custom data blocks file" is set in the instance configuration, that JSON file is
+        // used instead of the bundled defaults (after validation), so device support, field
+        // fixes or min/max limits can be added/changed without an adapter update.
+        idm.initialize(this.config.dataBlocksFile, msg => this.log.warn(msg));
+        if (this.config.dataBlocksFile) {
+            this.log.info('data block definitions loaded from: ' + idm.dataSource);
+        }
 
         this.subscribeStates('idm_control_version');
         // You can also add a subscription for multiple states. The following line watches all states starting with "lights."
@@ -811,14 +829,28 @@ class IdmMultitalent002 extends utils.Adapter {
     //    }
     // }
     /**
-     * @param {{ function: any; length: any; writable: any; factor: any}} definition
+     * Validates a value against the field's min/max (if configured) and, if it passes,
+     * enqueues it to be sent to the heat pump. A value that fails validation is never sent;
+     * the state is instead reverted to the last value we actually saw acknowledged, so the
+     * UI does not keep showing a value the heat pump never received.
+     * @param {string} stateName
+     * @param {{ function: any; length: any; writable: any; factor: any; min?: number|null; max?: number|null }} definition
      * @param {string | number | boolean | null} value
      */
-    sendValue(definition, value) {
-        if (definition.writable) {
-            this.log.info('********* all prerequisites met, enqueuing data to be sent, value = ' + value + ' factor = ' + definition.factor);
-            this.sendQueue.enqueue(idm.create_set_value_message(definition.function, value, definition.length, definition.factor));
+    async sendValue(stateName, definition, value) {
+        if (!definition.writable) return;
+
+        const check = idm.checkValueRange(definition, value);
+        if (!check.ok) {
+            this.log.error(`refusing to send ${stateName} = ${value}: ${check.reason} - nothing was sent to the heatpump`);
+            if (this.lastAckedValue.has(stateName)) {
+                this.setIDMState(stateName, this.lastAckedValue.get(stateName));
+            }
+            return;
         }
+
+        this.log.info('********* all prerequisites met, enqueuing data to be sent, value = ' + check.value + ' factor = ' + definition.factor);
+        this.sendQueue.enqueue(idm.create_set_value_message(definition.function, check.value, definition.length, definition.factor));
     }
 
     /**
@@ -837,8 +869,8 @@ class IdmMultitalent002 extends utils.Adapter {
                 if (this.stateNameMap.has(stateName)) {
                     const definition = this.stateNameMap.get(stateName);
                     if (definition.writable) {
-                        this.sendValue(definition, state.val);
-                        this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), will be sent`);
+                        this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack}), checking before sending`);
+                        this.sendValue(stateName, definition, state.val).catch(e => this.log.error('failed to process write to ' + stateName + ': ' + e));
                     }
                 }
             }

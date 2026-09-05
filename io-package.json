@@ -98,7 +98,8 @@
         "tcpserverip": "",
         "tcpserverport": 4001,
         "pollinterval": 30,
-        "reconnectinterval": 90
+        "reconnectinterval": 90,
+        "dataBlocksFile": ""
     },
     "objects": [],
     "instanceObjects": [
