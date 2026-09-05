@@ -29,7 +29,7 @@ function lang2data(lang) {
     let str ='{\n';
     let count = 0;
     for (const w in lang) {
-        if (lang.hasOwnProperty(w)) {
+        if (Object.prototype.hasOwnProperty.call(lang, w)) {
             count++;
             const key = '    "' + w.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": ';
             str += key + '"' + lang[w].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",\n';
@@ -56,7 +56,7 @@ function readWordJs(src) {
         const resultFunc = new Function('return ' + words + ';');
 
         return resultFunc();
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -71,11 +71,11 @@ function writeWordJs(data, src) {
     text += "'use strict';\n\n";
     text += 'systemDictionary = {\n';
     for (const word in data) {
-        if (data.hasOwnProperty(word)) {
+        if (Object.prototype.hasOwnProperty.call(data, word)) {
             text += '    ' + padRight('"' + word.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '": {', 50);
             let line = '';
             for (const lang in data[word]) {
-                if (data[word].hasOwnProperty(lang)) {
+                if (Object.prototype.hasOwnProperty.call(data[word], lang)) {
                     line += '"' + lang + '": "' + padRight(data[word][lang].replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '",', 50) + ' ';
                 }
             }
@@ -99,13 +99,13 @@ function words2languages(src) {
     const data = readWordJs(src);
     if (data) {
         for (const word in data) {
-            if (data.hasOwnProperty(word)) {
+            if (Object.prototype.hasOwnProperty.call(data, word)) {
                 for (const lang in data[word]) {
-                    if (data[word].hasOwnProperty(lang)) {
+                    if (Object.prototype.hasOwnProperty.call(data[word], lang)) {
                         langs[lang][word] = data[word][lang];
                         //  pre-fill all other languages
                         for (const j in langs) {
-                            if (langs.hasOwnProperty(j)) {
+                            if (Object.prototype.hasOwnProperty.call(langs, j)) {
                                 langs[j][word] = langs[j][word] || EMPTY;
                             }
                         }
@@ -117,7 +117,7 @@ function words2languages(src) {
             fs.mkdirSync(src + 'i18n/');
         }
         for (const l in langs) {
-            if (!langs.hasOwnProperty(l))
+            if (!Object.prototype.hasOwnProperty.call(langs, l))
                 continue;
             const keys = Object.keys(langs[l]);
             keys.sort();
@@ -169,7 +169,7 @@ function languages2words(src) {
         langs[lang] = JSON.parse(langs[lang]);
         const words = langs[lang];
         for (const word in words) {
-            if (words.hasOwnProperty(word)) {
+            if (Object.prototype.hasOwnProperty.call(words, word)) {
                 bigOne[word] = bigOne[word] || {};
                 if (words[word] !== EMPTY) {
                     bigOne[word][lang] = words[word];
@@ -184,7 +184,7 @@ function languages2words(src) {
     if (aWords) {
         // Merge words together
         for (const w in aWords) {
-            if (aWords.hasOwnProperty(w)) {
+            if (Object.prototype.hasOwnProperty.call(aWords, w)) {
                 if (!bigOne[w]) {
                     console.warn('Take from actual words.js: ' + w);
                     bigOne[w] = aWords[w];
