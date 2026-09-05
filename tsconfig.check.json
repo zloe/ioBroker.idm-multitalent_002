@@ -1,7 +1,14 @@
 // Specialized tsconfig for type-checking js files
 {
     "extends": "./tsconfig.json",
-    "compilerOptions": {},
+    "compilerOptions": {
+        // Without an explicit "types" array tsc was not picking up the ambient Mocha/Chai/
+        // Sinon globals (describe/it/expect/...) used throughout the *.test.js files, even
+        // though the matching @types/* packages are installed - it also silently left
+        // @iobroker/testing's own .d.ts unable to resolve its "Mocha" namespace reference.
+        // Listing them here fixes both.
+        "types": ["mocha", "node", "chai", "sinon", "chai-as-promised", "sinon-chai"]
+    },
     "include": [
         "**/*.js",
         "**/*.d.ts"
