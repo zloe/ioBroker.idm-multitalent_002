@@ -57,6 +57,13 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.2.7 (2026-09-05)
+* (zloe) fix broken test/lint toolchain (incompatible chai/sinon-chai/chai-as-promised versions, outdated tsconfig moduleResolution)
+* (zloe) fix three duplicate `function` numbers in data block definitions that could have targeted the wrong register once made writable
+* (zloe) clear all pending communication timers on adapter unload, not just reconnect/resend
+* (zloe) remove unused imports, clear the default TCP server IP placeholder
+* (zloe) add real unit tests for idm-utils and the main.js communication state machine
+
 ### 1.2.6 (2024-09-21)
 * (zloe) fixed reconnect handling
 
@@ -87,11 +94,10 @@ Example screenshots of objects:
 * (zloe) initial version TERRA130601 - S_H726100 support
 * (zloe) updated dependencies
 
-
 ## License
 MIT License
 
-Copyright (c) 2024 zloe <klaus@zloebl.net>
+Copyright (c) 2026 zloe <klaus@zloebl.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -126,4 +132,4 @@ Missing documentation about the data structures/blocks.
 Attention, still experimental, ... the adapter sets values of the heatpump, so do not install, unless you know what you are doing and have contacted the author! 
 
 
-Copyright (c) 2024 zloe <klaus@zloebl.net>
+Copyright (c) 2026 zloe <klaus@zloebl.net>
