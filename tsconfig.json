@@ -10,7 +10,6 @@
         "checkJs": true,
 
         "module": "commonjs",
-        "moduleResolution": "node",
         "esModuleInterop": true,
         // this is necessary for the automatic typing of the adapter config
         "resolveJsonModule": true,
@@ -28,6 +27,10 @@
 
         // Consider targetting es2019 or higher if you only support Node.js 12+
         "target": "es2019",
+        // es2019's default lib doesn't include the ES2022 Error.cause typings, even though
+        // Node itself has supported the `cause` option since Node 16.9 - add just that piece
+        // instead of bumping the whole target/lib to es2022.
+        "lib": ["es2019", "es2022.error"],
 
     },
     "include": [
