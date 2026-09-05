@@ -57,7 +57,9 @@ jobs:
   # Deploys the final package to NPM
   #
   # Voraussetzungen:
-  # - NPM_TOKEN als GitHub Secret hinterlegen
+  # - npm Trusted Publisher für dieses Repo + diese Workflow-Datei unter
+  #   npmjs.com -> Paket -> Settings -> Trusted Publisher konfiguriert
+  #   (die alten "Automation"-Tokens werden von npm nicht mehr unterstützt)
   # - Bei Sentry zusätzlich SENTRY_AUTH_TOKEN hinterlegen und Sentry-Block aktivieren
   deploy:
     needs: [check-and-lint, adapter-tests]
@@ -71,6 +73,7 @@ jobs:
 
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - uses: ioBroker/testing-action-deploy@v1
@@ -78,7 +81,6 @@ jobs:
           node-version: "24.x"
           install-command: "npm install"
           package-cache: false
-          npm-token: ${{ secrets.NPM_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
           # Only enable if Sentry is really configured:
