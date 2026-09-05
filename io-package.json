@@ -4,58 +4,34 @@
         "version": "1.2.7",
         "news": {
             "1.2.7": {
-                "en": "* fixed broken test/lint toolchain, duplicate register numbers and timer cleanup on unload"
+                "en": "* fixed broken test/lint toolchain, duplicate register numbers and timer cleanup on unload",
+                "de": "* Test-/Lint-Toolchain repariert, doppelte Registernummern und Timer-Aufräumung beim Unload behoben"
             },
             "1.2.6": {
-                "en": "* fixed reconnect handling"
+                "en": "* fixed reconnect handling",
+                "de": "* Reconnect-Verhalten korrigiert"
             },
             "1.2.5": {
-                "en": "* improved error handling"
+                "en": "* improved error handling",
+                "de": "* Fehlerbehandlung weiter verbessert"
             },
             "1.2.4": {
-                "en": "* improve logging and handling of data transmission problems"
+                "en": "* improve logging and handling of data transmission problems",
+                "de": "* Logging und Behandlung von Übertragungsfehlern verbessert"
             },
             "1.2.3": {
-                "en": "* improve handling of data transmission problems"
+                "en": "* improve handling of data transmission problems",
+                "de": "* Behandlung von Datenübertragungsproblemen verbessert"
             },
             "1.2.2": {
-                "en": "* fix handling of data transmission problems which lead to stopping requesting data"
+                "en": "* fix handling of data transmission problems which lead to stopping requesting data",
+                "de": "* Problem behoben, das zum Stoppen der Datenanfragen führte"
             },
             "1.2.1": {
-                "en": "* fixed data definitions for EVR 070110 - idm722100"
-            },
-            "1.2.0": {
-                "en": "* Initial version with support for EVR 070110 - idm722100"
-            },
-            "1.1.1": {
-                "en": "* Updated protocol implementation"
-            },
-            "1.1.0": {
-                "en": "* Initial version with support for TERRA130601 - S_H726100"
-            },
-            "1.0.4": {
-                "en": "* Fixed writing values with scaling factor again"
-            },
-            "1.0.3": {
-                "en": "* Fixed writing values with scaling factor"
-            },
-            "1.0.2": {
-                "en": "* Fixed retry after error from heatpump again"
-            },
-            "1.0.1": {
-                "en": "* Fixed retry after error from heatpump"
-            },
-            "1.0.0": {
-                "en": "* Major rework, dynamic timing"
-            },
-            "0.2.10": {
-                "en": "* fixed timing, last version with old static timing"
-            },
-            "0.2.8": {
-                "en": "* improved error handling"
+                "en": "* fixed data definitions for EVR 070110 - idm722100",
+                "de": "* Datendefinitionen für EVR 070110 - idm722100 korrigiert"
             }
         },
-        "title": "iDM multitalent.002",
         "titleLang": {
             "en": "iDM multitalent.002",
             "de": "iDM multitalent.002",
@@ -84,14 +60,13 @@
             "zloe <klaus@zloebl.net>"
         ],
         "keywords": [
+            "ioBroker",
             "iDM",
             "heating",
             "heatpump",
             "multitalent"
         ],
-        "license": "MIT",
         "platform": "Javascript/Node.js",
-        "main": "main.js",
         "icon": "idm-multitalent_002.png",
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/zloe/ioBroker.idm-multitalent_002/main/admin/idm-multitalent_002.png",
@@ -105,9 +80,19 @@
         "materialize": true,
         "dependencies": [
             {
-                "js-controller": ">=2.0.0"
+                "js-controller": ">=5.0.19"
             }
-        ]
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=6.17.14"
+            }
+        ],
+        "tier": 2,
+        "licenseInformation": {
+            "type": "free",
+            "license": "MIT"
+        }
     },
     "native": {
         "tcpserverip": "",

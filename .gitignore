@@ -13,6 +13,7 @@ nm.tar
 pack.sh
 test.sh
 Thumbs.db
+.commitinfo
 
 # i18n intermediate files
 admin/i18n/flat.txt

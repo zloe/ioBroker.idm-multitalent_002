@@ -9,6 +9,7 @@
   "homepage": "https://github.com/zloe/ioBroker.idm-multitalent_002",
   "license": "MIT",
   "keywords": [
+    "ioBroker",
     "iDM",
     "heating",
     "heatpump",
@@ -18,11 +19,15 @@
     "type": "git",
     "url": "https://github.com/zloe/ioBroker.idm-multitalent_002"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@iobroker/adapter-core": "^3.4.1"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^5.2.1",
+    "@eslint/js": "^10.0.1",
     "@iobroker/testing": "^5.2.2",
     "@types/chai": "^5.2.3",
     "@types/chai-as-promised": "^8.0.2",

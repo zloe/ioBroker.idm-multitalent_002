@@ -1,0 +1,5 @@
+{
+    "versionFiles": [
+        ["io-package.json", "(?<=\"version\":\\s*\")\\d+\\.\\d+\\.\\d+(?=\")"]
+    ]
+}
