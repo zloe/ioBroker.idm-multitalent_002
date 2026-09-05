@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "idm-multitalent_002",
-        "version": "1.2.7",
+        "version": "1.2.8",
         "news": {
             "1.2.7": {
                 "en": "* fixed broken test/lint toolchain, duplicate register numbers and timer cleanup on unload",

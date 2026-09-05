@@ -57,6 +57,11 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.2.8 (2026-09-05)
+* (zloe) fix repository checker issues (#298): add engines.node, German news translations, correct js-controller/admin dependency versions, add missing tier/licenseInformation, remove deprecated common.main/title, fix broken vscode schema link
+* (zloe) add .releaseconfig.json so io-package.json's version is kept in sync automatically on release
+* (zloe) fix broken `npm run lint` (missing @eslint/js dependency)
+
 ### 1.2.7 (2026-09-05)
 * (zloe) fix broken test/lint toolchain (incompatible chai/sinon-chai/chai-as-promised versions, outdated tsconfig moduleResolution)
 * (zloe) fix three duplicate `function` numbers in data block definitions that could have targeted the wrong register once made writable
