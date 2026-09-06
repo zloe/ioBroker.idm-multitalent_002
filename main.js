@@ -150,6 +150,7 @@ class IdmMultitalent002 extends utils.Adapter {
         // bundled definition after validation, so device support, field fixes or min/max
         // limits can be added/changed without an adapter update.
         this.idm.initialize(this.config.dataBlocksDir, msg => this.log.warn(msg));
+        this.log.info('data block definitions available for: ' + [...this.idm.dataDefinitions.keys()].sort().join(', '));
         if (this.config.dataBlocksDir) {
             const overridden = [...this.idm.dataSources]
                 .filter(([, file]) => file.startsWith(this.config.dataBlocksDir))
@@ -184,6 +185,11 @@ class IdmMultitalent002 extends utils.Adapter {
                 },
                 onVersion: (version) => {
                     this.version = version;
+                    if (this.idm.dataDefinitions.has(version)) {
+                        this.log.info('heat pump reports version "' + version + '" - using its data block definition (' + this.idm.dataSources.get(version) + ')');
+                    } else {
+                        this.log.warn('heat pump reports version "' + version + '", but no data block definition is available for it (see the list logged above) - no sensor/settings data can be read or written');
+                    }
                     this.setStateAsync('idm_control_version', version, true)
                         .catch(e => this.log.error('failed to set idm_control_version: ' + e));
                     this.CreateStates().catch(e => this.log.error('failed to create states: ' + e));

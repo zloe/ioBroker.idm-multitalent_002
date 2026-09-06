@@ -147,6 +147,29 @@ describe('main.js - IdmMultitalent002 (ioBroker glue around IdmSession)', () => 
         expect(adapter.stateNameMap.has('Heizkreis-A.Betriebsart')).to.be.true;
     });
 
+    it('logs which firmware versions have a data block definition available, once ready', () => {
+        const infoCall = adapter.log.info.getCalls().find(c => /data block definitions available for/.test(c.args[0]));
+        expect(infoCall, 'expected a log.info call listing the available versions').to.exist;
+        expect(infoCall.args[0]).to.match(/idm701100/);
+    });
+
+    it('onVersion hook logs which definition was selected for a known version', async () => {
+        session.hooks.onVersion('idm701100');
+        await flush();
+
+        expect(adapter.log.warn.called, 'a known version should not log a warning').to.be.false;
+        const infoCall = adapter.log.info.getCalls().find(c => /heat pump reports version "idm701100"/.test(c.args[0]));
+        expect(infoCall, 'expected a log.info call naming the selected definition').to.exist;
+    });
+
+    it('onVersion hook logs a warning when the reported version has no known data block definition', async () => {
+        session.hooks.onVersion('totally-unknown-version');
+        await flush();
+
+        const warnCall = adapter.log.warn.getCalls().find(c => /no data block definition is available/.test(c.args[0]));
+        expect(warnCall, 'expected a log.warn call about the missing definition').to.exist;
+    });
+
     it('onNeedStates hook creates states once and is a no-op afterwards', async () => {
         const createStatesSpy = sinon.spy(adapter, 'CreateStates');
 
