@@ -3,33 +3,113 @@
         "name": "idm-multitalent_002",
         "version": "1.2.9",
         "news": {
+            "1.2.9": {
+                "en": "switched npm publishing to Trusted Publishing (OIDC) after 1.2.7/1.2.8 failed to publish",
+                "de": "npm-Veröffentlichung auf Trusted Publishing (OIDC) umgestellt, nachdem 1.2.7/1.2.8 nicht veröffentlicht werden konnten",
+                "ru": "публикация в npm переведена на Trusted Publishing (OIDC) после неудачных публикаций 1.2.7/1.2.8",
+                "pt": "publicação no npm migrada para Trusted Publishing (OIDC) após falha na publicação das versões 1.2.7/1.2.8",
+                "nl": "npm-publicatie overgezet naar Trusted Publishing (OIDC) nadat 1.2.7/1.2.8 niet gepubliceerd konden worden",
+                "fr": "publication npm basculée vers Trusted Publishing (OIDC) après l'échec de publication des versions 1.2.7/1.2.8",
+                "it": "pubblicazione su npm passata a Trusted Publishing (OIDC) dopo il fallimento della pubblicazione di 1.2.7/1.2.8",
+                "es": "publicación en npm cambiada a Trusted Publishing (OIDC) tras fallar la publicación de 1.2.7/1.2.8",
+                "pl": "publikację w npm przełączono na Trusted Publishing (OIDC) po nieudanej publikacji 1.2.7/1.2.8",
+                "zh-cn": "由于 1.2.7/1.2.8 发布失败,已将 npm 发布方式切换为 Trusted Publishing (OIDC)"
+            },
+            "1.2.8": {
+                "en": "fixed repository checker issues (#298) and the broken lint toolchain",
+                "de": "Probleme des Repository-Checkers (#298) und die defekte Lint-Toolchain behoben",
+                "ru": "исправлены проблемы, выявленные проверкой репозитория (#298), и неработающий набор инструментов lint",
+                "pt": "corrigidos problemas apontados pelo verificador de repositório (#298) e a ferramenta de lint quebrada",
+                "nl": "problemen van de repository-checker (#298) en de kapotte lint-toolchain verholpen",
+                "fr": "correction des problèmes signalés par le vérificateur de dépôt (#298) et de la chaîne d'outils lint cassée",
+                "it": "risolti i problemi segnalati dal repository checker (#298) e la toolchain di lint non funzionante",
+                "es": "corregidos los problemas del verificador de repositorio (#298) y la cadena de herramientas de lint rota",
+                "pl": "naprawiono problemy wskazane przez repository checker (#298) oraz uszkodzony zestaw narzędzi lint",
+                "zh-cn": "修复了仓库检查器报告的问题 (#298) 以及损坏的 lint 工具链"
+            },
             "1.2.7": {
                 "en": "* fixed broken test/lint toolchain, duplicate register numbers and timer cleanup on unload",
-                "de": "* Test-/Lint-Toolchain repariert, doppelte Registernummern und Timer-Aufräumung beim Unload behoben"
+                "de": "* Test-/Lint-Toolchain repariert, doppelte Registernummern und Timer-Aufräumung beim Unload behoben",
+                "ru": "исправлены неработающий набор инструментов test/lint, дублирующиеся номера регистров и очистка таймеров при выгрузке",
+                "pt": "corrigida a cadeia de testes/lint quebrada, números de registro duplicados e limpeza de timers ao descarregar",
+                "nl": "kapotte test-/lint-toolchain, dubbele registernummers en timer-opruiming bij unload verholpen",
+                "fr": "correction de la chaîne test/lint cassée, des numéros de registre en double et du nettoyage des timers au déchargement",
+                "it": "risolti la toolchain test/lint non funzionante, i numeri di registro duplicati e la pulizia dei timer allo scaricamento",
+                "es": "corregida la cadena de test/lint rota, números de registro duplicados y la limpieza de temporizadores al descargar",
+                "pl": "naprawiono uszkodzony zestaw narzędzi test/lint, zduplikowane numery rejestrów oraz czyszczenie timerów przy wyładowaniu",
+                "zh-cn": "修复了损坏的测试/lint 工具链、重复的寄存器编号以及卸载时的定时器清理问题"
             },
             "1.2.6": {
                 "en": "* fixed reconnect handling",
-                "de": "* Reconnect-Verhalten korrigiert"
+                "de": "* Reconnect-Verhalten korrigiert",
+                "ru": "исправлена обработка повторного подключения",
+                "pt": "corrigida a lógica de reconexão",
+                "nl": "reconnect-afhandeling gecorrigeerd",
+                "fr": "correction de la gestion de la reconnexion",
+                "it": "corretta la gestione della riconnessione",
+                "es": "corregida la gestión de la reconexión",
+                "pl": "poprawiono obsługę ponownego łączenia",
+                "zh-cn": "修复了重新连接处理"
             },
             "1.2.5": {
                 "en": "* improved error handling",
-                "de": "* Fehlerbehandlung weiter verbessert"
+                "de": "* Fehlerbehandlung weiter verbessert",
+                "ru": "улучшена обработка ошибок",
+                "pt": "melhorada a manipulação de erros",
+                "nl": "foutafhandeling verder verbeterd",
+                "fr": "amélioration de la gestion des erreurs",
+                "it": "migliorata ulteriormente la gestione degli errori",
+                "es": "mejorado el manejo de errores",
+                "pl": "dalsze usprawnienie obsługi błędów",
+                "zh-cn": "进一步改进了错误处理"
             },
             "1.2.4": {
                 "en": "* improve logging and handling of data transmission problems",
-                "de": "* Logging und Behandlung von Übertragungsfehlern verbessert"
+                "de": "* Logging und Behandlung von Übertragungsfehlern verbessert",
+                "ru": "улучшено протоколирование и обработка проблем передачи данных",
+                "pt": "melhorados o registro (log) e o tratamento de problemas de transmissão de dados",
+                "nl": "logging en afhandeling van gegevensoverdrachtproblemen verbeterd",
+                "fr": "amélioration de la journalisation et de la gestion des problèmes de transmission de données",
+                "it": "migliorati il logging e la gestione dei problemi di trasmissione dati",
+                "es": "mejorados el registro y el manejo de problemas de transmisión de datos",
+                "pl": "usprawniono logowanie i obsługę problemów z transmisją danych",
+                "zh-cn": "改进了数据传输问题的日志记录和处理"
             },
             "1.2.3": {
                 "en": "* improve handling of data transmission problems",
-                "de": "* Behandlung von Datenübertragungsproblemen verbessert"
+                "de": "* Behandlung von Datenübertragungsproblemen verbessert",
+                "ru": "улучшена обработка проблем передачи данных",
+                "pt": "melhorado o tratamento de problemas de transmissão de dados",
+                "nl": "afhandeling van gegevensoverdrachtproblemen verbeterd",
+                "fr": "amélioration de la gestion des problèmes de transmission de données",
+                "it": "migliorata la gestione dei problemi di trasmissione dati",
+                "es": "mejorado el manejo de problemas de transmisión de datos",
+                "pl": "usprawniono obsługę problemów z transmisją danych",
+                "zh-cn": "改进了数据传输问题的处理"
             },
             "1.2.2": {
                 "en": "* fix handling of data transmission problems which lead to stopping requesting data",
-                "de": "* Problem behoben, das zum Stoppen der Datenanfragen führte"
+                "de": "* Problem behoben, das zum Stoppen der Datenanfragen führte",
+                "ru": "исправлена проблема передачи данных, приводившая к прекращению запросов данных",
+                "pt": "corrigido problema de transmissão de dados que causava a interrupção das solicitações de dados",
+                "nl": "probleem met gegevensoverdracht verholpen dat leidde tot het stoppen van dataverzoeken",
+                "fr": "correction d'un problème de transmission de données entraînant l'arrêt des demandes de données",
+                "it": "risolto un problema di trasmissione dati che causava l'interruzione delle richieste di dati",
+                "es": "corregido un problema de transmisión de datos que provocaba la detención de las solicitudes de datos",
+                "pl": "naprawiono problem z transmisją danych powodujący zatrzymanie żądań danych",
+                "zh-cn": "修复了导致数据请求停止的数据传输问题"
             },
             "1.2.1": {
                 "en": "* fixed data definitions for EVR 070110 - idm722100",
-                "de": "* Datendefinitionen für EVR 070110 - idm722100 korrigiert"
+                "de": "* Datendefinitionen für EVR 070110 - idm722100 korrigiert",
+                "ru": "исправлены определения данных для EVR 070110 - idm722100",
+                "pt": "corrigidas as definições de dados para EVR 070110 - idm722100",
+                "nl": "gegevensdefinities voor EVR 070110 - idm722100 gecorrigeerd",
+                "fr": "correction des définitions de données pour EVR 070110 - idm722100",
+                "it": "corrette le definizioni dei dati per EVR 070110 - idm722100",
+                "es": "corregidas las definiciones de datos para EVR 070110 - idm722100",
+                "pl": "poprawiono definicje danych dla EVR 070110 - idm722100",
+                "zh-cn": "修复了 EVR 070110 - idm722100 的数据定义"
             }
         },
         "titleLang": {
