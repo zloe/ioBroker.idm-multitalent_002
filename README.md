@@ -140,6 +140,25 @@ The serial protocol itself was reverse-engineered (RS422 sniffing, no official i
 ### Data block definitions
 The register/data-block layout for every supported control version (which fields exist, at which position, with which factor/length, and whether they may be written) lives in one JSON file per firmware version under [`lib/datablocks/`](lib/datablocks/) (e.g. `idm701100.json`), **not** in the adapter's code - `lib/idm_datablocks.js` only loads, matches and validates them. See [`lib/datablocks/README.md`](lib/datablocks/README.md) for the full file format and the (few) known min/max ranges.
 
+### Architecture
+`main.js` only wires the adapter lifecycle (config, ioBroker objects/states) together; the actual
+TCP connection and the request/response state machine that talks to the control (connect/
+reconnect, sending init/data-block/data-content/set-value messages at the delays it needs,
+retrying, recovering from a dropped connection or an unexpected reply) live in
+[`lib/idm-session.js`](lib/idm-session.js) (`IdmSession`), which knows nothing about ioBroker
+itself - it reports what happened through a small set of hooks instead, so it can be (and is,
+see `lib/idm-session.test.js`) unit-tested without an adapter instance. `lib/idm-protocol.js`
+(`IdmProtocol`) below that builds/parses the wire messages and holds the loaded data block
+definitions (see below); `lib/idm-utils.js` has the low-level byte/hex helpers both use. Each
+adapter instance creates its own `IdmProtocol` and `IdmSession` - see the comment at the top of
+either class for why they must not be shared between instances running in the same process
+(ioBroker "compact mode").
+
+`IdmSession` also arms a short response timeout after every request it sends and resets the
+connection if nothing valid comes back in time, instead of relying only on the much coarser
+per-`reconnectinterval` silence watchdog - so a single dropped reply is now noticed and
+recovered from in seconds rather than potentially up to a whole `reconnectinterval`.
+
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
 
