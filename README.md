@@ -138,22 +138,10 @@ As the adapter is not (yet) listed in the official ioBroker repository you have 
 The serial protocol itself was reverse-engineered (RS422 sniffing, no official iDM documentation exists) mainly by user "makki" in the [KNX-User-Forum "idm Wärmepumpe" thread](https://knx-user-forum.de/forum/%C3%B6ffentlicher-bereich/knx-eib-forum/1251-idm-w%C3%A4rmepumpe) and refined further here; see also the [ioBroker adapter thread](https://forum.iobroker.net/topic/54253/test-adapter-idm-multitalent_002). Neither source documents official min/max limits for the writable values (see below) - they only cover which register a value lives in and how it is encoded.
 
 ### Data block definitions
-The register/data-block layout for every supported control version (which fields exist, at which position, with which factor/length, and whether they may be written) lives in [`lib/idm_datablocks.default.json`](lib/idm_datablocks.default.json), **not** in the adapter's code. `lib/idm_datablocks.js` only loads and validates it. Each field entry looks like this:
-
-```json
-{ "statename": "Heizkreis-A.Betriebsart", "field": "betrieb_A", "description": "Betriebsart HK A", "length": 2, "factor": 1, "writable": true, "function": 11, "min": 0, "max": 5 }
-```
-
-* `statename` - the ioBroker state created for this field (empty for padding/unused positions)
-* `field` - internal field name (only used for `# was function: X` style comments/debugging)
-* `function` - the register id the multitalent control uses to identify this value; must be unique within its data block (checked by `idm_datablocks.js`'s validation - a collision has previously caused a write meant for one field to land on another, see the 1.2.7 changelog entry)
-* `length` - 1 or 2 bytes on the wire
-* `factor` - raw value is divided/multiplied by this to get/set the real-world value
-* `writable` - whether the adapter subscribes to this state and sends changes back to the heat pump
-* `min`/`max` - optional. When present, a write outside this range is rejected (logged, never sent to the heat pump, and the displayed value is reverted) instead of being forwarded. **Only a handful of fields have these set** - the enum ranges for the various "Betriebsart" (operating mode) fields, sourced directly from comments already in the codebase. Every other writable field (mostly temperature setpoints) intentionally has no configured limit, because no verified hardware range is available; see the note at the top of the JSON file itself (`_readme` key).
+The register/data-block layout for every supported control version (which fields exist, at which position, with which factor/length, and whether they may be written) lives in one JSON file per firmware version under [`lib/datablocks/`](lib/datablocks/) (e.g. `idm701100.json`), **not** in the adapter's code - `lib/idm_datablocks.js` only loads, matches and validates them. See [`lib/datablocks/README.md`](lib/datablocks/README.md) for the full file format and the (few) known min/max ranges.
 
 ### Overriding the data blocks without an adapter update
-The instance setting **"Custom data blocks file"** (`native.dataBlocksFile`) can point to an absolute path to your own JSON file with the same shape as `idm_datablocks.default.json`. If it exists and passes the same validation, it is used instead of the bundled file - useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. A file that fails validation (or can't be read) is ignored, with the reason logged as a warning, and the bundled defaults are used instead. Note that this is currently a full replacement, not a patch - a custom file needs the complete data set, not just the fields you want to change.
+The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
 
 Attention, still experimental, ... the adapter sets values of the heatpump, so do not install, unless you know what you are doing and have contacted the author! 
 

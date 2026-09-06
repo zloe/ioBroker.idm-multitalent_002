@@ -660,12 +660,20 @@ class IdmMultitalent002 extends utils.Adapter {
         // Initialize your adapter here
 
         // Reload the hardware data block definitions now that this.config is available: if
-        // "Custom data blocks file" is set in the instance configuration, that JSON file is
-        // used instead of the bundled defaults (after validation), so device support, field
-        // fixes or min/max limits can be added/changed without an adapter update.
-        this.idm.initialize(this.config.dataBlocksFile, msg => this.log.warn(msg));
-        if (this.config.dataBlocksFile) {
-            this.log.info('data block definitions loaded from: ' + this.idm.dataSource);
+        // "Custom data blocks directory" is set in the instance configuration, any per-version
+        // file in there (see lib/datablocks/README.md for the format) replaces the matching
+        // bundled definition after validation, so device support, field fixes or min/max
+        // limits can be added/changed without an adapter update.
+        this.idm.initialize(this.config.dataBlocksDir, msg => this.log.warn(msg));
+        if (this.config.dataBlocksDir) {
+            const overridden = [...this.idm.dataSources]
+                .filter(([, file]) => file.startsWith(this.config.dataBlocksDir))
+                .map(([version]) => version);
+            if (overridden.length > 0) {
+                this.log.info('using custom data block definitions from ' + this.config.dataBlocksDir + ' for: ' + overridden.join(', '));
+            } else {
+                this.log.info('"Custom data blocks directory" is set (' + this.config.dataBlocksDir + '), but none of its files were used - check the warnings above and the bundled definitions are being used for every version');
+            }
         }
 
         this.subscribeStates('idm_control_version');
