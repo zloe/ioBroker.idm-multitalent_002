@@ -1,6 +1,6 @@
 {
   "name": "iobroker.idm-multitalent_002",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "description": "Read and write values of a iDM heatpump with multitalent.002 control.",
   "author": {
     "name": "zloe",

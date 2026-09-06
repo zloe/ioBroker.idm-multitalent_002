@@ -57,6 +57,16 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.3.0 (2026-09-06)
+* (zloe) move the hardware data block definitions out of the code into one JSON file per firmware version (lib/datablocks/), validated at load time
+* (zloe) enforce configured min/max limits when writing a value to the heatpump, reverting the displayed value if a write is rejected
+* (zloe) support a directory of custom data block files (one per firmware version, matched by their own version field, not the filename) to override or add definitions without an adapter update - see lib/datablocks/README.md
+* (zloe) fix a bug where the per-version speed adjustment (e.g. idm722100's 75%) never actually took effect
+* (zloe) give every adapter instance its own protocol/connection state instead of a shared module-level singleton, fixing multi-instance ("compact mode") safety
+* (zloe) extract the TCP connection and request/response state machine out of main.js into its own class (lib/idm-session.js)
+* (zloe) add a short per-request response timeout and a frame-length cap, so a dropped reply or a garbled byte stream is recovered from in seconds instead of stalling
+* (zloe) translate the admin config screen and fill in missing changelog translations (previously English-only outside of a few fields)
+
 ### 1.2.9 (2026-09-05)
 * (zloe) switch npm deploy from the retired classic npm token to Trusted Publishing (OIDC) - both 1.2.7 and 1.2.8 failed to publish to npm because of this
 
