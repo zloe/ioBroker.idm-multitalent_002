@@ -3,6 +3,18 @@
         "name": "idm-multitalent_002",
         "version": "1.2.9",
         "news": {
+            "1.3.0": {
+                "en": "data block definitions moved to customizable JSON files, min/max write enforcement added, and the connection handling made more robust (per-instance state, faster recovery from a dropped reply)",
+                "de": "Datenblock-Definitionen in anpassbare JSON-Dateien ausgelagert, Min/Max-Prüfung beim Schreiben ergänzt und die Verbindungsbehandlung robuster gemacht (Zustand pro Instanz, schnellere Erholung nach einer verlorenen Antwort)",
+                "ru": "определения блоков данных вынесены в настраиваемые JSON-файлы, добавлена проверка мин/макс при записи, повышена устойчивость обработки соединения (состояние на каждый экземпляр, более быстрое восстановление после потерянного ответа)",
+                "pt": "as definições dos blocos de dados foram movidas para arquivos JSON personalizáveis, foi adicionada a verificação de min/máx ao escrever valores e o tratamento da conexão ficou mais robusto (estado por instância, recuperação mais rápida após uma resposta perdida)",
+                "nl": "datablokdefinities verplaatst naar aanpasbare JSON-bestanden, min/max-controle bij het schrijven toegevoegd en de verbindingsafhandeling robuuster gemaakt (status per instantie, sneller herstel na een verloren antwoord)",
+                "fr": "les définitions des blocs de données ont été déplacées vers des fichiers JSON personnalisables, une vérification min/max a été ajoutée lors de l'écriture, et la gestion de la connexion a été rendue plus robuste (état par instance, récupération plus rapide après une réponse perdue)",
+                "it": "le definizioni dei blocchi dati sono state spostate in file JSON personalizzabili, è stato aggiunto il controllo min/max in scrittura e la gestione della connessione è stata resa più robusta (stato per istanza, ripristino più rapido dopo una risposta persa)",
+                "es": "las definiciones de los bloques de datos se trasladaron a archivos JSON personalizables, se añadió la verificación de mín/máx al escribir y se hizo más robusto el manejo de la conexión (estado por instancia, recuperación más rápida tras una respuesta perdida)",
+                "pl": "definicje bloków danych przeniesiono do konfigurowalnych plików JSON, dodano sprawdzanie min/maks przy zapisie oraz uodporniono obsługę połączenia (stan na instancję, szybsze odzyskiwanie po utraconej odpowiedzi)",
+                "zh-cn": "数据块定义已迁移到可自定义的 JSON 文件,新增了写入时的最小/最大值校验,并增强了连接处理的健壮性(每个实例独立状态,对丢失响应的恢复更快)"
+            },
             "1.2.9": {
                 "en": "switched npm publishing to Trusted Publishing (OIDC) after 1.2.7/1.2.8 failed to publish",
                 "de": "npm-Veröffentlichung auf Trusted Publishing (OIDC) umgestellt, nachdem 1.2.7/1.2.8 nicht veröffentlicht werden konnten",
