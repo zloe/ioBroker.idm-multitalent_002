@@ -16,8 +16,14 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire').noPreserveCache();
 const { EventEmitter } = require('events');
 
-const idm = require('./lib/idm-protocol');
+const IdmProtocol = require('./lib/idm-protocol');
 const idm_u = require('./lib/idm-utils');
+// idm-protocol.js now exports the class rather than a singleton instance (each adapter
+// instance under test creates its own, just like the real adapter does - see main.js). This
+// module-level instance is only used by tests to build the expected wire bytes for
+// comparison (create_message/create_init_message etc. don't depend on any loaded state), not
+// as the adapter's own protocol state.
+const idm = new IdmProtocol();
 
 /** A minimal stand-in for a TCP net.Socket, fully driven by the test. */
 class FakeSocket extends EventEmitter {

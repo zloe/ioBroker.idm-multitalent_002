@@ -11,7 +11,7 @@ const net = require('net');
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
-const idm = require('./lib/idm-protocol');
+const IdmProtocol = require('./lib/idm-protocol');
 const idm_u = require('./lib/idm-utils');
 const Queue = require('./lib/queue');
 
@@ -28,9 +28,15 @@ class IdmMultitalent002 extends utils.Adapter {
         //this.log.info('created');
         this.statesCreated = false;
         this.statesSubscribed = false;
-        // Load the bundled defaults now, so idm.* is usable even before onReady/config are
+        // Each adapter instance gets its OWN IdmProtocol. It holds per-connection state
+        // (the incoming-byte parser buffer) as well as the data block definitions, which can
+        // now differ per instance (see the "Custom data blocks file" setting) - neither may be
+        // shared with another instance running in the same process, e.g. two heat pumps under
+        // ioBroker "compact mode" would otherwise corrupt each other's incoming data.
+        this.idm = new IdmProtocol();
+        // Load the bundled defaults now, so this.idm.* is usable even before onReady/config are
         // available. onReady() re-runs this with the configured custom file (if any).
-        idm.initialize();
+        this.idm.initialize();
         this.connectedToIDM = false;
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
@@ -96,9 +102,9 @@ class IdmMultitalent002 extends utils.Adapter {
     AdjustSpeed() {
         if (this.speedAdjusted)
             return;
-        // idm.speed is a Map, not a plain object - bracket access here always returned
+        // this.idm.speed is a Map, not a plain object - bracket access here always returned
         // undefined, so speed adjustment (e.g. idm722100's 75%) never actually took effect.
-        let factor = idm.speed.get(this.version);
+        let factor = this.idm.speed.get(this.version);
         if (factor != null) {
             if (factor != 100 && factor > 0) {
                 this.log.info('adjusting speed to ' + factor + '%');
@@ -160,7 +166,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // create the states
     async CreateStates() {
         this.log.debug('creating states');
-        const dataBlocks = idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+        const dataBlocks = this.idm.getDataBlocks(this.version); // get the known data blocks for the connected version
 
         if (!dataBlocks) {
             this.log.warn('no data blocks defined, no states will be created');
@@ -170,7 +176,7 @@ class IdmMultitalent002 extends utils.Adapter {
         // Wait for every state to actually be created before flagging statesCreated/statesSubscribed -
         // Array.prototype.forEach does not await its (async) callback, so this used to mark the states
         // as created while most of the setObjectNotExistsAsync calls were still in flight.
-        await idm.mapStatenames(this.version, this.createIDMState.bind(this));
+        await this.idm.mapStatenames(this.version, this.createIDMState.bind(this));
         for (const element of dataBlocks) {
             const stateName = 'Data_block_' + idm_u.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
@@ -215,7 +221,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
         if (this.client) {
             this.client.write(message);
-            this.log.debug('sent: ' + idm.get_protocol_string(message));
+            this.log.debug('sent: ' + this.idm.get_protocol_string(message));
             this.idmProtocolState = 6;
         }
     }
@@ -239,7 +245,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.log.debug('********* found data to be sent, state: ' + this.send_state);
             if (this.send_state === 0) {
                 this.itemToBeSent = this.sendQueue.dequeue();
-                this.log.debug('setting values: ' + idm.get_protocol_string(this.itemToBeSent));
+                this.log.debug('setting values: ' + this.idm.get_protocol_string(this.itemToBeSent));
                 if (this.client)
                     this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.setValueDelay);
                 this.send_state++;
@@ -283,8 +289,8 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
 
-        const init_message = idm.create_init_message();
-        this.log.silly('init message: ' + idm.get_protocol_string(init_message));
+        const init_message = this.idm.create_init_message();
+        this.log.silly('init message: ' + this.idm.get_protocol_string(init_message));
         if (this.client) {
             this.client.write(init_message);
             this.idmProtocolState = 1;
@@ -308,7 +314,7 @@ class IdmMultitalent002 extends utils.Adapter {
             return;
         }
         this.log.debug('sending request');
-        const requestMessage = idm.create_request_data_block_message(dataBlock);
+        const requestMessage = this.idm.create_request_data_block_message(dataBlock);
         if (this.client) {
             this.client.write(requestMessage);
             this.idmProtocolState = 3;
@@ -341,7 +347,7 @@ class IdmMultitalent002 extends utils.Adapter {
         let datablockToRequest;
         // request loop for all known sensor data blocks
         if (this.requestingSensorData) {
-            const dataBlocks = idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
+            const dataBlocks = this.idm.getSensorDataBlocks(this.version); // get the known data blocks for the connected version
             if (!dataBlocks) {
                 this.log.warn('no sensor data blocks defined, no data will be requested');
                 this.requestingSensorData = false;
@@ -362,7 +368,7 @@ class IdmMultitalent002 extends utils.Adapter {
         } else {
 
             // request the next settings datablock
-            const dataBlocks = idm.getSettingsDataBlocks(this.version);
+            const dataBlocks = this.idm.getSettingsDataBlocks(this.version);
             if (!dataBlocks) {
                 this.log.info('no settings data blocks defined, no settings data will be requested');
                 this.requestingSensorData = true;
@@ -389,7 +395,7 @@ class IdmMultitalent002 extends utils.Adapter {
             this.setConnected(false, true);
             return;
         }
-        const message = idm.create_request_data_content_message();
+        const message = this.idm.create_request_data_content_message();
         this.log.debug('requesting data content');
         if (this.client) {
             this.client.write(message);
@@ -424,12 +430,12 @@ class IdmMultitalent002 extends utils.Adapter {
         // first set reset the reconnectTimer as we received data and then set it again immediately
         this.setReconnectHandlerTimeout();
 
-        const state = idm.add_to_packet(data);
+        const state = this.idm.add_to_packet(data);
         if (state == 3) { // data packed received completely, let's check what we've got
-            this.log.silly('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
-            const received_data = idm.get_data_packet();
-            idm.reset(); // reset the packet reader to be ready for the next packet
-            const protocolState = idm.protocol_state(received_data);
+            this.log.silly('************* receiving **************** state ' + state + ' data=' + this.idm.get_protocol_string(data));
+            const received_data = this.idm.get_data_packet();
+            this.idm.reset(); // reset the packet reader to be ready for the next packet
+            const protocolState = this.idm.protocol_state(received_data);
             this.log.debug('protocol state ' + protocolState);
             if (protocolState === 'R1') { // successful data request, we have to be in state 3 and move to 4
                 if (this.idmProtocolState !== 3) {
@@ -478,7 +484,7 @@ class IdmMultitalent002 extends utils.Adapter {
                 }
                 return;
             }
-            const text = idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
+            const text = this.idm.interpret_data(this.version, received_data, this.setIDMState.bind(this));
             this.log.debug('received data: ' + received_data.length + ' - ' + text);
             if (protocolState.slice(0, 4) == 'Data') { // received a data block, setting the according state
                 if (this.idmProtocolState !== 5) {
@@ -532,9 +538,9 @@ class IdmMultitalent002 extends utils.Adapter {
                 this.sendInitTimer = this.setTimeout(this.send_init.bind(this), this.requestInitDelay * 2);
             }
         } else if (state > 3) {
-            this.log.debug('************* receiving **************** state ' + state + ' data=' + idm.get_protocol_string(data));
+            this.log.debug('************* receiving **************** state ' + state + ' data=' + this.idm.get_protocol_string(data));
             this.log.warn('wrong state in receiving data, state is ' + state + ' resetting the transmission and retrying to continue communication');
-            idm.reset();
+            this.idm.reset();
             this.idmProtocolState = 0;
             // clear all timers to avoid confusion
             if (this.sendInitTimer) {
@@ -657,9 +663,9 @@ class IdmMultitalent002 extends utils.Adapter {
         // "Custom data blocks file" is set in the instance configuration, that JSON file is
         // used instead of the bundled defaults (after validation), so device support, field
         // fixes or min/max limits can be added/changed without an adapter update.
-        idm.initialize(this.config.dataBlocksFile, msg => this.log.warn(msg));
+        this.idm.initialize(this.config.dataBlocksFile, msg => this.log.warn(msg));
         if (this.config.dataBlocksFile) {
-            this.log.info('data block definitions loaded from: ' + idm.dataSource);
+            this.log.info('data block definitions loaded from: ' + this.idm.dataSource);
         }
 
         this.subscribeStates('idm_control_version');
@@ -840,7 +846,7 @@ class IdmMultitalent002 extends utils.Adapter {
     async sendValue(stateName, definition, value) {
         if (!definition.writable) return;
 
-        const check = idm.checkValueRange(definition, value);
+        const check = this.idm.checkValueRange(definition, value);
         if (!check.ok) {
             this.log.error(`refusing to send ${stateName} = ${value}: ${check.reason} - nothing was sent to the heatpump`);
             if (this.lastAckedValue.has(stateName)) {
@@ -850,7 +856,7 @@ class IdmMultitalent002 extends utils.Adapter {
         }
 
         this.log.info('********* all prerequisites met, enqueuing data to be sent, value = ' + check.value + ' factor = ' + definition.factor);
-        this.sendQueue.enqueue(idm.create_set_value_message(definition.function, check.value, definition.length, definition.factor));
+        this.sendQueue.enqueue(this.idm.create_set_value_message(definition.function, check.value, definition.length, definition.factor));
     }
 
     /**
