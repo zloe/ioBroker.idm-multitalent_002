@@ -74,5 +74,21 @@ are pre-filled in the bundled files:
   Dauernennbetrieb und Freigabe Speicherladung), 1 = direkte WP Steuerung, 2 =
   Rundsteuerempfaenger
 
-Every other writable field (mostly temperature setpoints) intentionally has no `min`/`max` set,
-because no verified hardware range is available.
+Every other writable field in most bundled versions intentionally has no `min`/`max` set, because
+no verified hardware range is available.
+
+## Estimated ranges (S_H726100)
+
+`S_H726100.json` additionally has `min`/`max` set on every writable field that isn't already
+covered by a known enumeration above - the values above (still hardware-confirmed), plus one more
+category below. Unlike those, these are **not** confirmed against the actual control - nobody has
+verified them on real hardware for every field, they are plausible ranges (typical setpoint
+ranges for this kind of heat pump, e.g. domestic hot water 5-75°C, heating circuit flow
+limits 10-90°C, percentages 0-100) with a deliberate margin so a legitimate value is never
+rejected, chosen only to catch a value that is obviously wrong (a typo, a unit mix-up, a stray
+digit) rather than to enforce the hardware's real limits precisely. If one of them turns out to
+be wrong for your installation - too tight (a legitimate value gets rejected) or too loose - use
+the **"Custom data blocks directory"** setting (see above) with your own `S_H726100.json`
+containing the corrected `min`/`max` for that field; it fully replaces the bundled file, and the
+adapter logs which one (bundled or custom) it actually used for the connected version once
+connected, so you can confirm your override took effect.

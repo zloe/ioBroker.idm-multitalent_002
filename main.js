@@ -186,7 +186,8 @@ class IdmMultitalent002 extends utils.Adapter {
                 onVersion: (version) => {
                     this.version = version;
                     if (this.idm.dataDefinitions.has(version)) {
-                        this.log.info('heat pump reports version "' + version + '" - using its data block definition (' + this.idm.dataSources.get(version) + ')');
+                        const sourceKind = this.idm.isCustomDefinition(version) ? 'custom override' : 'bundled';
+                        this.log.info('heat pump reports version "' + version + '" - using its ' + sourceKind + ' data block definition (' + this.idm.dataSources.get(version) + ')');
                     } else {
                         this.log.warn('heat pump reports version "' + version + '", but no data block definition is available for it (see the list logged above) - no sensor/settings data can be read or written');
                     }

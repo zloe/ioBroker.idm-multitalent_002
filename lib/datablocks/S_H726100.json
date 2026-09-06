@@ -36,7 +36,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 1
+                    "function": 1,
+                    "min": 5,
+                    "max": 75
                 },
                 {
                     "statename": "Heizung.SommerWinterUmschaltTemp",
@@ -45,7 +47,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 4
+                    "function": 4,
+                    "min": -10,
+                    "max": 30
                 },
                 {
                     "statename": "Heizung.AutomatischeWPZuschaltung",
@@ -126,7 +130,9 @@
                     "length": 2,
                     "factor": 0.1,
                     "writable": true,
-                    "function": 66
+                    "function": 66,
+                    "min": -10,
+                    "max": 40
                 },
                 {
                     "statename": "Heizung.ExternerKontakt",
@@ -185,7 +191,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 6
+                    "function": 6,
+                    "min": 5,
+                    "max": 35
                 },
                 {
                     "statename": "Heizkreis-A.Spartemperatur",
@@ -194,7 +202,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 7
+                    "function": 7,
+                    "min": 0,
+                    "max": 30
                 },
                 {
                     "statename": "Heizkreis-A.HeizkreisArt",
@@ -223,7 +233,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 14
+                    "function": 14,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-A.Raumeinfluss",
@@ -252,7 +264,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 26
+                    "function": 26,
+                    "min": 5,
+                    "max": 50
                 },
                 {
                     "statename": "Heizkreis-A.AnteilRaumeinfluss",
@@ -351,7 +365,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 58
+                    "function": 58,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-C.MischerVorhanden",
@@ -535,7 +551,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 86
+                    "function": 86,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-D.Konstanttemperatur",
@@ -544,7 +562,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 87
+                    "function": 87,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-C.Maximaltemperatur",
@@ -553,7 +573,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 88
+                    "function": 88,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-D.Maximaltemperatur",
@@ -562,7 +584,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 89
+                    "function": 89,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-C.Minimaltemperatur",
@@ -571,7 +595,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 90
+                    "function": 90,
+                    "min": 5,
+                    "max": 50
                 },
                 {
                     "statename": "Heizkreis-D.Minimaltemperatur",
@@ -580,7 +606,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 91
+                    "function": 91,
+                    "min": 5,
+                    "max": 50
                 },
                 {
                     "statename": "Heizkreis-C.Spartemperatur",
@@ -589,7 +617,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 92
+                    "function": 92,
+                    "min": 0,
+                    "max": 30
                 },
                 {
                     "statename": "Heizkreis-D.Spartemperatur",
@@ -598,7 +628,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 93
+                    "function": 93,
+                    "min": 0,
+                    "max": 30
                 },
                 {
                     "statename": "Heizkreis-C.AnteilRaumeinfluss",
@@ -661,7 +693,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 100
+                    "function": 100,
+                    "min": 5,
+                    "max": 35
                 },
                 {
                     "statename": "Heizkreis-D.Nenntemperatur",
@@ -670,7 +704,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 101
+                    "function": 101,
+                    "min": 5,
+                    "max": 35
                 }
             ]
         },
@@ -711,7 +747,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 15
+                    "function": 15,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-B.Kennlinie",
@@ -729,7 +767,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 17
+                    "function": 17,
+                    "min": 5,
+                    "max": 35
                 },
                 {
                     "statename": "Heizkreis-B.Spartemperatur",
@@ -738,7 +778,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 18
+                    "function": 18,
+                    "min": 0,
+                    "max": 30
                 },
                 {
                     "statename": "Heizkreis-B.Betriebsart",
@@ -767,7 +809,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 27
+                    "function": 27,
+                    "min": 5,
+                    "max": 50
                 },
                 {
                     "statename": "Heizkreis-B.AnteilRaumeinfluss",
@@ -821,7 +865,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 59
+                    "function": 59,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Heizkreis-B.Schnellabsenkung",
@@ -880,7 +926,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 37
+                    "function": 37,
+                    "min": 10,
+                    "max": 90
                 },
                 {
                     "statename": "Waermepumpe.MinimaleLaufzeit",
@@ -1178,7 +1226,9 @@
                     "length": 1,
                     "factor": 1,
                     "writable": true,
-                    "function": 45
+                    "function": 45,
+                    "min": 0,
+                    "max": 1
                 },
                 {
                     "statename": "",
@@ -1214,7 +1264,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 49
+                    "function": 49,
+                    "min": 5,
+                    "max": 30
                 },
                 {
                     "statename": "Kuehlung-B.Raumtemperatur",
@@ -1241,7 +1293,9 @@
                     "length": 2,
                     "factor": 0.1,
                     "writable": true,
-                    "function": 69
+                    "function": 69,
+                    "min": 0.1,
+                    "max": 10
                 },
                 {
                     "statename": "",
@@ -1354,7 +1408,9 @@
                     "length": 2,
                     "factor": 1,
                     "writable": true,
-                    "function": 62
+                    "function": 62,
+                    "min": 0,
+                    "max": 100
                 }
             ]
         },
@@ -1716,7 +1772,9 @@
                     "length": 1,
                     "factor": 1,
                     "writable": true,
-                    "function": 151
+                    "function": 151,
+                    "min": 0,
+                    "max": 1
                 }
             ]
         }

@@ -12,6 +12,9 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noPreserveCache();
 const { EventEmitter } = require('events');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 /** A small stand-in for IdmSession that just records what main.js does with it. */
 class FakeIdmSession {
@@ -160,6 +163,7 @@ describe('main.js - IdmMultitalent002 (ioBroker glue around IdmSession)', () => 
         expect(adapter.log.warn.called, 'a known version should not log a warning').to.be.false;
         const infoCall = adapter.log.info.getCalls().find(c => /heat pump reports version "idm701100"/.test(c.args[0]));
         expect(infoCall, 'expected a log.info call naming the selected definition').to.exist;
+        expect(infoCall.args[0]).to.match(/using its bundled data block definition/);
     });
 
     it('onVersion hook logs a warning when the reported version has no known data block definition', async () => {
@@ -292,6 +296,55 @@ describe('main.js - IdmMultitalent002 (ioBroker glue around IdmSession)', () => 
             await flush();
 
             expect(session.enqueued).to.be.empty;
+        });
+    });
+
+    describe('custom data blocks directory', () => {
+        let tmpDir, customAdapter, customSession;
+
+        beforeEach(async () => {
+            tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'idm-main-test-'));
+            fs.writeFileSync(path.join(tmpDir, 'idm701100.json'), JSON.stringify({
+                version: 'idm701100',
+                sensorBlocks: [],
+                settingsBlocks: ['03'],
+                speed: 100,
+                data_blocks: [{ block_number: '03', definition: [
+                    { statename: 'Warmwasser.Sollwert', field: 'WW_soll', description: 'Warmwasser-Sollwert', length: 2, factor: 1, writable: true, function: 1, min: 30, max: 65 },
+                ] }],
+            }));
+
+            FakeIdmSession.instances = [];
+            const createAdapter = proxyquire('./main.js', {
+                '@iobroker/adapter-core': { Adapter: FakeAdapterBase, '@noCallThru': true },
+                './lib/idm-session': { IdmSession: FakeIdmSession, '@noCallThru': true },
+            });
+            customAdapter = createAdapter({
+                config: { tcpserverip: '10.0.0.1', tcpserverport: 4001, reconnectinterval: 90, dataBlocksDir: tmpDir },
+            });
+            // The outer beforeEach's sinon fake timers (still active here) fake process.nextTick
+            // too, which is what FakeAdapterBase uses to emit 'ready' - without this, onReady()
+            // never runs.
+            clock.runMicrotasks();
+            await flush();
+            customSession = FakeIdmSession.instances[0];
+        });
+
+        afterEach(() => {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('logs which versions were overridden from the custom directory, and that the override was used on connect', async () => {
+            const overrideCall = customAdapter.log.info.getCalls().find(c => /using custom data block definitions from/.test(c.args[0]));
+            expect(overrideCall, 'expected the startup summary of which versions were overridden').to.exist;
+            expect(overrideCall.args[0]).to.match(/idm701100/);
+
+            customSession.hooks.onVersion('idm701100');
+            await flush();
+
+            const versionCall = customAdapter.log.info.getCalls().find(c => /heat pump reports version "idm701100"/.test(c.args[0]));
+            expect(versionCall, 'expected a log.info call naming the selected definition').to.exist;
+            expect(versionCall.args[0]).to.match(/using its custom override data block definition/);
         });
     });
 });
