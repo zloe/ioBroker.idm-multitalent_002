@@ -3,6 +3,18 @@
         "name": "idm-multitalent_002",
         "version": "1.3.2",
         "news": {
+            "1.3.3": {
+                "en": "shortened the recurring data block 07 request log to one compact line with the same information, and added a log line for how long a full settings cycle (every settings block once) takes",
+                "de": "die wiederkehrende Log-Zeile für Datenblock 07 auf eine kompakte Zeile mit denselben Informationen gekürzt und eine Log-Zeile ergänzt, die die Dauer eines vollständigen Settings-Zyklus (jeder Settings-Block einmal) ausgibt",
+                "ru": "повторяющаяся запись в журнале для блока данных 07 сокращена до одной компактной строки с той же информацией, добавлена запись о длительности полного цикла настроек (каждый блок настроек один раз)",
+                "pt": "a linha de log recorrente do bloco de dados 07 foi reduzida a uma única linha compacta com a mesma informação, e foi adicionada uma linha de log com a duração de um ciclo completo de configurações (cada bloco de configurações uma vez)",
+                "nl": "de terugkerende logregel voor datablok 07 is teruggebracht tot één compacte regel met dezelfde informatie, en er is een logregel toegevoegd voor de duur van een volledige instellingencyclus (elk instellingenblok één keer)",
+                "fr": "la ligne de journal récurrente du bloc de données 07 a été réduite à une seule ligne compacte contenant les mêmes informations, et une ligne de journal indiquant la durée d'un cycle complet des paramètres (chaque bloc de paramètres une fois) a été ajoutée",
+                "it": "la riga di log ricorrente del blocco dati 07 è stata ridotta a un'unica riga compatta con le stesse informazioni, ed è stata aggiunta una riga di log con la durata di un ciclo completo delle impostazioni (ogni blocco impostazioni una volta)",
+                "es": "se redujo la línea de registro recurrente del bloque de datos 07 a una sola línea compacta con la misma información, y se añadió una línea de registro con la duración de un ciclo completo de configuraciones (cada bloque de configuración una vez)",
+                "pl": "powtarzający się wpis w logu dla bloku danych 07 skrócono do jednej zwięzłej linii z tymi samymi informacjami oraz dodano wpis w logu z czasem trwania pełnego cyklu ustawień (każdy blok ustawień raz)",
+                "zh-cn": "将反复出现的数据块 07 日志行精简为一行,信息不变,并新增了记录一次完整设置周期(每个设置数据块各一次)耗时的日志"
+            },
             "1.3.2": {
                 "en": "reworked the adaptive per-data-block delay to actually hill-climb a sweet spot instead of only ever growing, lowered its floor to 650ms, and added a log line for how long one full poll cycle takes",
                 "de": "die adaptive Wartezeit pro Datenblock so umgebaut, dass sie tatsächlich einen Sweet Spot sucht statt nur zu wachsen, den Mindestwert auf 650ms gesenkt und eine Log-Zeile für die Dauer eines vollständigen Abfragezyklus ergänzt",
