@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "1.3.5",
+    "version": "1.3.6",
     "news": {
+      "1.3.6": {
+        "en": "shorten the full-coverage cycle log line, and fix three type-check errors surfaced by the typescript 7 / axios 1.20 updates (no runtime behavior change)",
+        "de": "die Log-Zeile für den vollständigen Abfragezyklus gekürzt und drei durch die typescript-7-/axios-1.20-Updates aufgedeckte Typecheck-Fehler behoben (keine Verhaltensänderung)",
+        "ru": "сокращена строка журнала о полном цикле опроса и исправлены три ошибки проверки типов, выявленные обновлениями typescript 7/axios 1.20 (поведение не изменилось)",
+        "pt": "linha de log do ciclo completo encurtada e corrigidos três erros de verificação de tipos revelados pelas atualizações do typescript 7/axios 1.20 (sem alteração de comportamento)",
+        "nl": "de logregel voor de volledige cyclus ingekort en drie door de typescript 7-/axios 1.20-updates aan het licht gebrachte typecheck-fouten opgelost (geen gedragswijziging)",
+        "fr": "ligne de log du cycle complet raccourcie et correction de trois erreurs de vérification de types révélées par les mises à jour typescript 7/axios 1.20 (aucun changement de comportement)",
+        "it": "riga di log del ciclo completo abbreviata e corretti tre errori di controllo dei tipi emersi con gli aggiornamenti typescript 7/axios 1.20 (nessuna modifica al comportamento)",
+        "es": "línea de registro del ciclo completo acortada y corregidos tres errores de verificación de tipos surgidos con las actualizaciones de typescript 7/axios 1.20 (sin cambios de comportamiento)",
+        "pl": "skrócono linię logu pełnego cyklu oraz naprawiono trzy błędy sprawdzania typów ujawnione przez aktualizacje typescript 7/axios 1.20 (bez zmiany zachowania)",
+        "zh-cn": "精简了完整周期的日志行,并修复了 typescript 7/axios 1.20 更新暴露出的三个类型检查错误(不影响运行时行为)",
+        "uk": "скорочено рядок журналу повного циклу та виправлено три помилки перевірки типів, виявлені оновленнями typescript 7/axios 1.20 (без зміни поведінки)"
+      },
       "1.3.5": {
         "en": "hotfix: 1.3.4's CI run failed on Node 20 because engines>=22 and testing on Node 20 don't work together (EBADENGINE) - dropped Node 20 from the CI test matrix again",
         "de": "Hotfix: der CI-Lauf von 1.3.4 ist auf Node 20 fehlgeschlagen, weil engines>=22 und ein Test auf Node 20 nicht zusammenpassen (EBADENGINE) - Node 20 wieder aus der CI-Testmatrix entfernt",
@@ -80,19 +93,6 @@
         "pl": "definicje bloków danych przeniesiono do konfigurowalnych plików JSON, dodano sprawdzanie min/maks przy zapisie oraz uodporniono obsługę połączenia (stan na instancję, szybsze odzyskiwanie po utraconej odpowiedzi)",
         "zh-cn": "数据块定义已迁移到可自定义的 JSON 文件,新增了写入时的最小/最大值校验,并增强了连接处理的健壮性(每个实例独立状态,对丢失响应的恢复更快)",
         "uk": "визначення блоків даних перенесено до налаштовуваних JSON-файлів, додано перевірку мін/макс під час запису, а обробку з'єднання зроблено надійнішою (стан на кожен екземпляр, швидше відновлення після втраченої відповіді)"
-      },
-      "1.2.9": {
-        "en": "switched npm publishing to Trusted Publishing (OIDC) after 1.2.7/1.2.8 failed to publish",
-        "de": "npm-Veröffentlichung auf Trusted Publishing (OIDC) umgestellt, nachdem 1.2.7/1.2.8 nicht veröffentlicht werden konnten",
-        "ru": "публикация в npm переведена на Trusted Publishing (OIDC) после неудачных публикаций 1.2.7/1.2.8",
-        "pt": "publicação no npm migrada para Trusted Publishing (OIDC) após falha na publicação das versões 1.2.7/1.2.8",
-        "nl": "npm-publicatie overgezet naar Trusted Publishing (OIDC) nadat 1.2.7/1.2.8 niet gepubliceerd konden worden",
-        "fr": "publication npm basculée vers Trusted Publishing (OIDC) après l'échec de publication des versions 1.2.7/1.2.8",
-        "it": "pubblicazione su npm passata a Trusted Publishing (OIDC) dopo il fallimento della pubblicazione di 1.2.7/1.2.8",
-        "es": "publicación en npm cambiada a Trusted Publishing (OIDC) tras fallar la publicación de 1.2.7/1.2.8",
-        "pl": "publikację w npm przełączono na Trusted Publishing (OIDC) po nieudanej publikacji 1.2.7/1.2.8",
-        "zh-cn": "由于 1.2.7/1.2.8 发布失败,已将 npm 发布方式切换为 Trusted Publishing (OIDC)",
-        "uk": "публікацію в npm переведено на Trusted Publishing (OIDC) після невдалих публікацій 1.2.7/1.2.8"
       }
     },
     "titleLang": {

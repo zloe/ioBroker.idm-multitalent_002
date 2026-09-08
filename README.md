@@ -57,6 +57,10 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.3.6 (2026-09-08)
+* (zloe) shorten the full-coverage cycle log line to `full-coverage cycle #N done in Xms` - same information (elapsed time, running total), just without the long parenthetical explanation
+* (zloe) fix three `npm run check` (typescript) errors surfaced by the typescript 7 / axios 1.20 / @types/sinon 22 updates, without changing any runtime behavior
+
 ### 1.3.5 (2026-09-08)
 * (zloe) hotfix: 1.3.4's CI run failed on Node 20 - `engines: ">=22"` and testing on Node 20 at the same time don't work together, npm install fails with EBADENGINE. Drop Node 20 from the CI test matrix again (keeping the >=22 requirement); this reintroduces one repository-checker item (E3025) that directly conflicts with another (E0028) - can't satisfy both
 
