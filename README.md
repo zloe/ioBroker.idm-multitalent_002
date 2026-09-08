@@ -176,13 +176,17 @@ recovered from in seconds rather than potentially up to a whole `reconnectinterv
 
 After a data block request is acknowledged, the control needs a bit of time before its content is
 actually ready - too short a wait gets an "NR" (not ready) reply, costing a retry. That time isn't
-the same for every data block, so `IdmSession` learns it per data block instead of using one fixed
-guess for all of them: it tracks how long each block actually took last time (a smoothed average,
-biased slightly upward on purpose) and uses that as the wait next time that block comes up - see
-`contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive per-data-block
-content delay" tests in `lib/idm-session.test.js`. The very first request for a given data block
-(and every one until enough has been learned) still uses the fixed default, so this only ever
-reduces retries over time, it can't introduce new ones.
+the same for every data block, so instead of one fixed guess for all of them, `IdmSession`
+hill-climbs a per-block delay: a cycle that needed a retry grows that block's delay a little
+(capped); several consecutive cycles that didn't need one ease it back down a little - but never
+below the original fixed default, which is a hard floor, not just a starting point. This
+deliberately isn't based on how long a cycle actually took (that's mostly just however long we
+ourselves chose to wait before asking, so it could only ever justify growing the delay, never
+discovering a shorter one would also work) - only on whether a retry was actually needed, so the
+delay for a block can also come back down over time instead of only ratcheting upward, converging
+on the actual sweet spot rather than trading unlimited retries for an unbounded wait, or the
+reverse. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
+per-data-block content delay" tests in `lib/idm-session.test.js`.
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
