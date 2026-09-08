@@ -169,6 +169,16 @@ connection if nothing valid comes back in time, instead of relying only on the m
 per-`reconnectinterval` silence watchdog - so a single dropped reply is now noticed and
 recovered from in seconds rather than potentially up to a whole `reconnectinterval`.
 
+After a data block request is acknowledged, the control needs a bit of time before its content is
+actually ready - too short a wait gets an "NR" (not ready) reply, costing a retry. That time isn't
+the same for every data block, so `IdmSession` learns it per data block instead of using one fixed
+guess for all of them: it tracks how long each block actually took last time (a smoothed average,
+biased slightly upward on purpose) and uses that as the wait next time that block comes up - see
+`contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive per-data-block
+content delay" tests in `lib/idm-session.test.js`. The very first request for a given data block
+(and every one until enough has been learned) still uses the fixed default, so this only ever
+reduces retries over time, it can't introduce new ones.
+
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
 
