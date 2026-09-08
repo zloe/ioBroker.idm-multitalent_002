@@ -3,6 +3,18 @@
         "name": "idm-multitalent_002",
         "version": "1.3.1",
         "news": {
+            "1.3.2": {
+                "en": "reworked the adaptive per-data-block delay to actually hill-climb a sweet spot instead of only ever growing, lowered its floor to 650ms, and added a log line for how long one full poll cycle takes",
+                "de": "die adaptive Wartezeit pro Datenblock so umgebaut, dass sie tatsächlich einen Sweet Spot sucht statt nur zu wachsen, den Mindestwert auf 650ms gesenkt und eine Log-Zeile für die Dauer eines vollständigen Abfragezyklus ergänzt",
+                "ru": "адаптивная задержка для каждого блока данных переработана так, чтобы находить оптимальное значение, а не только расти, минимальное значение снижено до 650 мс, добавлена запись в журнал о длительности полного цикла опроса",
+                "pt": "o atraso adaptativo por bloco de dados foi reformulado para realmente encontrar um ponto ideal em vez de apenas crescer, o valor mínimo foi reduzido para 650ms, e foi adicionada uma linha de log com a duração de um ciclo completo de consulta",
+                "nl": "de adaptieve vertraging per datablok is herzien zodat deze echt een sweet spot zoekt in plaats van alleen maar te groeien, de ondergrens is verlaagd naar 650ms, en er is een logregel toegevoegd voor de duur van een volledige pollcyclus",
+                "fr": "le délai adaptatif par bloc de données a été retravaillé pour réellement converger vers un point optimal au lieu de ne faire que croître, son minimum a été abaissé à 650ms, et une ligne de journal indiquant la durée d'un cycle d'interrogation complet a été ajoutée",
+                "it": "il ritardo adattivo per blocco dati è stato rivisto per convergere realmente verso un punto ottimale invece di crescere soltanto, il valore minimo è stato abbassato a 650ms ed è stata aggiunta una riga di log con la durata di un intero ciclo di polling",
+                "es": "se rediseñó el retardo adaptativo por bloque de datos para que realmente converja hacia un punto óptimo en lugar de solo crecer, se redujo su mínimo a 650ms y se añadió una línea de registro con la duración de un ciclo de sondeo completo",
+                "pl": "przebudowano adaptacyjne opóźnienie dla każdego bloku danych, aby faktycznie wyszukiwało optymalną wartość zamiast tylko rosnąć, obniżono jego minimum do 650ms oraz dodano wpis w logu z czasem trwania pełnego cyklu odpytywania",
+                "zh-cn": "重新设计了按数据块自适应延迟的算法,使其真正收敛到最佳值而不是只会增长,将其下限降至 650ms,并新增了记录一次完整轮询周期耗时的日志"
+            },
             "1.3.1": {
                 "en": "logs which firmware data block definitions are available and selected, adds estimated min/max write limits for S_H726100, and learns a per-data-block delay to reduce \"not ready\" retries",
                 "de": "loggt, welche Firmware-Datenblock-Definitionen verfügbar sind und ausgewählt wurden, ergänzt geschätzte Min/Max-Schreibgrenzen für S_H726100 und lernt eine Wartezeit pro Datenblock, um „nicht bereit“-Wiederholungen zu reduzieren",

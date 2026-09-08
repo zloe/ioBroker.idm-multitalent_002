@@ -57,6 +57,11 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) replace the per-data-block content delay's averaging with a proper hill-climb: it now only grows when a "not ready" retry was actually needed and eases back down after several clean cycles, converging on a sweet spot instead of only ever ratcheting upward
+* (zloe) lower the default/floor data-content delay from 1000ms to 650ms
+* (zloe) log how long one full poll cycle (every sensor block plus one settings block) actually takes, once the next cycle starts
+
 ### 1.3.1 (2026-09-08)
 * (zloe) log which firmware versions have a data block definition available, and which one (bundled or a custom override) was actually selected once the heat pump reports its version
 * (zloe) add estimated min/max write limits for every remaining writable S_H726100 field (temperature setpoints, cooling settings, two on/off flags, pump speed) - conservative, margin-padded ranges, not hardware-verified for every field, see lib/datablocks/README.md
