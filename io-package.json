@@ -3,6 +3,19 @@
         "name": "idm-multitalent_002",
         "version": "1.3.3",
         "news": {
+            "1.3.4": {
+                "en": "resolved most of the ioBroker repository checker's findings from #349 (Node.js 22 minimum, dependency/translation/CI/dependabot cleanup, README installation instructions), and reworked the full-coverage cycle log line to explicitly cover every data block - not just settings - with a running total of completed cycles",
+                "de": "die meisten vom ioBroker-Repository-Checker in #349 gemeldeten Punkte behoben (Node.js 22 als Minimum, Bereinigung von Abhängigkeiten/Übersetzungen/CI/Dependabot, README-Installationsanleitung), und die Log-Zeile für den vollständigen Abfragezyklus so umgebaut, dass sie explizit alle Datenblöcke - nicht nur die Settings-Blöcke - abdeckt und einen laufenden Zähler abgeschlossener Zyklen ausgibt",
+                "ru": "устранено большинство замечаний бота проверки репозитория ioBroker из #349 (минимальная версия Node.js 22, чистка зависимостей/переводов/CI/dependabot, инструкции по установке в README), а строка журнала о полном цикле опроса переработана так, чтобы явно охватывать все блоки данных, а не только настройки, и выводить общий счётчик завершённых циклов",
+                "pt": "resolvida a maioria das constatações do verificador de repositório do ioBroker no #349 (Node.js 22 como mínimo, limpeza de dependências/traduções/CI/dependabot, instruções de instalação no README), e a linha de log do ciclo completo foi reformulada para cobrir explicitamente todos os blocos de dados - não apenas os de configurações - com um contador contínuo de ciclos concluídos",
+                "nl": "de meeste bevindingen van de ioBroker-repository-checker uit #349 opgelost (Node.js 22 als minimum, opschoning van dependencies/vertalingen/CI/dependabot, installatie-instructies in de README), en de logregel voor de volledige cyclus herzien zodat deze expliciet elk datablok dekt - niet alleen instellingen - met een lopende teller van voltooide cycli",
+                "fr": "résolution de la plupart des constats du vérificateur de dépôt ioBroker dans le ticket #349 (Node.js 22 minimum, nettoyage des dépendances/traductions/CI/dependabot, instructions d'installation du README), et refonte de la ligne de journal du cycle complet pour couvrir explicitement chaque bloc de données - pas seulement les paramètres - avec un compteur cumulé des cycles terminés",
+                "it": "risolti la maggior parte dei rilievi del repository checker di ioBroker nel #349 (Node.js 22 come minimo, pulizia di dipendenze/traduzioni/CI/dependabot, istruzioni di installazione nel README), e rivista la riga di log del ciclo completo affinché copra esplicitamente ogni blocco dati - non solo le impostazioni - con un conteggio progressivo dei cicli completati",
+                "es": "resueltos la mayoría de los hallazgos del verificador de repositorio de ioBroker en el #349 (Node.js 22 como mínimo, limpieza de dependencias/traducciones/CI/dependabot, instrucciones de instalación del README), y rediseñada la línea de registro del ciclo completo para cubrir explícitamente cada bloque de datos - no solo los de configuración - con un contador acumulado de ciclos completados",
+                "pl": "rozwiązano większość uwag bota sprawdzającego repozytorium ioBroker z #349 (Node.js 22 jako minimum, porządki w zależnościach/tłumaczeniach/CI/dependabot, instrukcje instalacji w README), a wiersz logu pełnego cyklu przebudowano tak, aby jawnie obejmował każdy blok danych - nie tylko ustawień - wraz z bieżącym licznikiem ukończonych cykli",
+                "zh-cn": "解决了 ioBroker 仓库检查器在 #349 中提出的大部分问题(Node.js 最低版本升至 22、依赖/翻译/CI/dependabot 清理、README 安装说明),并重新设计了完整周期日志行,使其明确覆盖每个数据块(而不仅仅是设置块),并附带已完成周期的累计计数",
+                "uk": "усунуто більшість зауважень бота перевірки репозиторію ioBroker з #349 (мінімальна версія Node.js 22, прибирання залежностей/перекладів/CI/dependabot, інструкції встановлення в README), а рядок журналу повного циклу перероблено так, щоб явно охоплювати кожен блок даних - а не лише налаштування - з поточним лічильником завершених циклів"
+            },
             "1.3.3": {
                 "en": "shortened the recurring data block 07 request log to one compact line with the same information, and added a log line for how long a full settings cycle (every settings block once) takes",
                 "de": "die wiederkehrende Log-Zeile für Datenblock 07 auf eine kompakte Zeile mit denselben Informationen gekürzt und eine Log-Zeile ergänzt, die die Dauer eines vollständigen Settings-Zyklus (jeder Settings-Block einmal) ausgibt",
@@ -80,19 +93,6 @@
                 "pl": "poprawiono obsługę ponownego łączenia",
                 "zh-cn": "修复了重新连接处理",
                 "uk": "виправлено обробку повторного підключення"
-            },
-            "1.2.5": {
-                "en": "* improved error handling",
-                "de": "* Fehlerbehandlung weiter verbessert",
-                "ru": "улучшена обработка ошибок",
-                "pt": "melhorada a manipulação de erros",
-                "nl": "foutafhandeling verder verbeterd",
-                "fr": "amélioration de la gestion des erreurs",
-                "it": "migliorata ulteriormente la gestione degli errori",
-                "es": "mejorado el manejo de errores",
-                "pl": "dalsze usprawnienie obsługi błędów",
-                "zh-cn": "进一步改进了错误处理",
-                "uk": "покращено обробку помилок"
             }
         },
         "titleLang": {
