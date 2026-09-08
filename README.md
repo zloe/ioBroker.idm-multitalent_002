@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.3.4 (2026-09-08)
 * (zloe) rename/rework the second cycle-timing log line: it's now explicitly about every data block (sensor and settings) having been read at least once, not just the settings side, and it now also reports a running total of how many full-coverage cycles have completed
 * (zloe) address most of the ioBroker repository checker's findings from #349: raise the minimum Node.js version to 22, bump the required admin/js-controller versions, add missing translations, trim the in-admin news list to real, published versions, switch built-in module imports to the `node:` form, add the missing release-script plugins, tidy up CI/dependabot config, and rewrite the README's installation section to stop suggesting a direct `npm install` (see below for the couple of checker items intentionally left alone)
 
