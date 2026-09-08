@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.3.2 (2026-09-08)
 * (zloe) replace the per-data-block content delay's averaging with a proper hill-climb: it now only grows when a "not ready" retry was actually needed and eases back down after several clean cycles, converging on a sweet spot instead of only ever ratcheting upward
 * (zloe) lower the default/floor data-content delay from 1000ms to 650ms
 * (zloe) log how long one full poll cycle (every sensor block plus one settings block) actually takes, once the next cycle starts
