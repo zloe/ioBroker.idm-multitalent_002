@@ -13,7 +13,8 @@
                 "it": "la riga di log ricorrente del blocco dati 07 è stata ridotta a un'unica riga compatta con le stesse informazioni, ed è stata aggiunta una riga di log con la durata di un ciclo completo delle impostazioni (ogni blocco impostazioni una volta)",
                 "es": "se redujo la línea de registro recurrente del bloque de datos 07 a una sola línea compacta con la misma información, y se añadió una línea de registro con la duración de un ciclo completo de configuraciones (cada bloque de configuración una vez)",
                 "pl": "powtarzający się wpis w logu dla bloku danych 07 skrócono do jednej zwięzłej linii z tymi samymi informacjami oraz dodano wpis w logu z czasem trwania pełnego cyklu ustawień (każdy blok ustawień raz)",
-                "zh-cn": "将反复出现的数据块 07 日志行精简为一行,信息不变,并新增了记录一次完整设置周期(每个设置数据块各一次)耗时的日志"
+                "zh-cn": "将反复出现的数据块 07 日志行精简为一行,信息不变,并新增了记录一次完整设置周期(每个设置数据块各一次)耗时的日志",
+                "uk": "повторювану лог-стрічку запиту блоку даних 07 скорочено до одного компактного рядка з тією ж інформацією, додано запис у журналі про тривалість повного циклу налаштувань (кожен блок налаштувань один раз)"
             },
             "1.3.2": {
                 "en": "reworked the adaptive per-data-block delay to actually hill-climb a sweet spot instead of only ever growing, lowered its floor to 650ms, and added a log line for how long one full poll cycle takes",
@@ -25,7 +26,8 @@
                 "it": "il ritardo adattivo per blocco dati è stato rivisto per convergere realmente verso un punto ottimale invece di crescere soltanto, il valore minimo è stato abbassato a 650ms ed è stata aggiunta una riga di log con la durata di un intero ciclo di polling",
                 "es": "se rediseñó el retardo adaptativo por bloque de datos para que realmente converja hacia un punto óptimo en lugar de solo crecer, se redujo su mínimo a 650ms y se añadió una línea de registro con la duración de un ciclo de sondeo completo",
                 "pl": "przebudowano adaptacyjne opóźnienie dla każdego bloku danych, aby faktycznie wyszukiwało optymalną wartość zamiast tylko rosnąć, obniżono jego minimum do 650ms oraz dodano wpis w logu z czasem trwania pełnego cyklu odpytywania",
-                "zh-cn": "重新设计了按数据块自适应延迟的算法,使其真正收敛到最佳值而不是只会增长,将其下限降至 650ms,并新增了记录一次完整轮询周期耗时的日志"
+                "zh-cn": "重新设计了按数据块自适应延迟的算法,使其真正收敛到最佳值而不是只会增长,将其下限降至 650ms,并新增了记录一次完整轮询周期耗时的日志",
+                "uk": "адаптивну затримку для кожного блоку даних перероблено так, щоб вона дійсно знаходила оптимальне значення, а не лише зростала, мінімальне значення знижено до 650мс, додано запис у журналі про тривалість одного повного циклу опитування"
             },
             "1.3.1": {
                 "en": "logs which firmware data block definitions are available and selected, adds estimated min/max write limits for S_H726100, and learns a per-data-block delay to reduce \"not ready\" retries",
@@ -37,7 +39,8 @@
                 "it": "registra quali definizioni dei blocchi dati del firmware sono disponibili e selezionate, aggiunge limiti min/max di scrittura stimati per S_H726100 e apprende un ritardo per blocco dati per ridurre i tentativi \"non pronto\"",
                 "es": "registra qué definiciones de bloques de datos de firmware están disponibles y cuál se seleccionó, añade límites estimados de mín/máx de escritura para S_H726100 y aprende un retardo por bloque de datos para reducir los reintentos por \"no listo\"",
                 "pl": "loguje, które definicje bloków danych oprogramowania są dostępne i która została wybrana, dodaje szacunkowe limity min/maks przy zapisie dla S_H726100 oraz uczy się opóźnienia dla każdego bloku danych, aby zmniejszyć liczbę ponowień z powodu \"niegotowości\"",
-                "zh-cn": "记录哪些固件数据块定义可用以及实际选用了哪一个，为 S_H726100 新增了估算的写入最小/最大值限制，并针对每个数据块学习延迟时间以减少“未就绪”重试次数"
+                "zh-cn": "记录哪些固件数据块定义可用以及实际选用了哪一个，为 S_H726100 新增了估算的写入最小/最大值限制，并针对每个数据块学习延迟时间以减少“未就绪”重试次数",
+                "uk": "реєструє, які визначення блоків даних прошивки доступні та яке з них обрано, додає оціночні межі мін/макс запису для S_H726100 та підбирає затримку для кожного блоку даних, щоб зменшити кількість повторів через відповідь «не готово»"
             },
             "1.3.0": {
                 "en": "data block definitions moved to customizable JSON files, min/max write enforcement added, and the connection handling made more robust (per-instance state, faster recovery from a dropped reply)",
@@ -49,7 +52,8 @@
                 "it": "le definizioni dei blocchi dati sono state spostate in file JSON personalizzabili, è stato aggiunto il controllo min/max in scrittura e la gestione della connessione è stata resa più robusta (stato per istanza, ripristino più rapido dopo una risposta persa)",
                 "es": "las definiciones de los bloques de datos se trasladaron a archivos JSON personalizables, se añadió la verificación de mín/máx al escribir y se hizo más robusto el manejo de la conexión (estado por instancia, recuperación más rápida tras una respuesta perdida)",
                 "pl": "definicje bloków danych przeniesiono do konfigurowalnych plików JSON, dodano sprawdzanie min/maks przy zapisie oraz uodporniono obsługę połączenia (stan na instancję, szybsze odzyskiwanie po utraconej odpowiedzi)",
-                "zh-cn": "数据块定义已迁移到可自定义的 JSON 文件,新增了写入时的最小/最大值校验,并增强了连接处理的健壮性(每个实例独立状态,对丢失响应的恢复更快)"
+                "zh-cn": "数据块定义已迁移到可自定义的 JSON 文件,新增了写入时的最小/最大值校验,并增强了连接处理的健壮性(每个实例独立状态,对丢失响应的恢复更快)",
+                "uk": "визначення блоків даних перенесено до налаштовуваних JSON-файлів, додано перевірку мін/макс під час запису, а обробку з'єднання зроблено надійнішою (стан на кожен екземпляр, швидше відновлення після втраченої відповіді)"
             },
             "1.2.9": {
                 "en": "switched npm publishing to Trusted Publishing (OIDC) after 1.2.7/1.2.8 failed to publish",
@@ -61,31 +65,8 @@
                 "it": "pubblicazione su npm passata a Trusted Publishing (OIDC) dopo il fallimento della pubblicazione di 1.2.7/1.2.8",
                 "es": "publicación en npm cambiada a Trusted Publishing (OIDC) tras fallar la publicación de 1.2.7/1.2.8",
                 "pl": "publikację w npm przełączono na Trusted Publishing (OIDC) po nieudanej publikacji 1.2.7/1.2.8",
-                "zh-cn": "由于 1.2.7/1.2.8 发布失败,已将 npm 发布方式切换为 Trusted Publishing (OIDC)"
-            },
-            "1.2.8": {
-                "en": "fixed repository checker issues (#298) and the broken lint toolchain",
-                "de": "Probleme des Repository-Checkers (#298) und die defekte Lint-Toolchain behoben",
-                "ru": "исправлены проблемы, выявленные проверкой репозитория (#298), и неработающий набор инструментов lint",
-                "pt": "corrigidos problemas apontados pelo verificador de repositório (#298) e a ferramenta de lint quebrada",
-                "nl": "problemen van de repository-checker (#298) en de kapotte lint-toolchain verholpen",
-                "fr": "correction des problèmes signalés par le vérificateur de dépôt (#298) et de la chaîne d'outils lint cassée",
-                "it": "risolti i problemi segnalati dal repository checker (#298) e la toolchain di lint non funzionante",
-                "es": "corregidos los problemas del verificador de repositorio (#298) y la cadena de herramientas de lint rota",
-                "pl": "naprawiono problemy wskazane przez repository checker (#298) oraz uszkodzony zestaw narzędzi lint",
-                "zh-cn": "修复了仓库检查器报告的问题 (#298) 以及损坏的 lint 工具链"
-            },
-            "1.2.7": {
-                "en": "* fixed broken test/lint toolchain, duplicate register numbers and timer cleanup on unload",
-                "de": "* Test-/Lint-Toolchain repariert, doppelte Registernummern und Timer-Aufräumung beim Unload behoben",
-                "ru": "исправлены неработающий набор инструментов test/lint, дублирующиеся номера регистров и очистка таймеров при выгрузке",
-                "pt": "corrigida a cadeia de testes/lint quebrada, números de registro duplicados e limpeza de timers ao descarregar",
-                "nl": "kapotte test-/lint-toolchain, dubbele registernummers en timer-opruiming bij unload verholpen",
-                "fr": "correction de la chaîne test/lint cassée, des numéros de registre en double et du nettoyage des timers au déchargement",
-                "it": "risolti la toolchain test/lint non funzionante, i numeri di registro duplicati e la pulizia dei timer allo scaricamento",
-                "es": "corregida la cadena de test/lint rota, números de registro duplicados y la limpieza de temporizadores al descargar",
-                "pl": "naprawiono uszkodzony zestaw narzędzi test/lint, zduplikowane numery rejestrów oraz czyszczenie timerów przy wyładowaniu",
-                "zh-cn": "修复了损坏的测试/lint 工具链、重复的寄存器编号以及卸载时的定时器清理问题"
+                "zh-cn": "由于 1.2.7/1.2.8 发布失败,已将 npm 发布方式切换为 Trusted Publishing (OIDC)",
+                "uk": "публікацію в npm переведено на Trusted Publishing (OIDC) після невдалих публікацій 1.2.7/1.2.8"
             },
             "1.2.6": {
                 "en": "* fixed reconnect handling",
@@ -97,7 +78,8 @@
                 "it": "corretta la gestione della riconnessione",
                 "es": "corregida la gestión de la reconexión",
                 "pl": "poprawiono obsługę ponownego łączenia",
-                "zh-cn": "修复了重新连接处理"
+                "zh-cn": "修复了重新连接处理",
+                "uk": "виправлено обробку повторного підключення"
             },
             "1.2.5": {
                 "en": "* improved error handling",
@@ -109,55 +91,8 @@
                 "it": "migliorata ulteriormente la gestione degli errori",
                 "es": "mejorado el manejo de errores",
                 "pl": "dalsze usprawnienie obsługi błędów",
-                "zh-cn": "进一步改进了错误处理"
-            },
-            "1.2.4": {
-                "en": "* improve logging and handling of data transmission problems",
-                "de": "* Logging und Behandlung von Übertragungsfehlern verbessert",
-                "ru": "улучшено протоколирование и обработка проблем передачи данных",
-                "pt": "melhorados o registro (log) e o tratamento de problemas de transmissão de dados",
-                "nl": "logging en afhandeling van gegevensoverdrachtproblemen verbeterd",
-                "fr": "amélioration de la journalisation et de la gestion des problèmes de transmission de données",
-                "it": "migliorati il logging e la gestione dei problemi di trasmissione dati",
-                "es": "mejorados el registro y el manejo de problemas de transmisión de datos",
-                "pl": "usprawniono logowanie i obsługę problemów z transmisją danych",
-                "zh-cn": "改进了数据传输问题的日志记录和处理"
-            },
-            "1.2.3": {
-                "en": "* improve handling of data transmission problems",
-                "de": "* Behandlung von Datenübertragungsproblemen verbessert",
-                "ru": "улучшена обработка проблем передачи данных",
-                "pt": "melhorado o tratamento de problemas de transmissão de dados",
-                "nl": "afhandeling van gegevensoverdrachtproblemen verbeterd",
-                "fr": "amélioration de la gestion des problèmes de transmission de données",
-                "it": "migliorata la gestione dei problemi di trasmissione dati",
-                "es": "mejorado el manejo de problemas de transmisión de datos",
-                "pl": "usprawniono obsługę problemów z transmisją danych",
-                "zh-cn": "改进了数据传输问题的处理"
-            },
-            "1.2.2": {
-                "en": "* fix handling of data transmission problems which lead to stopping requesting data",
-                "de": "* Problem behoben, das zum Stoppen der Datenanfragen führte",
-                "ru": "исправлена проблема передачи данных, приводившая к прекращению запросов данных",
-                "pt": "corrigido problema de transmissão de dados que causava a interrupção das solicitações de dados",
-                "nl": "probleem met gegevensoverdracht verholpen dat leidde tot het stoppen van dataverzoeken",
-                "fr": "correction d'un problème de transmission de données entraînant l'arrêt des demandes de données",
-                "it": "risolto un problema di trasmissione dati che causava l'interruzione delle richieste di dati",
-                "es": "corregido un problema de transmisión de datos que provocaba la detención de las solicitudes de datos",
-                "pl": "naprawiono problem z transmisją danych powodujący zatrzymanie żądań danych",
-                "zh-cn": "修复了导致数据请求停止的数据传输问题"
-            },
-            "1.2.1": {
-                "en": "* fixed data definitions for EVR 070110 - idm722100",
-                "de": "* Datendefinitionen für EVR 070110 - idm722100 korrigiert",
-                "ru": "исправлены определения данных для EVR 070110 - idm722100",
-                "pt": "corrigidas as definições de dados para EVR 070110 - idm722100",
-                "nl": "gegevensdefinities voor EVR 070110 - idm722100 gecorrigeerd",
-                "fr": "correction des définitions de données pour EVR 070110 - idm722100",
-                "it": "corrette le definizioni dei dati per EVR 070110 - idm722100",
-                "es": "corregidas las definiciones de datos para EVR 070110 - idm722100",
-                "pl": "poprawiono definicje danych dla EVR 070110 - idm722100",
-                "zh-cn": "修复了 EVR 070110 - idm722100 的数据定义"
+                "zh-cn": "进一步改进了错误处理",
+                "uk": "покращено обробку помилок"
             }
         },
         "titleLang": {
@@ -170,7 +105,8 @@
             "it": "iDM multitalent.002",
             "es": "iDM multitalent.002",
             "pl": "iDM multitalent.002",
-            "zh-cn": "iDM multitalent.002"
+            "zh-cn": "iDM multitalent.002",
+            "uk": "iDM multitalent.002"
         },
         "desc": {
             "en": "Read and write values of a iDM heatpump with multitalent.002 control.",
@@ -182,7 +118,8 @@
             "it": "Leggi e scrivi valori di una pompa di calore iDM con controllo multitalent.002.",
             "es": "Leer y escribir valores de una bomba de calor iDM con control multitalent.002.",
             "pl": "Odczyt i zapis wartości pompy ciepła iDM ze sterowaniem multitalent.002.",
-            "zh-cn": "读取和写入具有 multitalent.002 控制的 iDM 热泵的值。"
+            "zh-cn": "读取和写入具有 multitalent.002 控制的 iDM 热泵的值。",
+            "uk": "Читання та запис значень теплового насоса iDM з керуванням multitalent.002."
         },
         "authors": [
             "zloe <klaus@zloebl.net>"
@@ -208,12 +145,12 @@
         "materialize": true,
         "dependencies": [
             {
-                "js-controller": ">=5.0.19"
+                "js-controller": ">=6.0.11"
             }
         ],
         "globalDependencies": [
             {
-                "admin": ">=6.17.14"
+                "admin": ">=7.6.20"
             }
         ],
         "tier": 2,

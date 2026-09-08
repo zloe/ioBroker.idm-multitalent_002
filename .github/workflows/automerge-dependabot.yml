@@ -1,0 +1,25 @@
+# Automatically merge Dependabot PRs when they match the rules configured in
+# .github/auto-merge.yml (see that file, or the action's README, for the rule syntax).
+
+name: Auto-Merge Dependabot PRs
+
+on:
+  # WARNING: This needs to be run in the PR base, DO NOT build untrusted code in this action
+  # details under https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Auto-merge Dependabot PRs
+        uses: iobroker-bot-orga/action-automerge-dependabot@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

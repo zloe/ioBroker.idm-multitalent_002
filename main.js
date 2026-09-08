@@ -9,7 +9,7 @@
 const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
-// const fs = require("fs");
+// const fs = require("node:fs");
 const IdmProtocol = require('./lib/idm-protocol');
 const idm_u = require('./lib/idm-utils');
 const { IdmSession } = require('./lib/idm-session');

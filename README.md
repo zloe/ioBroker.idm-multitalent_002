@@ -57,6 +57,10 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) rename/rework the second cycle-timing log line: it's now explicitly about every data block (sensor and settings) having been read at least once, not just the settings side, and it now also reports a running total of how many full-coverage cycles have completed
+* (zloe) address most of the ioBroker repository checker's findings from #349: raise the minimum Node.js version to 22, bump the required admin/js-controller versions, add missing translations, trim the in-admin news list to real, published versions, switch built-in module imports to the `node:` form, add the missing release-script plugins, tidy up CI/dependabot config, and rewrite the README's installation section to stop suggesting a direct `npm install` (see below for the couple of checker items intentionally left alone)
+
 ### 1.3.3 (2026-09-08)
 * (zloe) shorten the recurring per-data-block request log line (data block 07) to one compact line with the same information
 * (zloe) also log how long a full settings cycle (every settings block once, not just the one per sweep) takes, once the next one starts
@@ -126,37 +130,11 @@ Example screenshots of objects:
 * (zloe) initial version TERRA130601 - S_H726100 support
 * (zloe) updated dependencies
 
-## License
-MIT License
-
-Copyright (c) 2026 zloe <klaus@zloebl.net>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
 ## Installation
-As the adapter is not (yet) listed in the official ioBroker repository you have to download the tgz file from here (github or npmjs).
-1. Upload the file to your ioBroker host
-1. Install it locally (The paths are different on Windows):
-    ```bash
-    cd /opt/iobroker
-    npm i /path/to/tarball.tgz
-    ```
+As the adapter is not (yet) listed in the official ioBroker repository, install it through the Admin UI rather than a direct npm command:
+1. In ioBroker Admin, go to **Adapters** and click the **"+" (custom install from URL)** icon in the top right
+1. Paste `https://github.com/zloe/ioBroker.idm-multitalent_002` (or, for a specific released version, `iobroker.idm-multitalent_002@x.y.z`) into the field and confirm
+1. Once installed, add an instance as usual and configure it
 
 ## Developer manual
 The serial protocol itself was reverse-engineered (RS422 sniffing, no official iDM documentation exists) mainly by user "makki" in the [KNX-User-Forum "idm Wärmepumpe" thread](https://knx-user-forum.de/forum/%C3%B6ffentlicher-bereich/knx-eib-forum/1251-idm-w%C3%A4rmepumpe) and refined further here; see also the [ioBroker adapter thread](https://forum.iobroker.net/topic/54253/test-adapter-idm-multitalent_002). Neither source documents official min/max limits for the writable values (see below) - they only cover which register a value lives in and how it is encoded.
@@ -200,15 +178,38 @@ per-data-block content delay" tests in `lib/idm-session.test.js`.
 `IdmSession` also logs how long a poll cycle actually took, once the next one starts (there is
 nothing to compare the very first cycle against yet). Two cycle lengths are tracked separately,
 since only one settings block is requested per sweep, round-robin: the sensor sweep itself (every
-sensor data block plus that one settings block, see `request_data()`) and the longer full settings
-cycle (every settings block once, i.e. one sensor sweep per settings block this version has).
-Together these are the overall effect of all the delays above added together, so they're what
-actually shows whether a change to them made polling faster or slower.
+sensor data block plus that one settings block, see `request_data()`) and the longer full-coverage
+cycle - every sensor block *and* every settings block read at least once, gated by the settings
+side since the sensor blocks are already re-read on every single sweep. The second line also
+carries a running total of how many full-coverage cycles have completed since the adapter started
+(not persisted across restarts). Together these are the overall effect of all the delays above
+added together, so they're what actually shows whether a change to them made polling faster or
+slower.
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
 
 Attention, still experimental, ... the adapter sets values of the heatpump, so do not install, unless you know what you are doing and have contacted the author! 
 
+## License
+MIT License
 
 Copyright (c) 2026 zloe <klaus@zloebl.net>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
