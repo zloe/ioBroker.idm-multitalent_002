@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "idm-multitalent_002",
-        "version": "1.3.2",
+        "version": "1.3.3",
         "news": {
             "1.3.3": {
                 "en": "shortened the recurring data block 07 request log to one compact line with the same information, and added a log line for how long a full settings cycle (every settings block once) takes",

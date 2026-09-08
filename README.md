@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.3.3 (2026-09-08)
 * (zloe) shorten the recurring per-data-block request log line (data block 07) to one compact line with the same information
 * (zloe) also log how long a full settings cycle (every settings block once, not just the one per sweep) takes, once the next one starts
 
