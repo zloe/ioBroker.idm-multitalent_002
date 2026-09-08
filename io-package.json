@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "1.3.6",
+    "version": "1.3.7",
     "news": {
+      "1.3.7": {
+        "en": "fix: the full-coverage cycle log line fired too often on real hardware because it was gated by request timing, not actual data reads - now gated by actually received data",
+        "de": "Fix: die Log-Zeile für den vollständigen Abfragezyklus feuerte auf echter Hardware zu oft, weil sie am Zeitpunkt der Anfrage statt am tatsächlichen Datenempfang hing - jetzt an tatsächlich empfangenen Daten festgemacht",
+        "ru": "исправление: строка журнала о полном цикле опроса срабатывала слишком часто на реальном оборудовании, так как зависела от момента запроса, а не от фактического получения данных - теперь привязана к фактически полученным данным",
+        "pt": "correção: a linha de log do ciclo completo disparava com muita frequência em hardware real porque dependia do momento da solicitação, não da leitura real dos dados - agora depende dos dados efetivamente recebidos",
+        "nl": "fix: de logregel voor de volledige cyclus vuurde op echte hardware te vaak af omdat deze afhing van het moment van aanvragen, niet van het daadwerkelijk ontvangen van data - nu gebaseerd op daadwerkelijk ontvangen data",
+        "fr": "correctif : la ligne de log du cycle complet se déclenchait trop souvent sur du matériel réel car elle dépendait du moment de la requête, pas de la réception réelle des données - désormais basée sur les données réellement reçues",
+        "it": "correzione: la riga di log del ciclo completo scattava troppo spesso su hardware reale perché dipendeva dal momento della richiesta e non dall'effettiva ricezione dei dati - ora basata sui dati effettivamente ricevuti",
+        "es": "corrección: la línea de registro del ciclo completo se disparaba con demasiada frecuencia en hardware real porque dependía del momento de la solicitud, no de la recepción real de datos - ahora se basa en los datos realmente recibidos",
+        "pl": "poprawka: wiersz logu pełnego cyklu uruchamiał się zbyt często na rzeczywistym sprzęcie, ponieważ zależał od momentu żądania, a nie faktycznego odczytu danych - teraz oparty na faktycznie odebranych danych",
+        "zh-cn": "修复:完整周期日志行在真实硬件上触发过于频繁,因为它取决于请求时机而非实际数据读取 - 现在改为基于实际接收到的数据",
+        "uk": "виправлення: рядок журналу повного циклу спрацьовував занадто часто на реальному обладнанні, оскільки залежав від моменту запиту, а не фактичного отримання даних - тепер прив'язаний до фактично отриманих даних"
+      },
       "1.3.6": {
         "en": "shorten the full-coverage cycle log line, and fix three type-check errors surfaced by the typescript 7 / axios 1.20 updates (no runtime behavior change)",
         "de": "die Log-Zeile für den vollständigen Abfragezyklus gekürzt und drei durch die typescript-7-/axios-1.20-Updates aufgedeckte Typecheck-Fehler behoben (keine Verhaltensänderung)",
@@ -80,19 +93,6 @@
         "pl": "loguje, które definicje bloków danych oprogramowania są dostępne i która została wybrana, dodaje szacunkowe limity min/maks przy zapisie dla S_H726100 oraz uczy się opóźnienia dla każdego bloku danych, aby zmniejszyć liczbę ponowień z powodu \"niegotowości\"",
         "zh-cn": "记录哪些固件数据块定义可用以及实际选用了哪一个，为 S_H726100 新增了估算的写入最小/最大值限制，并针对每个数据块学习延迟时间以减少“未就绪”重试次数",
         "uk": "реєструє, які визначення блоків даних прошивки доступні та яке з них обрано, додає оціночні межі мін/макс запису для S_H726100 та підбирає затримку для кожного блоку даних, щоб зменшити кількість повторів через відповідь «не готово»"
-      },
-      "1.3.0": {
-        "en": "data block definitions moved to customizable JSON files, min/max write enforcement added, and the connection handling made more robust (per-instance state, faster recovery from a dropped reply)",
-        "de": "Datenblock-Definitionen in anpassbare JSON-Dateien ausgelagert, Min/Max-Prüfung beim Schreiben ergänzt und die Verbindungsbehandlung robuster gemacht (Zustand pro Instanz, schnellere Erholung nach einer verlorenen Antwort)",
-        "ru": "определения блоков данных вынесены в настраиваемые JSON-файлы, добавлена проверка мин/макс при записи, повышена устойчивость обработки соединения (состояние на каждый экземпляр, более быстрое восстановление после потерянного ответа)",
-        "pt": "as definições dos blocos de dados foram movidas para arquivos JSON personalizáveis, foi adicionada a verificação de min/máx ao escrever valores e o tratamento da conexão ficou mais robusto (estado por instância, recuperação mais rápida após uma resposta perdida)",
-        "nl": "datablokdefinities verplaatst naar aanpasbare JSON-bestanden, min/max-controle bij het schrijven toegevoegd en de verbindingsafhandeling robuuster gemaakt (status per instantie, sneller herstel na een verloren antwoord)",
-        "fr": "les définitions des blocs de données ont été déplacées vers des fichiers JSON personnalisables, une vérification min/max a été ajoutée lors de l'écriture, et la gestion de la connexion a été rendue plus robuste (état par instance, récupération plus rapide après une réponse perdue)",
-        "it": "le definizioni dei blocchi dati sono state spostate in file JSON personalizzabili, è stato aggiunto il controllo min/max in scrittura e la gestione della connessione è stata resa più robusta (stato per istanza, ripristino più rapido dopo una risposta persa)",
-        "es": "las definiciones de los bloques de datos se trasladaron a archivos JSON personalizables, se añadió la verificación de mín/máx al escribir y se hizo más robusto el manejo de la conexión (estado por instancia, recuperación más rápida tras una respuesta perdida)",
-        "pl": "definicje bloków danych przeniesiono do konfigurowalnych plików JSON, dodano sprawdzanie min/maks przy zapisie oraz uodporniono obsługę połączenia (stan na instancję, szybsze odzyskiwanie po utraconej odpowiedzi)",
-        "zh-cn": "数据块定义已迁移到可自定义的 JSON 文件,新增了写入时的最小/最大值校验,并增强了连接处理的健壮性(每个实例独立状态,对丢失响应的恢复更快)",
-        "uk": "визначення блоків даних перенесено до налаштовуваних JSON-файлів, додано перевірку мін/макс під час запису, а обробку з'єднання зроблено надійнішою (стан на кожен екземпляр, швидше відновлення після втраченої відповіді)"
       }
     },
     "titleLang": {
