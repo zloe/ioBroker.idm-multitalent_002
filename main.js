@@ -38,7 +38,7 @@ class IdmMultitalent002 extends utils.Adapter {
         // available. onReady() re-runs this with the configured custom directory (if any).
         this.idm.initialize();
         this.connectedToIDM = false;
-        /** @type {IdmSession | null} created in onReady(), once this.config is available */
+        /** @type {InstanceType<typeof IdmSession> | null} created in onReady(), once this.config is available */
         this.session = null;
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
