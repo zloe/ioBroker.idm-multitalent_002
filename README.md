@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.3.1 (2026-09-08)
 * (zloe) log which firmware versions have a data block definition available, and which one (bundled or a custom override) was actually selected once the heat pump reports its version
 * (zloe) add estimated min/max write limits for every remaining writable S_H726100 field (temperature setpoints, cooling settings, two on/off flags, pump speed) - conservative, margin-padded ranges, not hardware-verified for every field, see lib/datablocks/README.md
 * (zloe) learn a per-data-block delay before requesting its content instead of one fixed guess for all of them, reducing "not ready" retries over time (see the Architecture section)
