@@ -57,6 +57,10 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) shorten the recurring per-data-block request log line (data block 07) to one compact line with the same information
+* (zloe) also log how long a full settings cycle (every settings block once, not just the one per sweep) takes, once the next one starts
+
 ### 1.3.2 (2026-09-08)
 * (zloe) replace the per-data-block content delay's averaging with a proper hill-climb: it now only grows when a "not ready" retry was actually needed and eases back down after several clean cycles, converging on a sweet spot instead of only ever ratcheting upward
 * (zloe) lower the default/floor data-content delay from 1000ms to 650ms
@@ -193,10 +197,13 @@ on the actual sweet spot rather than trading unlimited retries for an unbounded 
 reverse. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
 per-data-block content delay" tests in `lib/idm-session.test.js`.
 
-`IdmSession` also logs how long one full poll cycle - every sensor data block plus one settings
-data block, see `request_data()` - actually took, once the next cycle starts (there is nothing to
-compare the very first cycle against). This is the overall effect of all the delays above added
-together, so it is what actually shows whether a change to them made polling faster or slower.
+`IdmSession` also logs how long a poll cycle actually took, once the next one starts (there is
+nothing to compare the very first cycle against yet). Two cycle lengths are tracked separately,
+since only one settings block is requested per sweep, round-robin: the sensor sweep itself (every
+sensor data block plus that one settings block, see `request_data()`) and the longer full settings
+cycle (every settings block once, i.e. one sensor sweep per settings block this version has).
+Together these are the overall effect of all the delays above added together, so they're what
+actually shows whether a change to them made polling faster or slower.
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
