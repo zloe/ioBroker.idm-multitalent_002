@@ -3,6 +3,18 @@
         "name": "idm-multitalent_002",
         "version": "1.3.0",
         "news": {
+            "1.3.1": {
+                "en": "logs which firmware data block definitions are available and selected, adds estimated min/max write limits for S_H726100, and learns a per-data-block delay to reduce \"not ready\" retries",
+                "de": "loggt, welche Firmware-Datenblock-Definitionen verfügbar sind und ausgewählt wurden, ergänzt geschätzte Min/Max-Schreibgrenzen für S_H726100 und lernt eine Wartezeit pro Datenblock, um „nicht bereit“-Wiederholungen zu reduzieren",
+                "ru": "логирует, какие определения блоков данных прошивки доступны и выбраны, добавляет оценочные ограничения мин/макс при записи для S_H726100 и подбирает задержку для каждого блока данных, чтобы снизить количество повторов из-за ответа «не готово»",
+                "pt": "regista quais as definições de blocos de dados de firmware estão disponíveis e foi selecionada, adiciona limites estimados de mín/máx de escrita para o S_H726100 e aprende um atraso por bloco de dados para reduzir as repetições por \"não pronto\"",
+                "nl": "logt welke firmware-datablokdefinities beschikbaar zijn en geselecteerd werden, voegt geschatte min/max-schrijflimieten toe voor S_H726100 en leert een vertraging per datablok om \"niet gereed\"-herhalingen te verminderen",
+                "fr": "journalise les définitions de blocs de données de firmware disponibles et sélectionnées, ajoute des limites min/max d'écriture estimées pour S_H726100, et apprend un délai par bloc de données pour réduire les nouvelles tentatives \"pas prêt\"",
+                "it": "registra quali definizioni dei blocchi dati del firmware sono disponibili e selezionate, aggiunge limiti min/max di scrittura stimati per S_H726100 e apprende un ritardo per blocco dati per ridurre i tentativi \"non pronto\"",
+                "es": "registra qué definiciones de bloques de datos de firmware están disponibles y cuál se seleccionó, añade límites estimados de mín/máx de escritura para S_H726100 y aprende un retardo por bloque de datos para reducir los reintentos por \"no listo\"",
+                "pl": "loguje, które definicje bloków danych oprogramowania są dostępne i która została wybrana, dodaje szacunkowe limity min/maks przy zapisie dla S_H726100 oraz uczy się opóźnienia dla każdego bloku danych, aby zmniejszyć liczbę ponowień z powodu \"niegotowości\"",
+                "zh-cn": "记录哪些固件数据块定义可用以及实际选用了哪一个，为 S_H726100 新增了估算的写入最小/最大值限制，并针对每个数据块学习延迟时间以减少“未就绪”重试次数"
+            },
             "1.3.0": {
                 "en": "data block definitions moved to customizable JSON files, min/max write enforcement added, and the connection handling made more robust (per-instance state, faster recovery from a dropped reply)",
                 "de": "Datenblock-Definitionen in anpassbare JSON-Dateien ausgelagert, Min/Max-Prüfung beim Schreiben ergänzt und die Verbindungsbehandlung robuster gemacht (Zustand pro Instanz, schnellere Erholung nach einer verlorenen Antwort)",
