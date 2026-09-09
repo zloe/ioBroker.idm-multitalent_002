@@ -57,6 +57,10 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.3.9 (2026-09-09)
+* (zloe) list every data block's current content delay in the full-coverage cycle log line, so a change in total cycle time can be traced back to which block(s) grew
+* (zloe) the adaptive per-block content delay's ease-down step now starts coarse (100ms) and halves each time it's used (down to a 1ms floor), instead of always easing by a flat 100ms - a block that's been stable for a while gets refined much more finely, converging near its true minimum safe delay instead of only ever landing on multiples of 100ms. A retry resets a block's step back to the coarse starting point
+
 ### 1.3.8 (2026-09-09)
 * (zloe) remove the "completed one full poll cycle (every sensor block + one settings block)" log line entirely - it fired every single sensor sweep (~14s on real hardware), far too often to be useful. Only the full-coverage cycle line (every sensor and settings block actually read at least once, confirmed correct against real production logs) remains
 
