@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 1.3.10 (2026-09-09)
 * (zloe) fix: a retry on an already finely-tuned data block used to always jump its delay up by the full, coarse step (300ms) regardless of how small a correction was actually needed - now it corrects by the same (possibly already tiny) step that tuning had converged to, and only doubles that step towards the coarse ceiling if retries actually keep recurring
 
 ### 1.3.9 (2026-09-09)
