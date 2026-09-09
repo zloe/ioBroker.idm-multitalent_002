@@ -57,6 +57,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 1.3.8 (2026-09-09)
+* (zloe) remove the "completed one full poll cycle (every sensor block + one settings block)" log line entirely - it fired every single sensor sweep (~14s on real hardware), far too often to be useful. Only the full-coverage cycle line (every sensor and settings block actually read at least once, confirmed correct against real production logs) remains
+
 ### 1.3.7 (2026-09-08)
 * (zloe) fix: the full-coverage cycle log line still fired far too often on real hardware - it was gated by the settings-block round-robin index advancing at *request* time, not by data actually being read, so a retry, a response-watchdog reset, or the periodic resync could let a "lap" complete without every block truly having been read. Now gated by actual received data instead
 

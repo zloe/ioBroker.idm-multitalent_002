@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "1.3.7",
+    "version": "1.3.8",
     "news": {
+      "1.3.8": {
+        "en": "remove the frequent per-sweep 'completed one full poll cycle' log line entirely (fired every ~14s) - only the much less frequent full-coverage cycle line remains, confirmed correct against real production logs",
+        "de": "die häufige Log-Zeile 'completed one full poll cycle' (feuerte alle ~14s) komplett entfernt - nur die deutlich seltenere Vollzyklus-Zeile bleibt, deren Korrektheit anhand echter Produktions-Logs bestätigt wurde",
+        "ru": "часто встречающаяся строка журнала 'completed one full poll cycle' (срабатывала каждые ~14 с) полностью удалена - осталась только гораздо более редкая строка полного цикла, корректность которой подтверждена по реальным журналам",
+        "pt": "removida por completo a linha de log frequente 'completed one full poll cycle' (disparava a cada ~14s) - resta apenas a linha do ciclo completo, bem mais rara, cuja correção foi confirmada em logs reais de produção",
+        "nl": "de veelvoorkomende logregel 'completed one full poll cycle' (vuurde elke ~14s af) volledig verwijderd - alleen de veel minder frequente full-coverage-cyclusregel blijft over, waarvan de juistheid is bevestigd aan de hand van echte productielogs",
+        "fr": "suppression complète de la ligne de log fréquente 'completed one full poll cycle' (se déclenchait toutes les ~14s) - seule la ligne de cycle complet, bien plus rare, reste, sa justesse ayant été confirmée sur de vrais logs de production",
+        "it": "rimossa completamente la frequente riga di log 'completed one full poll cycle' (scattava ogni ~14s) - resta solo la riga del ciclo completo, molto meno frequente, la cui correttezza è stata confermata su log di produzione reali",
+        "es": "eliminada por completo la línea de registro frecuente 'completed one full poll cycle' (se disparaba cada ~14s) - solo queda la línea del ciclo completo, mucho menos frecuente, cuya corrección se confirmó con registros reales de producción",
+        "pl": "całkowicie usunięto częsty wiersz logu 'completed one full poll cycle' (uruchamiał się co ~14s) - pozostał tylko znacznie rzadszy wiersz pełnego cyklu, którego poprawność potwierdzono na rzeczywistych logach produkcyjnych",
+        "zh-cn": "彻底移除了频繁出现的 'completed one full poll cycle' 日志行(约每 14 秒触发一次)- 仅保留频率低得多的完整周期日志行,其正确性已通过真实生产日志验证",
+        "uk": "повністю видалено частий рядок журналу 'completed one full poll cycle' (спрацьовував що ~14с) - залишився лише значно рідший рядок повного циклу, коректність якого підтверджено на реальних лог-файлах"
+      },
       "1.3.7": {
         "en": "fix: the full-coverage cycle log line fired too often on real hardware because it was gated by request timing, not actual data reads - now gated by actually received data",
         "de": "Fix: die Log-Zeile für den vollständigen Abfragezyklus feuerte auf echter Hardware zu oft, weil sie am Zeitpunkt der Anfrage statt am tatsächlichen Datenempfang hing - jetzt an tatsächlich empfangenen Daten festgemacht",
@@ -80,19 +93,6 @@
         "pl": "przebudowano adaptacyjne opóźnienie dla każdego bloku danych, aby faktycznie wyszukiwało optymalną wartość zamiast tylko rosnąć, obniżono jego minimum do 650ms oraz dodano wpis w logu z czasem trwania pełnego cyklu odpytywania",
         "zh-cn": "重新设计了按数据块自适应延迟的算法,使其真正收敛到最佳值而不是只会增长,将其下限降至 650ms,并新增了记录一次完整轮询周期耗时的日志",
         "uk": "адаптивну затримку для кожного блоку даних перероблено так, щоб вона дійсно знаходила оптимальне значення, а не лише зростала, мінімальне значення знижено до 650мс, додано запис у журналі про тривалість одного повного циклу опитування"
-      },
-      "1.3.1": {
-        "en": "logs which firmware data block definitions are available and selected, adds estimated min/max write limits for S_H726100, and learns a per-data-block delay to reduce \"not ready\" retries",
-        "de": "loggt, welche Firmware-Datenblock-Definitionen verfügbar sind und ausgewählt wurden, ergänzt geschätzte Min/Max-Schreibgrenzen für S_H726100 und lernt eine Wartezeit pro Datenblock, um „nicht bereit“-Wiederholungen zu reduzieren",
-        "ru": "логирует, какие определения блоков данных прошивки доступны и выбраны, добавляет оценочные ограничения мин/макс при записи для S_H726100 и подбирает задержку для каждого блока данных, чтобы снизить количество повторов из-за ответа «не готово»",
-        "pt": "regista quais as definições de blocos de dados de firmware estão disponíveis e foi selecionada, adiciona limites estimados de mín/máx de escrita para o S_H726100 e aprende um atraso por bloco de dados para reduzir as repetições por \"não pronto\"",
-        "nl": "logt welke firmware-datablokdefinities beschikbaar zijn en geselecteerd werden, voegt geschatte min/max-schrijflimieten toe voor S_H726100 en leert een vertraging per datablok om \"niet gereed\"-herhalingen te verminderen",
-        "fr": "journalise les définitions de blocs de données de firmware disponibles et sélectionnées, ajoute des limites min/max d'écriture estimées pour S_H726100, et apprend un délai par bloc de données pour réduire les nouvelles tentatives \"pas prêt\"",
-        "it": "registra quali definizioni dei blocchi dati del firmware sono disponibili e selezionate, aggiunge limiti min/max di scrittura stimati per S_H726100 e apprende un ritardo per blocco dati per ridurre i tentativi \"non pronto\"",
-        "es": "registra qué definiciones de bloques de datos de firmware están disponibles y cuál se seleccionó, añade límites estimados de mín/máx de escritura para S_H726100 y aprende un retardo por bloque de datos para reducir los reintentos por \"no listo\"",
-        "pl": "loguje, które definicje bloków danych oprogramowania są dostępne i która została wybrana, dodaje szacunkowe limity min/maks przy zapisie dla S_H726100 oraz uczy się opóźnienia dla każdego bloku danych, aby zmniejszyć liczbę ponowień z powodu \"niegotowości\"",
-        "zh-cn": "记录哪些固件数据块定义可用以及实际选用了哪一个，为 S_H726100 新增了估算的写入最小/最大值限制，并针对每个数据块学习延迟时间以减少“未就绪”重试次数",
-        "uk": "реєструє, які визначення блоків даних прошивки доступні та яке з них обрано, додає оціночні межі мін/макс запису для S_H726100 та підбирає затримку для кожного блоку даних, щоб зменшити кількість повторів через відповідь «не готово»"
       }
     },
     "titleLang": {
