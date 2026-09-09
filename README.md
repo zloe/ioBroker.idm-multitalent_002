@@ -185,16 +185,19 @@ on the actual sweet spot rather than trading unlimited retries for an unbounded 
 reverse. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
 per-data-block content delay" tests in `lib/idm-session.test.js`.
 
-`IdmSession` also logs how long a poll cycle actually took, once the next one starts (there is
-nothing to compare the very first cycle against yet). Two cycle lengths are tracked separately,
-since only one settings block is requested per sweep, round-robin: the sensor sweep itself (every
-sensor data block plus that one settings block, see `request_data()`) and the longer full-coverage
-cycle - every sensor block *and* every settings block read at least once, gated by the settings
-side since the sensor blocks are already re-read on every single sweep. The second line also
-carries a running total of how many full-coverage cycles have completed since the adapter started
-(not persisted across restarts). Together these are the overall effect of all the delays above
-added together, so they're what actually shows whether a change to them made polling faster or
-slower.
+`IdmSession` also logs how long a full-coverage cycle actually took, once the next one completes
+(there is nothing to compare the very first cycle against yet) - every sensor block *and* every
+settings block actually read at least once, gated by the settings side since the sensor blocks are
+already re-read on every single sweep (only one settings block is requested per sweep, round-robin
+- see `request_data()`). This is driven by data actually being *received* (`recordBlockRead()`,
+called from `receive_data()`'s successful-data branch), not merely requested - a block that was
+requested but never got a reply back (a retry, a response-watchdog reset, the periodic resync) does
+not count, so the log only ever fires once every block has genuinely been read. It also carries a
+running total of how many full-coverage cycles have completed since the adapter started (not
+persisted across restarts) - together with the elapsed time, that's the overall effect of all the
+delays above added together, so it's what actually shows whether a change to them made polling
+faster or slower. (An earlier, more frequent "one full poll cycle" line - logged every single
+sensor sweep - was dropped as too noisy; only this line remains.)
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
