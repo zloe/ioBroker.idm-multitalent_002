@@ -185,7 +185,11 @@ ourselves chose to wait before asking, so it could only ever justify growing the
 discovering a shorter one would also work) - only on whether a retry was actually needed, so the
 delay for a block can also come back down over time instead of only ratcheting upward, converging
 on the actual sweet spot rather than trading unlimited retries for an unbounded wait, or the
-reverse. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
+reverse. The ease-down step itself starts coarse (100ms) and halves every time it's used, down to a
+1ms floor - a block gets found in its rough neighborhood quickly, then refined ever more finely the
+longer it stays stable, instead of only ever landing on multiples of 100ms. A retry resets that
+block's step back to the coarse starting point, since it just proved the fine-tuning that led there
+wrong. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
 per-data-block content delay" tests in `lib/idm-session.test.js`.
 
 `IdmSession` also logs how long a full-coverage cycle actually took, once the next one completes
