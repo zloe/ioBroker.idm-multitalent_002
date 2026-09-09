@@ -57,6 +57,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) fix: a retry on an already finely-tuned data block used to always jump its delay up by the full, coarse step (300ms) regardless of how small a correction was actually needed - now it corrects by the same (possibly already tiny) step that tuning had converged to, and only doubles that step towards the coarse ceiling if retries actually keep recurring
+
 ### 1.3.9 (2026-09-09)
 * (zloe) list every data block's current content delay in the full-coverage cycle log line, so a change in total cycle time can be traced back to which block(s) grew
 * (zloe) the adaptive per-block content delay's ease-down step now starts coarse (100ms) and halves each time it's used (down to a 1ms floor), instead of always easing by a flat 100ms - a block that's been stable for a while gets refined much more finely, converging near its true minimum safe delay instead of only ever landing on multiples of 100ms. A retry resets a block's step back to the coarse starting point
@@ -189,12 +192,15 @@ ourselves chose to wait before asking, so it could only ever justify growing the
 discovering a shorter one would also work) - only on whether a retry was actually needed, so the
 delay for a block can also come back down over time instead of only ratcheting upward, converging
 on the actual sweet spot rather than trading unlimited retries for an unbounded wait, or the
-reverse. The ease-down step itself starts coarse (100ms) and halves every time it's used, down to a
-1ms floor - a block gets found in its rough neighborhood quickly, then refined ever more finely the
-longer it stays stable, instead of only ever landing on multiples of 100ms. A retry resets that
-block's step back to the coarse starting point, since it just proved the fine-tuning that led there
-wrong. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and the "adaptive
-per-data-block content delay" tests in `lib/idm-session.test.js`.
+reverse. The adaptive step itself is shared by both directions and starts coarse (100ms): it
+halves every time it's used to ease a block down, down to a 1ms floor, so a block gets found in
+its rough neighborhood quickly, then refined ever more finely the longer it stays stable, instead
+of only ever landing on multiples of 100ms. A retry corrects the delay back up by that SAME
+(possibly already tiny) step, then doubles it for next time (capped at the original coarse
+ceiling) - so a lone retry on an already finely-tuned block only costs a small, proportional
+correction instead of always jumping by the full coarse amount; only genuinely repeated retries
+escalate the step back up. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and
+the "adaptive per-data-block content delay" tests in `lib/idm-session.test.js`.
 
 `IdmSession` also logs how long a full-coverage cycle actually took, once the next one completes
 (there is nothing to compare the very first cycle against yet) - every sensor block *and* every
