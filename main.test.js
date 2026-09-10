@@ -70,6 +70,10 @@ class FakeAdapterBase extends EventEmitter {
         this.states.set(fullId, { val, ack: ackFlag });
         return {};
     }
+    async getStateAsync(id) {
+        const fullId = this._fullId(id);
+        return this.states.has(fullId) ? this.states.get(fullId) : null;
+    }
     setState(id, value, ack, callback) {
         if (typeof ack === 'function') {
             callback = ack;
@@ -199,6 +203,64 @@ describe('main.js - IdmMultitalent002 (ioBroker glue around IdmSession)', () => 
         await flush();
         expect(adapter.states.get(`${adapter.namespace}.Heizkreis-A.Betriebsart`)).to.deep.equal({ val: 3, ack: true });
         expect(adapter.lastAckedValue.get('Heizkreis-A.Betriebsart')).to.equal(3);
+    });
+
+    describe('measuredWireLengths persistence (see loadMeasuredWireLengths() / the onWireLengthLearned hook)', () => {
+        it('onWireLengthLearned hook persists a newly confirmed wireLength to the info.measuredWireLengths state', async () => {
+            session.hooks.onWireLengthLearned('idm701100', '07', 30);
+            await flush();
+
+            expect(adapter.states.get(`${adapter.namespace}.info.measuredWireLengths`)).to.deep.equal({
+                val: JSON.stringify({ idm701100: { '07': 30 } }),
+                ack: true,
+            });
+            expect(adapter.measuredWireLengths).to.deep.equal({ idm701100: { '07': 30 } });
+
+            // A second, different block (same or another version) merges in rather than replacing.
+            session.hooks.onWireLengthLearned('idm701100', '09', 12);
+            await flush();
+            expect(adapter.states.get(`${adapter.namespace}.info.measuredWireLengths`).val).to.equal(
+                JSON.stringify({ idm701100: { '07': 30, '09': 12 } })
+            );
+        });
+
+        it('loadMeasuredWireLengths() seeds idm with whatever was persisted in a PREVIOUS run before the session starts', async () => {
+            const createAdapter = proxyquire('./main.js', {
+                '@iobroker/adapter-core': { Adapter: FakeAdapterBase, '@noCallThru': true },
+                './lib/idm-session': { IdmSession: FakeIdmSession, '@noCallThru': true },
+            });
+            FakeIdmSession.instances = [];
+            const freshAdapter = createAdapter({
+                config: { tcpserverip: '10.0.0.1', tcpserverport: 4001, reconnectinterval: 90 },
+            });
+            // Pre-populate the persisted state BEFORE 'ready' fires (process.nextTick - see
+            // FakeAdapterBase's constructor), simulating a restart after a previous run had
+            // already confirmed this block's wireLength.
+            freshAdapter.states.set(`${freshAdapter.namespace}.info.measuredWireLengths`, {
+                val: JSON.stringify({ idm701100: { '07': 30 } }),
+                ack: true,
+            });
+
+            clock.runMicrotasks();
+            await flush();
+
+            expect(freshAdapter.measuredWireLengths).to.deep.equal({ idm701100: { '07': 30 } });
+            expect(freshAdapter.idm.getVerifiedBlockWireLength('idm701100', '07'),
+                'a restored value is a candidate, not yet trusted - see idm.seedMeasuredWireLength()').to.be.null;
+            const infoCall = freshAdapter.log.info.getCalls().find(c => /restored 1 previously-measured wireLength\(s\)/.test(c.args[0]));
+            expect(infoCall, 'expected a log.info call about the restored wireLength(s)').to.exist;
+
+            // The seeded value only counts as the FIRST of the two matching measurements every
+            // restart still requires (see idm.seedMeasuredWireLength()'s comment) - confirm that
+            // by recording one more matching measurement directly against the same idm instance.
+            expect(freshAdapter.idm.recordMeasuredWireLength('idm701100', '07', 30).status).to.equal('confirmed');
+        });
+
+        it('loadMeasuredWireLengths() tolerates a missing/corrupted state and just starts fresh', async () => {
+            // The shared beforeEach's adapter never had this state written, so it starts as null -
+            // this is really exercising parseMeasuredWireLengths(undefined) via the real flow.
+            expect(adapter.measuredWireLengths).to.deep.equal({});
+        });
     });
 
     it('onUnload stops the session', async () => {

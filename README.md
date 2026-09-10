@@ -57,6 +57,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) auto-learn each data block's actual wire length from real traffic instead of only relying on hand-verified values (logged, and persisted to the `info.measuredWireLengths` state so it survives a restart - though every restart still re-confirms it once, in case a heat pump setting somehow affects it) - once a firmware's SENSOR blocks (not just its settings blocks, extending 2.0.0) all have a trusted length this way, they too are requested as one multi-block batch. Sensor and settings polling is now also interleaved (2 sensor turns for every 1 settings turn, sensor first) instead of settings collection running to completion before sensor data gets another look in, so sensor freshness no longer suffers while a slow settings collection is still catching up (see the Architecture section)
+
 ### 2.0.0 (2026-09-10)
 * (zloe) for S_H726100 (currently the only firmware with every data block's actual wire length verified against real hardware), collect all settings data blocks in one multi-block request per settings turn instead of one block per poll cycle, with automatic re-asking/backoff for the control's typically-partial replies - a full settings refresh now takes seconds instead of roughly a minute. Every other supported firmware is completely unaffected and keeps requesting settings blocks one at a time (see the Architecture section)
 
@@ -207,17 +210,30 @@ the "adaptive per-data-block content delay" tests in `lib/idm-session.test.js`.
 
 `IdmSession` also logs how long a full-coverage cycle actually took, once the next one completes
 (there is nothing to compare the very first cycle against yet) - every sensor block *and* every
-settings block actually read at least once, gated by the settings side since the sensor blocks are
-already re-read on every single sweep (only one settings block is requested per sweep, round-robin
-- see `request_data()`). This is driven by data actually being *received* (`recordBlockRead()`,
-called from `receive_data()`'s successful-data branch), not merely requested - a block that was
-requested but never got a reply back (a retry, a response-watchdog reset, the periodic resync) does
-not count, so the log only ever fires once every block has genuinely been read. It also carries a
-running total of how many full-coverage cycles have completed since the adapter started (not
-persisted across restarts) - together with the elapsed time, that's the overall effect of all the
-delays above added together, so it's what actually shows whether a change to them made polling
-faster or slower. (An earlier, more frequent "one full poll cycle" line - logged every single
-sensor sweep - was dropped as too noisy; only this line remains.)
+settings block actually read at least once. This is driven by data actually being *received*
+(`recordBlockRead()`, called from `receive_data()`'s successful-data branch), not merely requested
+- a block that was requested but never got a reply back (a retry, a response-watchdog reset, the
+periodic resync) does not count, so the log only ever fires once every block has genuinely been
+read. It also carries a running total of how many full-coverage cycles have completed since the
+adapter started (not persisted across restarts) and a breakdown of the delay currently in use per
+block, grouped by shared value (e.g. `(07,08) 650ms, (09,04,05) 2300ms`) - together with the
+elapsed time, that's the overall effect of all the delays and polling behavior below added
+together, so it's what actually shows whether a change to any of it made polling faster or slower.
+(An earlier, more frequent "one full poll cycle" line - logged every single sensor sweep - was
+dropped as too noisy; only this line remains.)
+
+#### Poll pattern: sensor and settings, interleaved
+
+Every call to `request_data()` is one "turn", and which of the two groups (sensor or settings) a
+turn is for comes from `IdmSession#pollPattern` (`['sensor', 'sensor', 'settings']`, cycled via
+`pollPatternIndex`): sensor gets two turns for every one settings turn, and always goes first -
+both after connecting and after every settings turn - so the freshest-changing data (sensor
+readings) is never left waiting behind a settings collection, however long that takes. Within a
+turn, each group independently uses either the classic one-block-at-a-time round-robin (unchanged
+since the very first version) or a multi-block request for the whole group at once, whichever it
+currently qualifies for - see the next two sections.
+
+#### Multi-block requests, per group
 
 The serial protocol actually allows requesting several data blocks in one `0171` message, which
 come back combined in a single `01F2`/`0172` reply - but the control's replies turned out to be
@@ -228,25 +244,59 @@ ETX/checksum framing finds the boundary regardless - but fatal for parsing sever
 one reply, where the exact length of each block is the only way to find where the next one
 starts), and a single `0172` typically only returns a PARTIAL subset of the requested blocks,
 requiring the request to be repeated until everything has actually come back. Because of this, the
-multi-block request path is strictly opt-in per firmware: `IdmProtocol#firmwareSupportsMultiBlockRequests()`
-only returns true once every one of that firmware's settings blocks has an explicit, hardware-
-verified `wireLength` in its data block definition (see
-[`lib/datablocks/README.md`](lib/datablocks/README.md)) - currently only S_H726100. For every other
-firmware, `request_data()` keeps using the plain one-settings-block-per-cycle round-robin described
-above, completely unchanged.
+multi-block request path is strictly opt-in, gated independently for each of the two groups:
+`IdmProtocol#firmwareSupportsMultiBlockRequestsForBlocks()` (and its `firmwareSupportsMultiBlockRequests()`
+/`firmwareSupportsMultiBlockRequestsForSensors()` convenience wrappers for the settings/sensor
+groups) only returns true once every one of that group's blocks has a TRUSTED wire length - either
+an explicit, hand-verified `wireLength` in its data block definition (see
+[`lib/datablocks/README.md`](lib/datablocks/README.md)), or one confirmed from real traffic (see
+"wireLength learning" below). A firmware's two groups can be in different states (e.g. settings
+qualified from its JSON definition while sensor is still being learned, or vice versa); whichever
+group doesn't (yet) qualify keeps using the plain one-block-per-turn round-robin, completely
+unaffected.
 
-Where it is supported, `IdmSession#beginSettingsBatchCollection()` requests every settings block at
-once instead of just one, reusing the very same request/response state machine (the "R1" ack and
-the `0172` content request are exactly the same messages the single-block path already sends) -
-only the reply is parsed differently (`IdmProtocol#parse_multi_block_reply()`, using each block's
-verified `wireLength` to find its boundary) and re-asked (plain `0172` again, no need to repeat the
-block list) with a growing backoff (`multiBlockReaskBaseDelay`, capped at
-`multiBlockReaskMaxDelay`) until every requested block has actually been seen, up to
-`multiBlockMaxReasks` attempts before giving up on the stragglers for this cycle - the next
-settings turn starts a fresh batch for everything again, so nothing is permanently lost, only
-deferred. See the "multi-block settings batch collection" tests in `lib/idm-session.test.js`,
-which drive this against a small simulated control (`MultiBlockControllerSim`) modeling the
-partial-reply/stale-repeat/not-ready behavior actually observed on real hardware.
+Where a group is multi-block-capable, `IdmSession#beginOrContinueGroupCollection()` requests every
+block in that group at once instead of just one, reusing the very same request/response state
+machine (the "R1" ack and the `0172` content request are exactly the same messages the single-block
+path already sends) - only the reply is parsed differently (`IdmProtocol#parse_multi_block_reply()`,
+using each block's verified wire length to find its boundary). Unlike a plain round-robin turn, a
+multi-block group can need several attempts to actually see every block it asked for (the partial-
+reply behavior above) - but each of a group's TURNS (see the poll pattern above) still only ever
+makes exactly ONE `0171`/`0172` attempt for whatever is still missing, then ends, whether or not
+that attempt completed the group: the next time that group's turn comes around, it picks the same
+collection back up (asking only for what's still missing, never the blocks already found) rather
+than looping internally until done. This is deliberate: an internal retry loop would let one slow
+group monopolize the connection for its entire completion time, starving the OTHER group's turns
+for just as long - which is exactly what interleaving is meant to prevent - and re-sending a fresh
+request for what's missing, rather than assuming the control can resume an interrupted reply stream
+across an unrelated request served in between, sticks to protocol behavior that's actually been
+observed, not assumed. A group that still hasn't finished after `multiBlockMaxAttemptsPerLap`
+attempts (across as many of its own turns) gives up on the stragglers and starts completely fresh
+next time, so nothing is permanently lost, only deferred. See the "multi-block collection, sensor
+and settings, interleaved" tests in `lib/idm-session.test.js`, which drive this against a small
+simulated control (`MultiBlockControllerSim`) modeling the partial-reply/stale-repeat/not-ready
+behavior actually observed on real hardware.
+
+#### wireLength learning
+
+A block's wire length only needs to be trusted, not necessarily hand-verified up front: every
+classic single-block reply is fully checksum-framed regardless of its actual length, so
+`IdmSession#learnWireLengthFrom()` passively measures it from ordinary traffic at essentially no
+cost, for any block that doesn't already have a trusted length. A measurement alone isn't trusted
+immediately, though - `IdmProtocol#recordMeasuredWireLength()` requires the SAME length twice in a
+row (a disagreement logs a warning and restarts the count from the new value, never averages)
+before treating it as confirmed, in case a firmware turns out to add a different number of
+undocumented bytes on different occasions. Every outcome is logged (routine progress at `info`, a
+disagreement at `warn`), and the moment a group's every block becomes trusted this way, that's
+logged too and multi-block requests for it start from its very next turn. Each newly CONFIRMED
+length is also persisted to the `info.measuredWireLengths` ioBroker state (`onWireLengthLearned`
+hook, wired up in `main.js`) as `{"<firmware version>": {"<block id>": <byte length>}}`, and
+restored on the next adapter start (`loadMeasuredWireLengths()`, before the session starts) via
+`IdmProtocol#seedMeasuredWireLength()` - but only as a CANDIDATE, not as already-trusted: every
+restart still re-confirms it with one fresh matching measurement before relying on it again, in
+case some heat pump setting turns out to affect a block's length after all. See the "wireLength
+learning" tests in `lib/idm-session.test.js` (and `idm-protocol.test.js` for the underlying
+confirm/mismatch/seed mechanics).
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.

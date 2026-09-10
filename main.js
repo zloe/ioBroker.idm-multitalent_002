@@ -57,6 +57,57 @@ class IdmMultitalent002 extends utils.Adapter {
     // rejected by sendValue() (out of range), so the UI doesn't keep showing a value that was
     // never actually sent.
     lastAckedValue = new Map();
+    // Wire lengths auto-learned from real traffic (see IdmSession#learnWireLengthFrom()),
+    // persisted to measuredWireLengthsStateId so they survive a restart instead of having to be
+    // re-learned from scratch every time - see loadMeasuredWireLengths() (read + seed, called
+    // from onReady() before the session starts) and the onWireLengthLearned hook below (write, on
+    // every newly CONFIRMED measurement). Shape: { "<firmware version>": { "<block id>": <byte
+    // length> } }. Kept as a plain object (not a Map) since it is only ever read/written as a
+    // whole via JSON.stringify/parse against the state.
+    measuredWireLengths = {};
+    measuredWireLengthsStateId = 'info.measuredWireLengths';
+
+    /**
+     * Parses the persisted measuredWireLengths state value, tolerating anything unexpected
+     * (never written yet, corrupted, hand-edited) by just starting fresh instead of throwing -
+     * this is a learned-from-traffic CACHE, not something the adapter can't run without.
+     * @param {string | null | undefined} raw
+     * @returns {Record<string, Record<string, number>>}
+     */
+    parseMeasuredWireLengths(raw) {
+        if (!raw) return {};
+        try {
+            const parsed = JSON.parse(raw);
+            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+        } catch (e) {
+            this.log.warn('could not parse the persisted ' + this.measuredWireLengthsStateId + ' state, starting fresh: ' + e);
+            return {};
+        }
+    }
+
+    /**
+     * Reads back whatever wireLengths were confirmed (and persisted) in a PREVIOUS run and seeds
+     * them into this.idm as candidates for this run - see idm.seedMeasuredWireLength()'s comment
+     * for why a restored value still needs one fresh matching measurement before being trusted
+     * again, rather than being restored as already-confirmed. Called from onReady(), before the
+     * session (and therefore any actual traffic) starts.
+     */
+    async loadMeasuredWireLengths() {
+        const state = await this.getStateAsync(this.measuredWireLengthsStateId);
+        const raw = state && typeof state.val === 'string' ? state.val : undefined;
+        this.measuredWireLengths = this.parseMeasuredWireLengths(raw);
+        let seeded = 0;
+        for (const [version, blocks] of Object.entries(this.measuredWireLengths)) {
+            for (const [block, length] of Object.entries(blocks)) {
+                this.idm.seedMeasuredWireLength(version, block, length);
+                seeded++;
+            }
+        }
+        if (seeded > 0) {
+            this.log.info('restored ' + seeded + ' previously-measured wireLength(s) from ' + this.measuredWireLengthsStateId +
+                ' - each still needs one fresh matching measurement this run before being trusted again for multi-block requests');
+        }
+    }
 
     setIDMState(stateName, value) {
         this.lastAckedValue.set(stateName, value);
@@ -162,6 +213,24 @@ class IdmMultitalent002 extends utils.Adapter {
             }
         }
 
+        // See loadMeasuredWireLengths()'s comment - must happen before the session (and any
+        // actual traffic) starts, and the state it reads from must exist first.
+        await this.setObjectNotExistsAsync(this.measuredWireLengthsStateId, {
+            type: 'state',
+            common: {
+                name: 'measuredWireLengths',
+                type: 'string',
+                role: 'json',
+                read: true,
+                write: false,
+                desc: 'Wire lengths auto-learned per data block from real traffic (see README\'s ' +
+                    '"wireLength learning" section), persisted so they do not have to be re-learned ' +
+                    'from scratch after every restart. JSON: {"<firmware version>": {"<block id>": <byte length>}}',
+            },
+            native: {},
+        });
+        await this.loadMeasuredWireLengths();
+
         // The session owns the TCP connection and the request/response state machine (see
         // lib/idm-session.js); it knows nothing about ioBroker, so everything it needs to
         // report - a connection change, the version, a parsed data block, a single field's
@@ -206,6 +275,12 @@ class IdmMultitalent002 extends utils.Adapter {
                     this.setStateAsync(stateName, text, true).catch(e => this.log.error('failed to set state ' + stateName + ': ' + e));
                 },
                 onFieldUpdate: this.setIDMState.bind(this),
+                onWireLengthLearned: (version, block, length) => {
+                    if (!this.measuredWireLengths[version]) this.measuredWireLengths[version] = {};
+                    this.measuredWireLengths[version][block] = length;
+                    this.setStateAsync(this.measuredWireLengthsStateId, JSON.stringify(this.measuredWireLengths), true)
+                        .catch(e => this.log.error('failed to persist ' + this.measuredWireLengthsStateId + ': ' + e));
+                },
                 setTimeout: this.setTimeout.bind(this),
                 clearTimeout: this.clearTimeout.bind(this),
                 setInterval: this.setInterval.bind(this),

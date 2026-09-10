@@ -26,6 +26,7 @@ definition (if any) is kept in that case rather than guessing which one to use.
     "data_blocks": [
         {
             "block_number": "03",
+            "wireLength": 28,
             "definition": [
                 { "statename": "Heizkreis-A.Betriebsart", "field": "betrieb_A", "description": "Betriebsart HK A", "length": 2, "factor": 1, "writable": true, "function": 11, "min": 0, "max": 5 }
             ]
@@ -40,20 +41,31 @@ definition (if any) is kept in that case rather than guessing which one to use.
   fast-changing sensor data vs. slower-changing settings data
 * `speed` - percentage of normal polling speed this control can keep up with (100 = normal;
   some versions need to be polled more slowly)
-* `data_blocks` - one entry per block number, each with a `definition` array of fields:
-  * `statename` - the ioBroker state created for this field (empty for padding/unused positions)
-  * `field` - internal field name (only used for debugging/comments)
-  * `function` - the register id the multitalent control uses to identify this value; must be
-    unique within its data block (checked by validation - a collision has previously caused a
-    write meant for one field to land on another, see the 1.2.7 changelog entry)
-  * `length` - 1 or 2 bytes on the wire
-  * `factor` - raw value is divided/multiplied by this to get/set the real-world value
-  * `writable` - whether the adapter subscribes to this state and sends changes back to the heat pump
-  * `min` / `max` - optional. When present, a write outside this range is rejected (logged,
-    never sent to the heat pump, and the displayed value is reverted) instead of being
-    forwarded. **Only add these once you are sure of the correct value for your hardware** -
-    this is sent to a live heat pump, and a wrong guess is enforced just as strictly as a
-    correct one.
+* `data_blocks` - one entry per block number:
+  * `wireLength` - optional. This block's reply length in bytes, as actually observed on the
+    wire (which can be a few bytes longer than its documented fields account for - the extra
+    bytes are simply ignored, they just have to be skipped correctly). **Only add this once you
+    have verified it against real hardware traffic.** An explicit, hand-verified `wireLength`
+    here is trusted immediately; without one, the adapter measures and confirms it for itself
+    from ordinary traffic at runtime instead (see the main README's "wireLength learning"
+    section) - either way, once every block in a firmware's sensor or settings group has a
+    trusted length, that whole group is requested together in one combined multi-block request
+    instead of one block at a time. Leaving this out just means it takes a little longer to kick
+    in after every restart, not that it never will.
+  * `definition` - array of fields:
+    * `statename` - the ioBroker state created for this field (empty for padding/unused positions)
+    * `field` - internal field name (only used for debugging/comments)
+    * `function` - the register id the multitalent control uses to identify this value; must be
+      unique within its data block (checked by validation - a collision has previously caused a
+      write meant for one field to land on another, see the 1.2.7 changelog entry)
+    * `length` - 1 or 2 bytes on the wire
+    * `factor` - raw value is divided/multiplied by this to get/set the real-world value
+    * `writable` - whether the adapter subscribes to this state and sends changes back to the heat pump
+    * `min` / `max` - optional. When present, a write outside this range is rejected (logged,
+      never sent to the heat pump, and the displayed value is reverted) instead of being
+      forwarded. **Only add these once you are sure of the correct value for your hardware** -
+      this is sent to a live heat pump, and a wrong guess is enforced just as strictly as a
+      correct one.
 
 ## Known operating-mode enumerations
 
