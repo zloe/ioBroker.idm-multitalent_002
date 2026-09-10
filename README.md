@@ -56,6 +56,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 2.1.2 (2026-09-10)
+* (zloe) fix: 2.1.0's interleaving made a multi-block group's turn give up after exactly one `0171`/`0172` attempt and yield to the other group, even if that attempt hadn't found every block yet - on real hardware, where settings typically needs several re-asks to fully arrive, this meant each of those re-asks now had to wait through two full sensor turns and a connection resync in between, so a full settings refresh actually got close to as slow as before 2.0.0 despite sensor freshness genuinely improving. A group's turn now again collects the whole group - re-asking with a bare `0172` at an adaptive backoff, exactly like the original (2.0.0) settings-only mechanism, just extended to sensor too - before yielding to the next turn in the poll pattern (see the Architecture section)
+
 ### 2.1.1 (2026-09-10)
 * (zloe) fix: the intro's description of how sensor/settings values are polled still described the pre-2.0.0 behavior (one settings block read per cycle, a fixed "~5-6 cycles" for a full settings refresh) - now describes the actual (2.1.0) polling, without repeating the Architecture section's exact schedule
 
@@ -224,7 +227,7 @@ together, so it's what actually shows whether a change to any of it made polling
 (An earlier, more frequent "one full poll cycle" line - logged every single sensor sweep - was
 dropped as too noisy; only this line remains.)
 
-#### Poll pattern: sensor and settings, interleaved
+#### Poll pattern: sensor and settings
 
 Every call to `request_data()` is one "turn", and which of the two groups (sensor or settings) a
 turn is for comes from `IdmSession#pollPattern` (`['sensor', 'sensor', 'settings']`, cycled via
@@ -233,7 +236,10 @@ both after connecting and after every settings turn - so the freshest-changing d
 readings) is never left waiting behind a settings collection, however long that takes. Within a
 turn, each group independently uses either the classic one-block-at-a-time round-robin (unchanged
 since the very first version) or a multi-block request for the whole group at once, whichever it
-currently qualifies for - see the next two sections.
+currently qualifies for - see the next two sections. Where a group is multi-block-capable, its turn
+collects that WHOLE group - every one of its blocks actually found - before the next turn in the
+pattern begins; it is not interrupted partway through (see the next section for why), so the
+pattern is what settles how *often* each group gets a turn, not how long any one turn takes.
 
 #### Multi-block requests, per group
 
@@ -257,27 +263,36 @@ qualified from its JSON definition while sensor is still being learned, or vice 
 group doesn't (yet) qualify keeps using the plain one-block-per-turn round-robin, completely
 unaffected.
 
-Where a group is multi-block-capable, `IdmSession#beginOrContinueGroupCollection()` requests every
-block in that group at once instead of just one, reusing the very same request/response state
-machine (the "R1" ack and the `0172` content request are exactly the same messages the single-block
-path already sends) - only the reply is parsed differently (`IdmProtocol#parse_multi_block_reply()`,
-using each block's verified wire length to find its boundary). Unlike a plain round-robin turn, a
-multi-block group can need several attempts to actually see every block it asked for (the partial-
-reply behavior above) - but each of a group's TURNS (see the poll pattern above) still only ever
-makes exactly ONE `0171`/`0172` attempt for whatever is still missing, then ends, whether or not
-that attempt completed the group: the next time that group's turn comes around, it picks the same
-collection back up (asking only for what's still missing, never the blocks already found) rather
-than looping internally until done. This is deliberate: an internal retry loop would let one slow
-group monopolize the connection for its entire completion time, starving the OTHER group's turns
-for just as long - which is exactly what interleaving is meant to prevent - and re-sending a fresh
-request for what's missing, rather than assuming the control can resume an interrupted reply stream
-across an unrelated request served in between, sticks to protocol behavior that's actually been
-observed, not assumed. A group that still hasn't finished after `multiBlockMaxAttemptsPerLap`
-attempts (across as many of its own turns) gives up on the stragglers and starts completely fresh
-next time, so nothing is permanently lost, only deferred. See the "multi-block collection, sensor
-and settings, interleaved" tests in `lib/idm-session.test.js`, which drive this against a small
-simulated control (`MultiBlockControllerSim`) modeling the partial-reply/stale-repeat/not-ready
-behavior actually observed on real hardware.
+Where a group is multi-block-capable, `IdmSession#beginGroupCollection()` requests every block in
+that group at once instead of just one - a single `0171` naming the whole group - reusing the very
+same request/response state machine (the "R1" ack and the `0172` content request are exactly the
+same messages the single-block path already sends) - only the reply is parsed differently
+(`IdmProtocol#parse_multi_block_reply()`, using each block's verified wire length to find its
+boundary). Because a single `0172` typically only returns a partial subset (see above), the
+collection then keeps RE-ASKING - a bare `0172`, without repeating the block list, since the
+control already knows what was requested from the initial `0171` - until every block has actually
+been found, merging newly-found blocks into what it already has and only asking again for whatever
+is still missing. Each re-ask waits `multiBlockReaskBaseDelay` (900ms) after the previous reply by
+default; a reply that comes back with nothing NEW doubles that wait next time (capped at
+`multiBlockReaskMaxDelay`, 4000ms) - real traffic showed the control sometimes needs longer to
+finish preparing the rest, or occasionally repeats an identical stale partial reply if re-asked too
+soon - while a reply that DOES make progress resets the wait back down to the base. If a
+collection still hasn't finished after `multiBlockMaxReasks` (20) re-asks, it gives up on the
+stragglers for now (falling back to idle exactly as if it had completed) and starts completely
+fresh - asking for every one of that group's blocks again - next time that group's turn comes
+around, so nothing is permanently lost, only deferred.
+
+This deliberately mirrors how the very first (2.0.0) version of this feature worked, rather than
+resending a fresh `0171` on every re-ask and force-yielding to the other group after a single
+attempt regardless of whether the collection had finished (as a brief interim design in 2.1.0 did):
+a collection's own re-asks are never interleaved with an unrelated request from the other group in
+between, so there is no uncertainty here about whether the control could resume a partial reply
+across such an interruption - that situation simply never arises - and settings, which on real
+hardware often needs several re-asks to fully arrive, no longer has to wait through two full sensor
+turns and a connection resync between every one of them. See the "multi-block collection, sensor
+and settings" tests in `lib/idm-session.test.js`, which drive this against a small simulated
+control (`MultiBlockControllerSim`) modeling the partial-reply/stale-repeat/not-ready behavior
+actually observed on real hardware.
 
 #### wireLength learning
 
