@@ -57,6 +57,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) for S_H726100 (currently the only firmware with every data block's actual wire length verified against real hardware), collect all settings data blocks in one multi-block request per settings turn instead of one block per poll cycle, with automatic re-asking/backoff for the control's typically-partial replies - a full settings refresh now takes seconds instead of roughly a minute. Every other supported firmware is completely unaffected and keeps requesting settings blocks one at a time (see the Architecture section)
+
 ### 1.3.10 (2026-09-09)
 * (zloe) fix: a retry on an already finely-tuned data block used to always jump its delay up by the full, coarse step (300ms) regardless of how small a correction was actually needed - now it corrects by the same (possibly already tiny) step that tuning had converged to, and only doubles that step towards the coarse ceiling if retries actually keep recurring
 
@@ -215,6 +218,35 @@ persisted across restarts) - together with the elapsed time, that's the overall 
 delays above added together, so it's what actually shows whether a change to them made polling
 faster or slower. (An earlier, more frequent "one full poll cycle" line - logged every single
 sensor sweep - was dropped as too noisy; only this line remains.)
+
+The serial protocol actually allows requesting several data blocks in one `0171` message, which
+come back combined in a single `01F2`/`0172` reply - but the control's replies turned out to be
+genuinely different from single-block requests in two ways, both confirmed against a real
+S_H726100 control before this was implemented: a block's reply can be a few bytes LONGER than the
+documented fields account for (harmless for a single-block request, since the frame's own SOH/
+ETX/checksum framing finds the boundary regardless - but fatal for parsing several blocks out of
+one reply, where the exact length of each block is the only way to find where the next one
+starts), and a single `0172` typically only returns a PARTIAL subset of the requested blocks,
+requiring the request to be repeated until everything has actually come back. Because of this, the
+multi-block request path is strictly opt-in per firmware: `IdmProtocol#firmwareSupportsMultiBlockRequests()`
+only returns true once every one of that firmware's settings blocks has an explicit, hardware-
+verified `wireLength` in its data block definition (see
+[`lib/datablocks/README.md`](lib/datablocks/README.md)) - currently only S_H726100. For every other
+firmware, `request_data()` keeps using the plain one-settings-block-per-cycle round-robin described
+above, completely unchanged.
+
+Where it is supported, `IdmSession#beginSettingsBatchCollection()` requests every settings block at
+once instead of just one, reusing the very same request/response state machine (the "R1" ack and
+the `0172` content request are exactly the same messages the single-block path already sends) -
+only the reply is parsed differently (`IdmProtocol#parse_multi_block_reply()`, using each block's
+verified `wireLength` to find its boundary) and re-asked (plain `0172` again, no need to repeat the
+block list) with a growing backoff (`multiBlockReaskBaseDelay`, capped at
+`multiBlockReaskMaxDelay`) until every requested block has actually been seen, up to
+`multiBlockMaxReasks` attempts before giving up on the stragglers for this cycle - the next
+settings turn starts a fresh batch for everything again, so nothing is permanently lost, only
+deferred. See the "multi-block settings batch collection" tests in `lib/idm-session.test.js`,
+which drive this against a small simulated control (`MultiBlockControllerSim`) modeling the
+partial-reply/stale-repeat/not-ready behavior actually observed on real hardware.
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.

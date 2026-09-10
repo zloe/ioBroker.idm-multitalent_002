@@ -3,6 +3,19 @@
     "name": "idm-multitalent_002",
     "version": "1.3.10",
     "news": {
+      "2.0.0": {
+        "en": "for S_H726100, all settings values are now collected in one combined request instead of one block per poll cycle - a full settings refresh now takes seconds instead of roughly a minute. Every other supported firmware is unaffected",
+        "de": "für S_H726100 werden Settings-Werte jetzt in einer einzigen kombinierten Anfrage statt einem Block pro Abfragezyklus gesammelt - eine vollständige Settings-Aktualisierung dauert jetzt Sekunden statt rund eine Minute. Alle anderen unterstützten Firmwares sind davon unberührt",
+        "ru": "для S_H726100 значения настроек теперь собираются одним объединённым запросом вместо одного блока за цикл опроса - полное обновление настроек теперь занимает секунды вместо примерно минуты. Все остальные поддерживаемые прошивки это не затрагивает",
+        "pt": "para o S_H726100, os valores de configuração agora são coletados em uma única requisição combinada, em vez de um bloco por ciclo de sondagem - uma atualização completa das configurações agora leva segundos em vez de cerca de um minuto. Os demais firmwares suportados não são afetados",
+        "nl": "voor S_H726100 worden instellingswaarden nu in één gecombineerd verzoek verzameld in plaats van één blok per pollcyclus - een volledige update van de instellingen duurt nu seconden in plaats van ongeveer een minuut. Alle andere ondersteunde firmwares blijven onaangetast",
+        "fr": "pour le S_H726100, les valeurs de réglage sont désormais collectées en une seule requête combinée au lieu d'un bloc par cycle d'interrogation - une actualisation complète des réglages ne prend plus que quelques secondes au lieu d'environ une minute. Les autres firmwares pris en charge ne sont pas affectés",
+        "it": "per S_H726100, i valori delle impostazioni vengono ora raccolti in un'unica richiesta combinata invece di un blocco per ciclo di polling - un aggiornamento completo delle impostazioni richiede ora pochi secondi invece di circa un minuto. Gli altri firmware supportati non sono interessati",
+        "es": "para S_H726100, los valores de configuración ahora se recopilan en una única solicitud combinada en lugar de un bloque por ciclo de sondeo - una actualización completa de la configuración ahora tarda segundos en lugar de aproximadamente un minuto. El resto de firmwares compatibles no se ven afectados",
+        "pl": "dla S_H726100 wartości ustawień są teraz zbierane w jednym połączonym żądaniu zamiast jednego bloku na cykl odpytywania - pełne odświeżenie ustawień trwa teraz sekundy zamiast około minuty. Pozostałe obsługiwane firmware nie są tym dotknięte",
+        "zh-cn": "对于 S_H726100,设置值现在通过一次合并请求一次性收集,而不再是每个轮询周期只读取一个区块——完整刷新一次设置现在只需几秒钟,而不是大约一分钟。其他所有受支持的固件均不受影响",
+        "uk": "для S_H726100 значення налаштувань тепер збираються одним об'єднаним запитом замість одного блоку за цикл опитування - повне оновлення налаштувань тепер триває секунди замість приблизно хвилини. Усі інші підтримувані прошивки це не стосується"
+      },
       "1.3.10": {
         "en": "fix: a retry on an already finely-tuned data block no longer jumps the delay up by the full coarse step - it now corrects by the same small step the tuning had converged to, and only escalates back up if retries keep actually recurring",
         "de": "fix: ein Retry auf einen bereits fein eingestellten Datenblock springt das Delay nicht mehr um den vollen groben Schritt hoch - er korrigiert jetzt um denselben kleinen Schritt, auf den die Feinabstimmung bereits konvergiert war, und eskaliert nur weiter, wenn Retries tatsächlich wiederholt auftreten",

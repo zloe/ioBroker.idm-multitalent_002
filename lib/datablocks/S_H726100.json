@@ -152,7 +152,8 @@
                     "writable": false,
                     "function": 132
                 }
-            ]
+            ],
+            "wireLength": 28
         },
         {
             "block_number": "04",
@@ -708,7 +709,8 @@
                     "min": 5,
                     "max": 35
                 }
-            ]
+            ],
+            "wireLength": 87
         },
         {
             "block_number": "05",
@@ -878,7 +880,8 @@
                     "writable": false,
                     "function": 53
                 }
-            ]
+            ],
+            "wireLength": 30
         },
         {
             "block_number": "06",
@@ -1002,7 +1005,8 @@
                     "writable": false,
                     "function": 54
                 }
-            ]
+            ],
+            "wireLength": 23
         },
         {
             "block_number": "07",
@@ -1205,7 +1209,8 @@
                     "writable": false,
                     "function": 153
                 }
-            ]
+            ],
+            "wireLength": 36
         },
         {
             "block_number": "08",
@@ -1387,7 +1392,8 @@
                     "writable": false,
                     "function": -1
                 }
-            ]
+            ],
+            "wireLength": 36
         },
         {
             "block_number": "09",
@@ -1412,7 +1418,8 @@
                     "min": 0,
                     "max": 100
                 }
-            ]
+            ],
+            "wireLength": 4
         },
         {
             "block_number": "0A",
@@ -1444,7 +1451,8 @@
                     "writable": false,
                     "function": -1
                 }
-            ]
+            ],
+            "wireLength": 6
         },
         {
             "block_number": "0B",
@@ -1521,7 +1529,8 @@
                     "writable": false,
                     "function": 236
                 }
-            ]
+            ],
+            "wireLength": 11
         },
         {
             "block_number": "0C",
@@ -1661,7 +1670,8 @@
                     "writable": false,
                     "function": 158
                 }
-            ]
+            ],
+            "wireLength": 42
         },
         {
             "block_number": "0D",
@@ -1776,7 +1786,8 @@
                     "min": 0,
                     "max": 1
                 }
-            ]
+            ],
+            "wireLength": 14
         }
     ]
 }
