@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "news": {
       "2.1.0": {
         "en": "sensor data blocks can now also be collected in one combined request per firmware (not just settings), and the adapter auto-learns each block's wire length from real traffic instead of requiring it to be hand-verified first. Sensor and settings polling is now interleaved so sensor data stays fresh while a settings collection is still in progress",
@@ -93,19 +93,6 @@
         "pl": "skrócono linię logu pełnego cyklu oraz naprawiono trzy błędy sprawdzania typów ujawnione przez aktualizacje typescript 7/axios 1.20 (bez zmiany zachowania)",
         "zh-cn": "精简了完整周期的日志行,并修复了 typescript 7/axios 1.20 更新暴露出的三个类型检查错误(不影响运行时行为)",
         "uk": "скорочено рядок журналу повного циклу та виправлено три помилки перевірки типів, виявлені оновленнями typescript 7/axios 1.20 (без зміни поведінки)"
-      },
-      "1.3.5": {
-        "en": "hotfix: 1.3.4's CI run failed on Node 20 because engines>=22 and testing on Node 20 don't work together (EBADENGINE) - dropped Node 20 from the CI test matrix again",
-        "de": "Hotfix: der CI-Lauf von 1.3.4 ist auf Node 20 fehlgeschlagen, weil engines>=22 und ein Test auf Node 20 nicht zusammenpassen (EBADENGINE) - Node 20 wieder aus der CI-Testmatrix entfernt",
-        "ru": "исправление: CI-прогон версии 1.3.4 не прошёл на Node 20, так как engines>=22 и тестирование на Node 20 несовместимы (EBADENGINE) - Node 20 снова убран из матрицы тестов CI",
-        "pt": "correção urgente: a execução de CI da 1.3.4 falhou no Node 20 porque engines>=22 e testar no Node 20 são incompatíveis (EBADENGINE) - o Node 20 foi novamente removido da matriz de testes de CI",
-        "nl": "hotfix: de CI-run van 1.3.4 mislukte op Node 20 omdat engines>=22 en testen op Node 20 niet samengaan (EBADENGINE) - Node 20 weer uit de CI-testmatrix verwijderd",
-        "fr": "correctif : l'exécution CI de la 1.3.4 a échoué sur Node 20 car engines>=22 et un test sur Node 20 sont incompatibles (EBADENGINE) - Node 20 de nouveau retiré de la matrice de tests CI",
-        "it": "hotfix: l'esecuzione CI della 1.3.4 è fallita su Node 20 perché engines>=22 e il test su Node 20 sono incompatibili (EBADENGINE) - Node 20 rimosso di nuovo dalla matrice di test CI",
-        "es": "corrección urgente: la ejecución de CI de 1.3.4 falló en Node 20 porque engines>=22 y probar en Node 20 son incompatibles (EBADENGINE) - se eliminó de nuevo Node 20 de la matriz de pruebas de CI",
-        "pl": "poprawka: przebieg CI wersji 1.3.4 nie powiódł się na Node 20, ponieważ engines>=22 i testowanie na Node 20 są niekompatybilne (EBADENGINE) - Node 20 ponownie usunięto z macierzy testów CI",
-        "zh-cn": "热修复:由于 engines>=22 与在 Node 20 上测试互不兼容(EBADENGINE),1.3.4 的 CI 运行失败 - 已再次从 CI 测试矩阵中移除 Node 20",
-        "uk": "гарячий виправлення: прогін CI версії 1.3.4 не вдався на Node 20, оскільки engines>=22 і тестування на Node 20 несумісні (EBADENGINE) - Node 20 знову прибрано з матриці тестів CI"
       }
     },
     "titleLang": {

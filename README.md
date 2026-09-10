@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 2.1.0 (2026-09-10)
 * (zloe) auto-learn each data block's actual wire length from real traffic instead of only relying on hand-verified values (logged, and persisted to the `info.measuredWireLengths` state so it survives a restart - though every restart still re-confirms it once, in case a heat pump setting somehow affects it) - once a firmware's SENSOR blocks (not just its settings blocks, extending 2.0.0) all have a trusted length this way, they too are requested as one multi-block batch. Sensor and settings polling is now also interleaved (2 sensor turns for every 1 settings turn, sensor first) instead of settings collection running to completion before sensor data gets another look in, so sensor freshness no longer suffers while a slow settings collection is still catching up (see the Architecture section)
 
 ### 2.0.0 (2026-09-10)
