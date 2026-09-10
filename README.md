@@ -30,9 +30,8 @@ Currently following versions are supported (if your version is not listed but yo
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
-There are sensor values and settings values. During a cycle all sensor values and one part of the settings values are read. So the sensor values are read more frequently than the settings values. 
-The changed values are transferred immediately.
-Note that settings of the heatpump are only read all ~5-6 cycles, so when setting values the acknowledgment might take some time.
+There are sensor values and settings values; sensor values are read about twice as often as settings values, so they stay more up to date. Depending on your control's firmware, the adapter either reads a whole group (all sensor values, or all settings values) together in one request, or - for firmwares where that isn't (yet) established - one settings block at a time, round-robin, so a complete refresh of every setting can take a few polling cycles either way (see the Architecture section below for the exact schedule).
+Values you change yourself are sent to the heat pump right away; the state's acknowledgment only follows once that value is actually read back from the heat pump on its next turn, so it can take a little while to show up.
 
 During bootup of the heatpump control (e.g. after a power loss) no values should be polled. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
 
@@ -57,6 +56,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) fix: the intro's description of how sensor/settings values are polled still described the pre-2.0.0 behavior (one settings block read per cycle, a fixed "~5-6 cycles" for a full settings refresh) - now describes the actual (2.1.0) polling, without repeating the Architecture section's exact schedule
+
 ### 2.1.0 (2026-09-10)
 * (zloe) auto-learn each data block's actual wire length from real traffic instead of only relying on hand-verified values (logged, and persisted to the `info.measuredWireLengths` state so it survives a restart - though every restart still re-confirms it once, in case a heat pump setting somehow affects it) - once a firmware's SENSOR blocks (not just its settings blocks, extending 2.0.0) all have a trusted length this way, they too are requested as one multi-block batch. Sensor and settings polling is now also interleaved (2 sensor turns for every 1 settings turn, sensor first) instead of settings collection running to completion before sensor data gets another look in, so sensor freshness no longer suffers while a slow settings collection is still catching up (see the Architecture section)
 
