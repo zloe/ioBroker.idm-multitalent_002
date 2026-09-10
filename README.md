@@ -56,7 +56,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 2.1.1 (2026-09-10)
 * (zloe) fix: the intro's description of how sensor/settings values are polled still described the pre-2.0.0 behavior (one settings block read per cycle, a fixed "~5-6 cycles" for a full settings refresh) - now describes the actual (2.1.0) polling, without repeating the Architecture section's exact schedule
 
 ### 2.1.0 (2026-09-10)

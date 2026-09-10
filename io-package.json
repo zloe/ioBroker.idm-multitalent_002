@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "news": {
       "2.1.1": {
         "en": "fix: the README's intro still described the old (pre-2.0.0) polling behavior - a fixed \"~5-6 cycles\" for a full settings refresh, one settings block per cycle - now describes the actual, faster 2.1.0 polling instead",
@@ -93,19 +93,6 @@
         "pl": "poprawka: wiersz logu pełnego cyklu uruchamiał się zbyt często na rzeczywistym sprzęcie, ponieważ zależał od momentu żądania, a nie faktycznego odczytu danych - teraz oparty na faktycznie odebranych danych",
         "zh-cn": "修复:完整周期日志行在真实硬件上触发过于频繁,因为它取决于请求时机而非实际数据读取 - 现在改为基于实际接收到的数据",
         "uk": "виправлення: рядок журналу повного циклу спрацьовував занадто часто на реальному обладнанні, оскільки залежав від моменту запиту, а не фактичного отримання даних - тепер прив'язаний до фактично отриманих даних"
-      },
-      "1.3.6": {
-        "en": "shorten the full-coverage cycle log line, and fix three type-check errors surfaced by the typescript 7 / axios 1.20 updates (no runtime behavior change)",
-        "de": "die Log-Zeile für den vollständigen Abfragezyklus gekürzt und drei durch die typescript-7-/axios-1.20-Updates aufgedeckte Typecheck-Fehler behoben (keine Verhaltensänderung)",
-        "ru": "сокращена строка журнала о полном цикле опроса и исправлены три ошибки проверки типов, выявленные обновлениями typescript 7/axios 1.20 (поведение не изменилось)",
-        "pt": "linha de log do ciclo completo encurtada e corrigidos três erros de verificação de tipos revelados pelas atualizações do typescript 7/axios 1.20 (sem alteração de comportamento)",
-        "nl": "de logregel voor de volledige cyclus ingekort en drie door de typescript 7-/axios 1.20-updates aan het licht gebrachte typecheck-fouten opgelost (geen gedragswijziging)",
-        "fr": "ligne de log du cycle complet raccourcie et correction de trois erreurs de vérification de types révélées par les mises à jour typescript 7/axios 1.20 (aucun changement de comportement)",
-        "it": "riga di log del ciclo completo abbreviata e corretti tre errori di controllo dei tipi emersi con gli aggiornamenti typescript 7/axios 1.20 (nessuna modifica al comportamento)",
-        "es": "línea de registro del ciclo completo acortada y corregidos tres errores de verificación de tipos surgidos con las actualizaciones de typescript 7/axios 1.20 (sin cambios de comportamiento)",
-        "pl": "skrócono linię logu pełnego cyklu oraz naprawiono trzy błędy sprawdzania typów ujawnione przez aktualizacje typescript 7/axios 1.20 (bez zmiany zachowania)",
-        "zh-cn": "精简了完整周期的日志行,并修复了 typescript 7/axios 1.20 更新暴露出的三个类型检查错误(不影响运行时行为)",
-        "uk": "скорочено рядок журналу повного циклу та виправлено три помилки перевірки типів, виявлені оновленнями typescript 7/axios 1.20 (без зміни поведінки)"
       }
     },
     "titleLang": {
