@@ -57,7 +57,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 2.0.0 (2026-09-10)
 * (zloe) for S_H726100 (currently the only firmware with every data block's actual wire length verified against real hardware), collect all settings data blocks in one multi-block request per settings turn instead of one block per poll cycle, with automatic re-asking/backoff for the control's typically-partial replies - a full settings refresh now takes seconds instead of roughly a minute. Every other supported firmware is completely unaffected and keeps requesting settings blocks one at a time (see the Architecture section)
 
 ### 1.3.10 (2026-09-09)
