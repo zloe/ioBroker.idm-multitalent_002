@@ -46,12 +46,18 @@ definition (if any) is kept in that case rather than guessing which one to use.
     wire (which can be a few bytes longer than its documented fields account for - the extra
     bytes are simply ignored, they just have to be skipped correctly). **Only add this once you
     have verified it against real hardware traffic.** An explicit, hand-verified `wireLength`
-    here is trusted immediately; without one, the adapter measures and confirms it for itself
-    from ordinary traffic at runtime instead (see the main README's "wireLength learning"
-    section) - either way, once every block in a firmware's sensor or settings group has a
-    trusted length, that whole group is requested together in one combined multi-block request
-    instead of one block at a time. Leaving this out just means it takes a little longer to kick
-    in after every restart, not that it never will.
+    here still isn't trusted outright, though - the adapter always confirms it once against the
+    actual connected hardware before relying on it (one matching live read is enough, since a
+    verified value already starts a step ahead of a block with none); without one, the adapter
+    measures and confirms it for itself entirely from ordinary traffic at runtime instead, needing
+    two consecutive matching reads since it has nothing to start from (see the main README's
+    "wireLength learning" section) - either way, once every block in a firmware's sensor or
+    settings group has a confirmed length, that whole group is requested together in one combined
+    multi-block request instead of one block at a time, and if a combined reply ever turns out to
+    be misread, the whole group's confirmed lengths (this one included) are forgotten and
+    re-confirmed from scratch rather than continuing to trust a value that just proved wrong.
+    Leaving this out just means it takes one extra confirming read to kick in after every restart,
+    not that it never will.
   * `definition` - array of fields:
     * `statename` - the ioBroker state created for this field (empty for padding/unused positions)
     * `field` - internal field name (only used for debugging/comments)

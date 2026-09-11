@@ -30,7 +30,7 @@ Currently following versions are supported (if your version is not listed but yo
 
 You need a Ethernet to RS422 converter to connect to the multitalent control.
 **Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
-There are sensor values and settings values; sensor values are read about twice as often as settings values, so they stay more up to date. Depending on your control's firmware, the adapter either reads a whole group (all sensor values, or all settings values) together in one request, or - for firmwares where that isn't (yet) established - one settings block at a time, round-robin, so a complete refresh of every setting can take a few polling cycles either way (see the Architecture section below for the exact schedule).
+There are sensor values and settings values; the adapter alternates between the two groups turn by turn, so both stay about equally up to date. The adapter reads a whole group (all sensor values, or all settings values) together in one request once every block's exact reply length for that group has been CONFIRMED from real traffic - even for firmwares with hand-verified lengths built in, a short startup phase always re-confirms each one against the actual hardware first (one matching read is enough there; a firmware with no built-in lengths at all needs two consecutive matching reads instead, since it has nothing to start from), no dedicated measurement pass required either way, just the readings the adapter would be taking anyway. Every firmware ends up on the faster combined-request path this way; only how many polling cycles that startup phase takes depends on whether its lengths were already known in advance (see the Architecture section below for the exact schedule). If a combined reply is ever misread, the adapter forgets that group's confirmed lengths and re-confirms it from scratch rather than continuing to trust a value that just proved wrong.
 Values you change yourself are sent to the heat pump right away; the state's acknowledgment only follows once that value is actually read back from the heat pump on its next turn, so it can take a little while to show up.
 
 During bootup of the heatpump control (e.g. after a power loss) no values should be polled. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
@@ -56,6 +56,13 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 2.1.3 (2026-09-11)
+* (zloe) every data block's wire length - even a hand-verified one built into a firmware's data block definition - now always needs at least one confirming read against the actual connected hardware before multi-block requests trust it, exactly like a value learned from scratch or restored from a previous run; previously a built-in value was trusted outright, forever, with no live check at all. This costs nothing extra in the normal case (that one confirming read happens as part of the startup phase every firmware already goes through) and means every firmware benefits equally from the same safety net: if a multi-block reply is ever misread (lost sync - an unrecognized block id, a block shorter than expected, or leftover trailing bytes), the adapter now forgets every wire length for that whole group and re-confirms it from scratch instead of continuing to (mis)use a length that just proved wrong
+* (zloe) sensor and settings turns now alternate strictly 1:1 (previously sensor got 2 turns for every 1 settings turn) - the 2:1 bias dated from when a settings turn could take much longer than a sensor turn to actually finish; since 2.1.2 a turn always collects its whole group before yielding either way, so the old bias no longer bought sensor anything and settings now gets its fair share of turns too
+* (zloe) the maximum frame length the adapter will buffer before giving up on a stuck/noisy connection is reduced from 2048 to 1024 hex characters (~512 bytes) - still more than double the largest real combined multi-block reply seen so far (S_H726100's 7-block settings group, ~442 hex characters), while catching runaway noise sooner
+* (zloe) new `info`-level log lines, once per connection: how many blocks in each of the sensor/settings groups still need a confirming measurement before that group can switch to multi-block requests (0 means it starts on multi-block requests right away)
+* (zloe) fix: the intro's description of sensor/settings polling still implied a firmware's built-in wire lengths were trusted immediately and that sensor was read twice as often as settings - both are addressed by the two changes above
+
 ### 2.1.2 (2026-09-10)
 * (zloe) fix: 2.1.0's interleaving made a multi-block group's turn give up after exactly one `0171`/`0172` attempt and yield to the other group, even if that attempt hadn't found every block yet - on real hardware, where settings typically needs several re-asks to fully arrive, this meant each of those re-asks now had to wait through two full sensor turns and a connection resync in between, so a full settings refresh actually got close to as slow as before 2.0.0 despite sensor freshness genuinely improving. A group's turn now again collects the whole group - re-asking with a bare `0172` at an adaptive backoff, exactly like the original (2.0.0) settings-only mechanism, just extended to sensor too - before yielding to the next turn in the poll pattern (see the Architecture section)
 
@@ -230,16 +237,21 @@ dropped as too noisy; only this line remains.)
 #### Poll pattern: sensor and settings
 
 Every call to `request_data()` is one "turn", and which of the two groups (sensor or settings) a
-turn is for comes from `IdmSession#pollPattern` (`['sensor', 'sensor', 'settings']`, cycled via
-`pollPatternIndex`): sensor gets two turns for every one settings turn, and always goes first -
-both after connecting and after every settings turn - so the freshest-changing data (sensor
-readings) is never left waiting behind a settings collection, however long that takes. Within a
-turn, each group independently uses either the classic one-block-at-a-time round-robin (unchanged
-since the very first version) or a multi-block request for the whole group at once, whichever it
-currently qualifies for - see the next two sections. Where a group is multi-block-capable, its turn
-collects that WHOLE group - every one of its blocks actually found - before the next turn in the
-pattern begins; it is not interrupted partway through (see the next section for why), so the
-pattern is what settles how *often* each group gets a turn, not how long any one turn takes.
+turn is for comes from `IdmSession#pollPattern` (`['sensor', 'settings']`, cycled via
+`pollPatternIndex`): simple 1:1 alternation, sensor first - both after connecting and after every
+settings turn - so the very first turn after connecting, and every settings turn, is bracketed by a
+fresh sensor read rather than opening the connection with the slower-changing settings data. An
+earlier version gave sensor two turns for every one settings turn, back when a settings turn could
+take several times longer than a sensor turn to actually finish (many re-asks against real
+hardware); now that a turn always collects its whole group before yielding either way (see below),
+that imbalance no longer buys sensor anything extra, so plain alternation is both simpler and gives
+settings its fair share too. Within a turn, each group independently uses either the classic
+one-block-at-a-time round-robin (unchanged since the very first version) or a multi-block request
+for the whole group at once, whichever it currently qualifies for - see the next two sections.
+Where a group is multi-block-capable, its turn collects that WHOLE group - every one of its blocks
+actually found - before the next turn in the pattern begins; it is not interrupted partway through
+(see the next section for why), so the pattern is what settles how *often* each group gets a turn,
+not how long any one turn takes.
 
 #### Multi-block requests, per group
 
@@ -255,13 +267,13 @@ requiring the request to be repeated until everything has actually come back. Be
 multi-block request path is strictly opt-in, gated independently for each of the two groups:
 `IdmProtocol#firmwareSupportsMultiBlockRequestsForBlocks()` (and its `firmwareSupportsMultiBlockRequests()`
 /`firmwareSupportsMultiBlockRequestsForSensors()` convenience wrappers for the settings/sensor
-groups) only returns true once every one of that group's blocks has a TRUSTED wire length - either
+groups) only returns true once every one of that group's blocks has a TRUSTED wire length - always
+CONFIRMED from real traffic (see "wireLength learning" below), whether it started from nothing, from
 an explicit, hand-verified `wireLength` in its data block definition (see
-[`lib/datablocks/README.md`](lib/datablocks/README.md)), or one confirmed from real traffic (see
-"wireLength learning" below). A firmware's two groups can be in different states (e.g. settings
-qualified from its JSON definition while sensor is still being learned, or vice versa); whichever
-group doesn't (yet) qualify keeps using the plain one-block-per-turn round-robin, completely
-unaffected.
+[`lib/datablocks/README.md`](lib/datablocks/README.md)), or from a value restored from a previous
+run. A firmware's two groups can be in different states (e.g. settings qualified while sensor is
+still being confirmed, or vice versa); whichever group doesn't (yet) qualify keeps using the plain
+one-block-per-turn round-robin, completely unaffected.
 
 Where a group is multi-block-capable, `IdmSession#beginGroupCollection()` requests every block in
 that group at once instead of just one - a single `0171` naming the whole group - reusing the very
@@ -281,6 +293,20 @@ collection still hasn't finished after `multiBlockMaxReasks` (20) re-asks, it gi
 stragglers for now (falling back to idle exactly as if it had completed) and starts completely
 fresh - asking for every one of that group's blocks again - next time that group's turn comes
 around, so nothing is permanently lost, only deferred.
+
+A reply that can't be fully parsed at all (`IdmProtocol#parse_multi_block_reply()`'s "lost sync" -
+an unrecognized block id, a block truncated shorter than its wire length, or trailing bytes left
+over after the last complete block) is treated differently from a routine partial reply: it means
+one of the group's wire lengths is no longer correct, though not which one, so
+`IdmSession#handleMultiBlockDataReply()` immediately abandons the collection and calls
+`IdmProtocol#forgetMeasuredWireLengths()` to discard EVERY one of that group's wire lengths - both
+confirmed values and unconfirmed seeds, deliberately not re-seeding from the same (possibly wrong)
+built-in value - before falling back to idle. `firmwareSupportsMultiBlockRequestsForBlocks()` then
+correctly returns false for the group, so its very next turn drops back to the classic
+one-block-at-a-time round-robin and re-confirms every block from scratch, exactly like a block seen
+for the first time ever. This benefits every firmware equally, not just the ones with hand-verified
+lengths: whatever the length's original source, a wrong assumption never lingers past the collection
+it broke.
 
 This deliberately mirrors how the very first (2.0.0) version of this feature worked, rather than
 resending a fresh `0171` on every re-ask and force-yielding to the other group after a single
@@ -303,17 +329,35 @@ cost, for any block that doesn't already have a trusted length. A measurement al
 immediately, though - `IdmProtocol#recordMeasuredWireLength()` requires the SAME length twice in a
 row (a disagreement logs a warning and restarts the count from the new value, never averages)
 before treating it as confirmed, in case a firmware turns out to add a different number of
-undocumented bytes on different occasions. Every outcome is logged (routine progress at `info`, a
-disagreement at `warn`), and the moment a group's every block becomes trusted this way, that's
-logged too and multi-block requests for it start from its very next turn. Each newly CONFIRMED
-length is also persisted to the `info.measuredWireLengths` ioBroker state (`onWireLengthLearned`
-hook, wired up in `main.js`) as `{"<firmware version>": {"<block id>": <byte length>}}`, and
-restored on the next adapter start (`loadMeasuredWireLengths()`, before the session starts) via
-`IdmProtocol#seedMeasuredWireLength()` - but only as a CANDIDATE, not as already-trusted: every
-restart still re-confirms it with one fresh matching measurement before relying on it again, in
-case some heat pump setting turns out to affect a block's length after all. See the "wireLength
-learning" tests in `lib/idm-session.test.js` (and `idm-protocol.test.js` for the underlying
-confirm/mismatch/seed mechanics).
+undocumented bytes on different occasions.
+
+That two-in-a-row rule has exactly one shortcut, applied uniformly regardless of where a starting
+value came from: `IdmProtocol#seedMeasuredWireLength()` seeds a length as an unconfirmed CANDIDATE
+rather than an already-trusted value, and a candidate counts as the FIRST of the two required
+measurements, so only one further fresh, matching read is needed to confirm it - never an instant
+grant. Two things get seeded this way: a value restored from a previous adapter run (see below), and
+- as of this release - an explicit, hand-verified `wireLength` in a firmware's data block definition
+(see [`lib/datablocks/README.md`](lib/datablocks/README.md)), seeded by `IdmProtocol#initialize()`
+for every block that declares one. Previously a declared `wireLength` was trusted outright and
+forever, with no live check at all; now it still costs nothing extra in the normal case (the one
+confirming read happens as part of the startup phase every firmware already goes through), but every
+firmware - built-in lengths or not - gets the same live safety net, and a firmware update or
+undocumented quirk that changes a block's actual length no longer goes undetected forever.
+
+Every outcome is logged (routine progress at `info`, a disagreement at `warn`), and the moment a
+group's every block becomes trusted this way, that's logged too and multi-block requests for it
+start from its very next turn. Each newly CONFIRMED length is also persisted to the
+`info.measuredWireLengths` ioBroker state (`onWireLengthLearned` hook, wired up in `main.js`) as
+`{"<firmware version>": {"<block id>": <byte length>}}`, and restored on the next adapter start
+(`loadMeasuredWireLengths()`, before the session starts) via `seedMeasuredWireLength()` - the same
+seed-then-confirm path described above, so it too needs one fresh matching measurement before
+relying on it again, in case some heat pump setting turns out to affect a block's length after all.
+
+A length - seeded or fully confirmed - can also be forgotten outright: see the "lost sync" handling
+in the "Multi-block requests, per group" section above (`IdmProtocol#forgetMeasuredWireLengths()`),
+which forces a whole group back through this same measurement path from scratch after a multi-block
+reply couldn't be parsed. See the "wireLength learning" tests in `lib/idm-session.test.js` (and
+`idm-protocol.test.js` for the underlying confirm/mismatch/seed/forget mechanics).
 
 ### Overriding the data blocks without an adapter update
 The instance setting **"Custom data blocks directory"** (`native.dataBlocksDir`) can point at a directory of your own such files. Each file's `"version"` field is matched against the version string the heat pump reports after connecting - a match REPLACES that version's bundled definition entirely (it is not merged field-by-field), useful for adding min/max limits you have verified for your own installation, fixing a field, or adding a not-yet-supported control version, all without reinstalling or upgrading the adapter. Versions with no matching (and valid) custom file keep using their bundled definition. A file that fails validation, or two files claiming the same version, are both rejected with a warning in the adapter's log - the bundled definition (if any) is kept in that case.
