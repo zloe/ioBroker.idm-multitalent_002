@@ -56,6 +56,12 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 2.2.0 (2026-09-11)
+* (zloe) sensor and settings are no longer polled in lockstep: sensor is read as fast as the protocol allows (throttled to at most once every 10s), settings only once every 60s plus once right away after any value is written to the heat pump - both intervals measured from the start of one full sweep to the start of the next, and neither configurable. This noticeably reduces how often the heat pump's own control gets polled for the slower-changing settings data, without making sensor data any less fresh
+* (zloe) a group's sweep (round-robin or multi-block alike) is never interrupted by the other group becoming due partway through - previously only a multi-block collection had this guarantee; the classic one-block-at-a-time round-robin now gets it too
+* (zloe) replaced the combined "full-coverage cycle" log line (which no longer makes sense once sensor and settings run on independent schedules) with one line per group, logged the moment that group's own sweep completes, showing its actual elapsed time and a rolling average over its last 10 sweeps - the old per-block delay breakdown is gone along with it
+* (zloe) docs: shortened and reworked the Architecture section's description of the sensor/settings polling cadence, with a small sequence diagram
+
 ### 2.1.3 (2026-09-11)
 * (zloe) every data block's wire length - even a hand-verified one built into a firmware's data block definition - now always needs at least one confirming read against the actual connected hardware before multi-block requests trust it, exactly like a value learned from scratch or restored from a previous run; previously a built-in value was trusted outright, forever, with no live check at all. This costs nothing extra in the normal case (that one confirming read happens as part of the startup phase every firmware already goes through) and means every firmware benefits equally from the same safety net: if a multi-block reply is ever misread (lost sync - an unrecognized block id, a block shorter than expected, or leftover trailing bytes), the adapter now forgets every wire length for that whole group and re-confirms it from scratch instead of continuing to (mis)use a length that just proved wrong
 * (zloe) sensor and settings turns now alternate strictly 1:1 (previously sensor got 2 turns for every 1 settings turn) - the 2:1 bias dated from when a settings turn could take much longer than a sensor turn to actually finish; since 2.1.2 a turn always collects its whole group before yielding either way, so the old bias no longer bought sensor anything and settings now gets its fair share of turns too
@@ -220,60 +226,67 @@ correction instead of always jumping by the full coarse amount; only genuinely r
 escalate the step back up. See `contentDelayForCurrentBlock()`/`updateContentDelayEstimate()` and
 the "adaptive per-data-block content delay" tests in `lib/idm-session.test.js`.
 
-`IdmSession` also logs how long a full-coverage cycle actually took, once the next one completes
-(there is nothing to compare the very first cycle against yet) - every sensor block *and* every
-settings block actually read at least once. This is driven by data actually being *received*
-(`recordBlockRead()`, called from `receive_data()`'s successful-data branch), not merely requested
-- a block that was requested but never got a reply back (a retry, a response-watchdog reset, the
-periodic resync) does not count, so the log only ever fires once every block has genuinely been
-read. It also carries a running total of how many full-coverage cycles have completed since the
-adapter started (not persisted across restarts) and a breakdown of the delay currently in use per
-block, grouped by shared value (e.g. `(07,08) 650ms, (09,04,05) 2300ms`) - together with the
-elapsed time, that's the overall effect of all the delays and polling behavior below added
-together, so it's what actually shows whether a change to any of it made polling faster or slower.
-(An earlier, more frequent "one full poll cycle" line - logged every single sensor sweep - was
-dropped as too noisy; only this line remains.)
+#### Sensor and settings: independent polling cadence
 
-#### Poll pattern: sensor and settings
+Every call to `request_data()` is one "turn" - a request for either the sensor or the settings
+group, decided by `chooseNextGroup()`. The two groups are no longer polled in lockstep: each has
+its own minimum interval between the *start* of one full sweep (every block in that group actually
+read at least once) and the start of its next - sensor as fast as the protocol allows, but never
+sooner than **10s** apart; settings only every **60s**, plus once right after any value is written
+to the heat pump, so a change you make shows up promptly instead of waiting out the rest of that
+window. Both numbers are fixed (not configurable) - the point is purely to spare the heat pump's
+own control, since settings rarely change and doesn't need reading nearly as often as sensor data.
 
-Every call to `request_data()` is one "turn", and which of the two groups (sensor or settings) a
-turn is for comes from `IdmSession#pollPattern` (`['sensor', 'settings']`, cycled via
-`pollPatternIndex`): simple 1:1 alternation, sensor first - both after connecting and after every
-settings turn - so the very first turn after connecting, and every settings turn, is bracketed by a
-fresh sensor read rather than opening the connection with the slower-changing settings data. An
-earlier version gave sensor two turns for every one settings turn, back when a settings turn could
-take several times longer than a sensor turn to actually finish (many re-asks against real
-hardware); now that a turn always collects its whole group before yielding either way (see below),
-that imbalance no longer buys sensor anything extra, so plain alternation is both simpler and gives
-settings its fair share too. Within a turn, each group independently uses either the classic
-one-block-at-a-time round-robin (unchanged since the very first version) or a multi-block request
-for the whole group at once, whichever it currently qualifies for - see the next two sections.
-Where a group is multi-block-capable, its turn collects that WHOLE group - every one of its blocks
-actually found - before the next turn in the pattern begins; it is not interrupted partway through
-(see the next section for why), so the pattern is what settles how *often* each group gets a turn,
-not how long any one turn takes.
+Once a sweep for a group has started, it keeps getting that group's turns - regardless of whether
+the other group is also due - until every one of its blocks has actually been read; only then does
+the interval rule decide when that group may sweep again. This is the same "never interrupted
+partway through" rule a multi-block collection already followed (see below), now applied to the
+classic one-block-at-a-time round-robin too. A batch of writes is never interrupted by a settings
+read either: `request_data()` is only reached once the whole write queue has drained, so several
+values submitted together always finish, uninterrupted, before the one settings refresh they
+trigger.
+
+```mermaid
+sequenceDiagram
+    participant HP as Heat pump
+    participant S as IdmSession
+    Note over S: sensor due (≥10s since its last sweep started)
+    S->>HP: request sensor blocks
+    HP-->>S: sensor data
+    Note over S: sensor sweep complete
+    Note over S: settings not due yet - parks, nothing sent
+    Note over S: a value gets written
+    S->>HP: write value
+    HP-->>S: ack
+    Note over S: write queue drained - settings refresh forced
+    S->>HP: request settings blocks
+    HP-->>S: settings data
+    Note over S: settings sweep complete
+```
+
+Each completed sweep logs its own actual elapsed time plus a rolling average over the last 10
+sweeps, e.g. `sensor sweep done in 1400ms (avg of last 10: 1360ms)` - one line per group, logged
+the moment that group's sweep finishes. This replaces the earlier combined "full-coverage cycle"
+line: now that the two groups run on independent schedules there is no single shared interval left
+to time them together, so each gets its own line instead. As before, this is driven by data
+actually being *received* (`recordBlockRead()`), not merely requested - a block that was asked for
+but never got a reply (a retry, a response-watchdog reset, the periodic resync) does not count.
 
 #### Multi-block requests, per group
 
-The serial protocol actually allows requesting several data blocks in one `0171` message, which
-come back combined in a single `01F2`/`0172` reply - but the control's replies turned out to be
-genuinely different from single-block requests in two ways, both confirmed against a real
-S_H726100 control before this was implemented: a block's reply can be a few bytes LONGER than the
-documented fields account for (harmless for a single-block request, since the frame's own SOH/
-ETX/checksum framing finds the boundary regardless - but fatal for parsing several blocks out of
-one reply, where the exact length of each block is the only way to find where the next one
-starts), and a single `0172` typically only returns a PARTIAL subset of the requested blocks,
-requiring the request to be repeated until everything has actually come back. Because of this, the
-multi-block request path is strictly opt-in, gated independently for each of the two groups:
-`IdmProtocol#firmwareSupportsMultiBlockRequestsForBlocks()` (and its `firmwareSupportsMultiBlockRequests()`
-/`firmwareSupportsMultiBlockRequestsForSensors()` convenience wrappers for the settings/sensor
-groups) only returns true once every one of that group's blocks has a TRUSTED wire length - always
-CONFIRMED from real traffic (see "wireLength learning" below), whether it started from nothing, from
-an explicit, hand-verified `wireLength` in its data block definition (see
-[`lib/datablocks/README.md`](lib/datablocks/README.md)), or from a value restored from a previous
-run. A firmware's two groups can be in different states (e.g. settings qualified while sensor is
-still being confirmed, or vice versa); whichever group doesn't (yet) qualify keeps using the plain
-one-block-per-turn round-robin, completely unaffected.
+The serial protocol allows requesting several data blocks in one `0171` message, combined in a
+single `01F2`/`0172` reply - but real control traffic (confirmed against S_H726100) showed two
+quirks: a block's reply can be a few bytes LONGER than its documented fields (harmless alone, but
+fatal for splitting several blocks out of one reply unless each one's exact length is known), and a
+single `0172` typically only returns a PARTIAL subset of what was asked for. Because of this, the
+multi-block path is strictly opt-in, gated independently per group:
+`IdmProtocol#firmwareSupportsMultiBlockRequestsForBlocks()` (and its `...ForSensors()`/plain
+`...Requests()` wrappers for sensor/settings) only returns true once every block in that group has
+a TRUSTED wire length - confirmed from real traffic (see "wireLength learning" below), whether it
+started from an explicit `wireLength` in the data block definition (see
+[`lib/datablocks/README.md`](lib/datablocks/README.md)), a value restored from a previous run, or
+nothing at all. The two groups can be in different states; whichever hasn't (yet) qualified just
+keeps using the plain one-block-per-turn round-robin.
 
 Where a group is multi-block-capable, `IdmSession#beginGroupCollection()` requests every block in
 that group at once instead of just one - a single `0171` naming the whole group - reusing the very
@@ -308,14 +321,9 @@ for the first time ever. This benefits every firmware equally, not just the ones
 lengths: whatever the length's original source, a wrong assumption never lingers past the collection
 it broke.
 
-This deliberately mirrors how the very first (2.0.0) version of this feature worked, rather than
-resending a fresh `0171` on every re-ask and force-yielding to the other group after a single
-attempt regardless of whether the collection had finished (as a brief interim design in 2.1.0 did):
-a collection's own re-asks are never interleaved with an unrelated request from the other group in
-between, so there is no uncertainty here about whether the control could resume a partial reply
-across such an interruption - that situation simply never arises - and settings, which on real
-hardware often needs several re-asks to fully arrive, no longer has to wait through two full sensor
-turns and a connection resync between every one of them. See the "multi-block collection, sensor
+A collection's own re-asks are never interleaved with an unrelated request from the other group in
+between, so there is no uncertainty about whether the control could resume a partial reply across
+such an interruption - that situation simply never arises. See the "multi-block collection, sensor
 and settings" tests in `lib/idm-session.test.js`, which drive this against a small simulated
 control (`MultiBlockControllerSim`) modeling the partial-reply/stale-repeat/not-ready behavior
 actually observed on real hardware.
