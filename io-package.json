@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "idm-multitalent_002",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "news": {
       "2.2.2": {
         "en": "scheduler tests now cover every bundled firmware plus a synthetic custom definition, not just two; hardware/RS422 setup now has its own clear, step-by-step section in the README; general housekeeping ahead of submitting to the official ioBroker adapter repository (dependency cleanup, CI matrix, stale changelog entry removed)",
