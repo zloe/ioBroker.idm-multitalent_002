@@ -56,7 +56,7 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 2.2.1 (2026-09-13)
 * (zloe) the per-sweep log line introduced in 2.2.0 (`sensor sweep done in ...`) is now logged at debug level instead of info - in normal operation a sensor sweep completes roughly every 10s, which was far too chatty for info level. In its place, a new info-level summary is logged once every 10 minutes with a small statistic (sweep count, min/avg/max duration) per group covering that window
 
 ### 2.2.0 (2026-09-11)
