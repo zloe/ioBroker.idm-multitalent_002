@@ -76,6 +76,11 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) scheduler tests (sensor/settings priority, sweep completion, no starvation, debug-level logging) now run against every bundled firmware, not just idm701100/S_H726100 - and against a synthetic, non-bundled definition too, proving the scheduler doesn't just happen to work for the shapes this project ships, but for any valid "Custom data blocks directory" file a user adds themselves
+* (zloe) docs: the hardware/RS422 setup instructions have their own clear, numbered "Hardware setup" section now, instead of being mixed into the intro alongside a duplicate (and out-of-place) explanation of the polling architecture
+* (zloe) housekeeping ahead of submitting to the official ioBroker adapter repository: cleaned up devDependencies already provided by `@iobroker/testing`, updated `@iobroker/testing` and pinned `@types/node` to the actually supported Node range, removed the now-redundant `.npmignore`, added Node.js 26.x to the CI test matrix, and removed a stale `common.news` entry for a version that was never actually published to npm
+
 ### 2.2.1 (2026-09-13)
 * (zloe) the per-sweep log line introduced in 2.2.0 (`sensor sweep done in ...`) is now logged at debug level instead of info - in normal operation a sensor sweep completes roughly every 10s, which was far too chatty for info level. In its place, a new info-level summary is logged once every 10 minutes with a small statistic (sweep count, min/avg/max duration) per group covering that window
 
