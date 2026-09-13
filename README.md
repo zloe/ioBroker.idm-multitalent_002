@@ -56,6 +56,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (zloe) the per-sweep log line introduced in 2.2.0 (`sensor sweep done in ...`) is now logged at debug level instead of info - in normal operation a sensor sweep completes roughly every 10s, which was far too chatty for info level. In its place, a new info-level summary is logged once every 10 minutes with a small statistic (sweep count, min/avg/max duration) per group covering that window
+
 ### 2.2.0 (2026-09-11)
 * (zloe) sensor and settings are no longer polled in lockstep: sensor is read as fast as the protocol allows (throttled to at most once every 10s), settings only once every 60s plus once right away after any value is written to the heat pump - both intervals measured from the start of one full sweep to the start of the next, and neither configurable. This noticeably reduces how often the heat pump's own control gets polled for the slower-changing settings data, without making sensor data any less fresh
 * (zloe) a group's sweep (round-robin or multi-block alike) is never interrupted by the other group becoming due partway through - previously only a multi-block collection had this guarantee; the classic one-block-at-a-time round-robin now gets it too
@@ -265,12 +268,19 @@ sequenceDiagram
 ```
 
 Each completed sweep logs its own actual elapsed time plus a rolling average over the last 10
-sweeps, e.g. `sensor sweep done in 1400ms (avg of last 10: 1360ms)` - one line per group, logged
-the moment that group's sweep finishes. This replaces the earlier combined "full-coverage cycle"
-line: now that the two groups run on independent schedules there is no single shared interval left
-to time them together, so each gets its own line instead. As before, this is driven by data
+sweeps at **debug** level, e.g. `sensor sweep done in 1400ms (avg of last 10: 1360ms)` - one line
+per group, logged the moment that group's sweep finishes. As before, this is driven by data
 actually being *received* (`recordBlockRead()`), not merely requested - a block that was asked for
 but never got a reply (a retry, a response-watchdog reset, the periodic resync) does not count.
+
+Since a sensor sweep normally completes roughly every 10s, debug is the right level for that
+per-sweep detail - logging it at info would flood the log in normal operation. Instead, once every
+10 minutes (fixed), one small **info**-level summary line reports both groups' activity over that
+window, e.g. `last 10min - sensor: 58 sweep(s), 1360ms avg (min 1210ms, max 1890ms); settings: 9
+sweep(s), 640ms avg (min 600ms, max 720ms)` - or `0 sweeps` for a group that hasn't completed one
+in that window. This is the only sweep-related log at info level now; it replaces the earlier
+combined "full-coverage cycle" line, which no longer made sense once the two groups started running
+on independent schedules.
 
 #### Multi-block requests, per group
 
