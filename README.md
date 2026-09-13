@@ -28,26 +28,46 @@ Currently following versions are supported (if your version is not listed but yo
 | EVR-II100201 | EVR752 (EVR752101) | support in development currently, one experimental installation |
 | TERRA130601 | S_H726 (S_H726100) | supported, one installation |
 
-You need a Ethernet to RS422 converter to connect to the multitalent control.
-**Note** that you have to connect ground/shield of your converter to the ground of the control/heatpump in order to prevent electric influences on the sensor readings.
-There are sensor values and settings values; sensor is polled as fast as the protocol allows (throttled to at most once every 10s), while settings is polled only once every 60s, plus once right away after you change a value yourself - see the Architecture section below for the exact schedule. The adapter reads a whole group (all sensor values, or all settings values) together in one request once every block's exact reply length for that group has been CONFIRMED from real traffic - even for firmwares with hand-verified lengths built in, a short startup phase always re-confirms each one against the actual hardware first (one matching read is enough there; a firmware with no built-in lengths at all needs two consecutive matching reads instead, since it has nothing to start from), no dedicated measurement pass required either way, just the readings the adapter would be taking anyway. Every firmware ends up on the faster combined-request path this way. If a combined reply is ever misread, the adapter forgets that group's confirmed lengths and re-confirms it from scratch rather than continuing to trust a value that just proved wrong.
-Values you change yourself are sent to the heat pump right away; the state's acknowledgment only follows once that value is actually read back from the heat pump on its next turn, so it can take a little while to show up.
+Sensor values are polled as fast as the protocol allows (at most once every 10s), settings values
+much less often (once every 60s, plus right away after you change one yourself) - see
+[Architecture](#architecture) below if you want the exact details, they're not needed to get
+running. A value you change yourself is sent to the heat pump right away, but the state only shows
+as acknowledged once it's actually been read back on the next turn, so it can take a few seconds to
+visibly update.
 
-During bootup of the heatpump control (e.g. after a power loss) no values should be polled. This is currently **NOT** ensured by the adapter. So you **manually** need to **stop** it. If the control of the heatpump did not start due to the adapter then simply stop the adapter and power cycle the control. This should fix the problem. Afterwards you can start the adapter again. I implemented a delayed switch-on of the serial server. This also mitigates the problem.
-
-Example installation:
+## Hardware setup
+You need an Ethernet-to-RS422 converter (also called a serial server or serial device server) to
+connect to the multitalent control - the adapter talks to it over the network (TCP), and it talks
+to the heat pump's control board over RS422. The screenshots and setup below use a Moxa serial
+server as an example; any Ethernet-to-RS422 converter that can be configured with the serial
+settings below should work.
 
 ![system overview](resources/idm%20RS422%20Anschluss.drawio.png)
 
-Settings of the serial adapter:
-```
- Baud Rate(bps) 19200
- Parity         Even
- Data Bit       8
- Stop Bit       1
- Flow Control   None
- UART FIFO      Disable
-```
+1. Connect the converter to your network (LAN) - this is what the adapter will connect to, so it
+   needs an IP address reachable from your ioBroker host.
+2. Wire the converter's serial side to the 4-pin plug on the **back** of the Multitalent.002
+   control display: `Tx-`, `Tx+`, `Rx-`, `Rx+`, matching the same labels on the converter.
+   **Important:** also connect the converter's ground/shield to the control's/heat pump's ground -
+   without this, electrical interference can corrupt sensor readings.
+3. Configure the converter's own serial port settings (in the converter's own web interface, not
+   in ioBroker) to match what the control expects:
+   ```
+    Baud Rate(bps) 19200
+    Parity         Even
+    Data Bit       8
+    Stop Bit       1
+    Flow Control   None
+    UART FIFO      Disable
+   ```
+4. Install the adapter (see [Installation](#installation) below) and, when adding an instance,
+   enter the converter's IP address and TCP port in the instance configuration.
+
+**Known quirk - heat pump reboots (e.g. after a power loss):** while the control is booting, it
+should not be polled. The adapter does **not** currently detect this on its own, so if the control
+fails to start with the adapter running, stop the adapter, power-cycle the control, wait for it to
+finish booting, then start the adapter again. A delayed switch-on of the serial connection is
+already built in to reduce how often this happens, but it isn't a complete fix yet.
 
 Example screenshots of objects:
 ![Heizkreis A](resources/ioBrokerAdapter-HKA.jpg)
@@ -181,7 +201,9 @@ Example screenshots of objects:
 As the adapter is not (yet) listed in the official ioBroker repository, install it through the Admin UI rather than a direct npm command:
 1. In ioBroker Admin, go to **Adapters** and click the **"+" (custom install from URL)** icon in the top right
 1. Paste `https://github.com/zloe/ioBroker.idm-multitalent_002` (or, for a specific released version, `iobroker.idm-multitalent_002@x.y.z`) into the field and confirm
-1. Once installed, add an instance as usual and configure it
+1. Once installed, add an instance and, in its configuration, enter the IP address and TCP port of
+   your Ethernet-to-RS422 converter (see [Hardware setup](#hardware-setup) above if you haven't
+   wired that up yet)
 
 ## Developer manual
 The serial protocol itself was reverse-engineered (RS422 sniffing, no official iDM documentation exists) mainly by user "makki" in the [KNX-User-Forum "idm Wärmepumpe" thread](https://knx-user-forum.de/forum/%C3%B6ffentlicher-bereich/knx-eib-forum/1251-idm-w%C3%A4rmepumpe) and refined further here; see also the [ioBroker adapter thread](https://forum.iobroker.net/topic/54253/test-adapter-idm-multitalent_002). Neither source documents official min/max limits for the writable values (see below) - they only cover which register a value lives in and how it is encoded.
