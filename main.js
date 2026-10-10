@@ -49,7 +49,7 @@ class IdmMultitalent002 extends utils.Adapter {
 
     statesCreated;
     statesSubscribed;
-    version;
+    idmControlVersion;
     connectedToIDM;
     stateNameMap = new Map();
     // Last value actually confirmed for a state - either read from the heat pump, or a write
@@ -158,7 +158,7 @@ class IdmMultitalent002 extends utils.Adapter {
     // create the states
     async CreateStates() {
         this.log.debug('creating states');
-        const dataBlocks = this.idm.getDataBlocks(this.version); // get the known data blocks for the connected version
+        const dataBlocks = this.idm.getDataBlocks(this.idmControlVersion); // get the known data blocks for the connected version
 
         if (!dataBlocks) {
             this.log.warn('no data blocks defined, no states will be created');
@@ -168,7 +168,7 @@ class IdmMultitalent002 extends utils.Adapter {
         // Wait for every state to actually be created before flagging statesCreated/statesSubscribed -
         // Array.prototype.forEach does not await its (async) callback, so this used to mark the states
         // as created while most of the setObjectNotExistsAsync calls were still in flight.
-        await this.idm.mapStatenames(this.version, this.createIDMState.bind(this));
+        await this.idm.mapStatenames(this.idmControlVersion, this.createIDMState.bind(this));
         for (const element of dataBlocks) {
             const stateName = 'Data_block_' + idm_u.get_byte(element);
             await this.setObjectNotExistsAsync(stateName, {
@@ -253,7 +253,7 @@ class IdmMultitalent002 extends utils.Adapter {
                     });
                 },
                 onVersion: (version) => {
-                    this.version = version;
+                    this.idmControlVersion = version;
                     if (this.idm.dataDefinitions.has(version)) {
                         const sourceKind = this.idm.isCustomDefinition(version) ? 'custom override' : 'bundled';
                         this.log.info('heat pump reports version "' + version + '" - using its ' + sourceKind + ' data block definition (' + this.idm.dataSources.get(version) + ')');

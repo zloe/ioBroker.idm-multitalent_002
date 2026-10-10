@@ -148,7 +148,7 @@ describe('main.js - IdmMultitalent002 (ioBroker glue around IdmSession)', () => 
         await flush();
         await flush(); // CreateStates -> mapStatenames -> per-state setObjectNotExistsAsync chain
 
-        expect(adapter.version).to.equal('idm701100');
+        expect(adapter.idmControlVersion).to.equal('idm701100');
         expect(adapter.states.get(`${adapter.namespace}.idm_control_version`)).to.deep.equal({ val: 'idm701100', ack: true });
         expect(adapter.statesCreated).to.be.true;
         expect(adapter.stateNameMap.has('Heizkreis-A.Betriebsart')).to.be.true;

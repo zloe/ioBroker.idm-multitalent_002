@@ -1,5 +1,11 @@
 // Root tsconfig to set the settings and power editor support for all TS files
 {
+    // Base target/lib (es2022, lib es2024) and strict/esModuleInterop/moduleResolution for our
+    // actual minimum supported Node.js version (engines.node: ">=22") instead of hand-picking
+    // individual lib pieces ourselves - also makes "npm run check" fail loudly on the next major
+    // bump if engines.node and this ever drift apart (see S0085/S0086/S0088 in the ioBroker
+    // repository checker).
+    "extends": "@tsconfig/node22/tsconfig.json",
     "compileOnSave": true,
     "compilerOptions": {
         // do not compile anything, this file is just to configure type checking
@@ -9,29 +15,26 @@
         "allowJs": true,
         "checkJs": true,
 
+        // This project is CommonJS (require/module.exports), not ESM - override the base's
+        // "nodenext" module setting, which assumes the latter. TypeScript 7 removed the old
+        // "node"/"node10" moduleResolution alias outright and ties "node16"/"nodenext"
+        // resolution to the matching module setting, so "bundler" is the one mode that still
+        // resolves plain extension-less requires() the way this (non-ESM, non-bundled) project
+        // actually uses them, without inheriting the base's module/moduleResolution pairing.
         "module": "commonjs",
-        "esModuleInterop": true,
+        "moduleResolution": "bundler",
         // this is necessary for the automatic typing of the adapter config
         "resolveJsonModule": true,
 
-        // Set this to false if you want to disable the very strict rules (not recommended)
-        "strict": true,
-        // Or enable some of those features for more fine-grained control
+        // The base sets "strict": true; fine-tune just this one sub-flag instead of disabling
+        // strict mode outright (not recommended).
         // "strictNullChecks": true,
         // "strictPropertyInitialization": true,
         // "strictBindCallApply": true,
         "noImplicitAny": false,
         // "noUnusedLocals": true,
         // "noUnusedParameters": true,
-        "useUnknownInCatchVariables": false,
-
-        // Consider targetting es2019 or higher if you only support Node.js 12+
-        "target": "es2019",
-        // es2019's default lib doesn't include the ES2022 Error.cause typings, even though
-        // Node itself has supported the `cause` option since Node 16.9 - add just that piece
-        // instead of bumping the whole target/lib to es2022.
-        "lib": ["es2019", "es2022.error"],
-
+        "useUnknownInCatchVariables": false
     },
     "include": [
         "**/*.js",
