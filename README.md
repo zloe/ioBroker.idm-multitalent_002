@@ -76,6 +76,10 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 2.2.4 (2026-10-10)
+* (zloe) fixed the same "marked read-only by mistake" bug for `Waermepumpe.Maximaltemperatur` on EVR752101 (found by cross-checking all six firmware definitions against each other, same pattern as the Heizkreis B fix below)
+* (zloe) added a permanent automated test (`lib/idm_datablocks.test.js`) that cross-checks every bundled firmware definition against the others - same statename + register ("function") id must agree on `writable`/`length`/`factor` - so this class of bug is caught by CI from now on instead of needing a one-off manual check. A handful of genuine, still-unconfirmed differences (`Waermepumpe.MinimaleLaufzeit` writable, and three `length` mismatches around `Heizkreis-A.Absenkfaktor`/`Heizung.PufferVorhanden`/`Heizung.SchichttrennplatteVorhanden`) are documented as known exceptions in that test rather than guessed at - see the test file for why
+
 ### 2.2.3 (2026-10-10)
 * (zloe) fixed: "Heizkreis B" operating mode (Betriebsart) could not be changed on the S_H726100 and idm750100 control versions - it was incorrectly marked read-only in the data block definition (`writable: false` instead of `true`), while reading always worked fine. Found by cross-checking all six firmware definitions against each other: every other control version already had `function: 19` (same register, same min/max) correctly set to `writable: true`
 
