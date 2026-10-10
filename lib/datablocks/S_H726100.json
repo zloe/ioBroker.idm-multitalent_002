@@ -336,19 +336,10 @@
                     "statename": "Heizkreis-A.Absenkfaktor",
                     "field": "faktor_A",
                     "description": "Absenkfaktor A",
-                    "length": 1,
+                    "length": 2,
                     "factor": 1,
                     "writable": false,
                     "function": 50
-                },
-                {
-                    "statename": "",
-                    "field": "padding5",
-                    "description": "padding5",
-                    "length": 1,
-                    "factor": 1,
-                    "writable": false,
-                    "function": -1
                 },
                 {
                     "statename": "Heizkreis-A.Schnellabsenkung",
