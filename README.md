@@ -76,6 +76,9 @@ Example screenshots of objects:
 ![Status](resources/ioBrokerAdapter-Status.jpg)
 
 ## Changelog
+### 2.2.3 (2026-10-10)
+* (zloe) fixed: "Heizkreis B" operating mode (Betriebsart) could not be changed on the S_H726100 and idm750100 control versions - it was incorrectly marked read-only in the data block definition (`writable: false` instead of `true`), while reading always worked fine. Found by cross-checking all six firmware definitions against each other: every other control version already had `function: 19` (same register, same min/max) correctly set to `writable: true`
+
 ### 2.2.2 (2026-09-13)
 * (zloe) scheduler tests (sensor/settings priority, sweep completion, no starvation, debug-level logging) now run against every bundled firmware, not just idm701100/S_H726100 - and against a synthetic, non-bundled definition too, proving the scheduler doesn't just happen to work for the shapes this project ships, but for any valid "Custom data blocks directory" file a user adds themselves
 * (zloe) docs: the hardware/RS422 setup instructions have their own clear, numbered "Hardware setup" section now, instead of being mixed into the intro alongside a duplicate (and out-of-place) explanation of the polling architecture

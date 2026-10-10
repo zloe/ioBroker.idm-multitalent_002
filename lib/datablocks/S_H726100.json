@@ -790,7 +790,7 @@
                     "description": "Betriebsart HK B",
                     "length": 2,
                     "factor": 1,
-                    "writable": false,
+                    "writable": true,
                     "function": 19,
                     "min": 0,
                     "max": 5
